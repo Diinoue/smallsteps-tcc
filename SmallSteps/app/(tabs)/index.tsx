@@ -1,98 +1,162 @@
-import { Image } from 'expo-image';
-import { Platform, StyleSheet } from 'react-native';
+import React, { useState } from 'react';
+import {
+  ScrollView,
+  View,
+  Text,
+  StyleSheet,
+  StatusBar,
+  TouchableOpacity,
+} from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { useThemeColor } from '@/hooks/use-theme-color';
+import { useColorScheme } from '@/hooks/use-color-scheme';
+import { StreakCard, StreakStatus } from '@/components/dashboard/StreakCard';
+import { GoalTimelineCard } from '@/components/dashboard/GoalTimelineCard';
+import { Button } from '@/components/ui/Button';
 
-import { HelloWave } from '@/components/hello-wave';
-import ParallaxScrollView from '@/components/parallax-scroll-view';
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { Link } from 'expo-router';
+export default function DashboardScreen() {
+  //ALTERE AQUI PARA TESTE
+  const [streakStatus, setStreakStatus] = useState<StreakStatus>('frozen');
+  const [streakDays, setStreakDays] = useState(2);
 
-export default function HomeScreen() {
+  const backgroundColor = useThemeColor({}, 'background');
+  const textColor = useThemeColor({}, 'text');
+  const colorScheme = useColorScheme();
+  const primaryColor = useThemeColor({}, 'primary');
+  const activeColor = useThemeColor({}, 'streakActive');
+
+  const mockGoals = [
+    {
+      id: 'g1',
+      title: 'Die Mittsommernacht-Fantasie',
+      completed: true,
+      subGoals: [
+        { id: 'sg1', title: 'Learn the structure', timeAgo: '2 Months ago', completed: true },
+        { id: 'sg2', title: 'Hard section slow-speed', timeAgo: '2 Months ago', completed: true },
+        { id: 'sg3', title: 'Finish a slow-speed full-track run', timeAgo: '1 Month ago', completed: true },
+        { id: 'sg4', title: 'Clean Hard section normal-speed', timeAgo: '17 days ago', completed: true },
+      ],
+      targetMilestone: 'Clean full track run!!',
+    },
+    {
+      id: 'g2',
+      title: 'Tout est bien qui finit bien',
+      completed: false,
+      subGoals: [
+        { id: 'sg21', title: 'Learn the structure', timeAgo: '2 Months ago', completed: true },
+        { id: 'sg22', title: 'Hard section slow-speed', timeAgo: '2 Months ago', completed: false },
+        { id: 'sg23', title: 'Finish a slow-speed full-track run', timeAgo: '1 Month ago', completed: false },
+      ],
+      targetMilestone: 'Complete final performance',
+    },
+  ];
+
   return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}
-      headerImage={
-        <Image
-          source={require('@/assets/images/partial-react-logo.png')}
-          style={styles.reactLogo}
-        />
-      }>
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText type="title">Welcome!</ThemedText>
-        <HelloWave />
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 1: Try it</ThemedText>
-        <ThemedText>
-          Edit <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> to see changes.
-          Press{' '}
-          <ThemedText type="defaultSemiBold">
-            {Platform.select({
-              ios: 'cmd + d',
-              android: 'cmd + m',
-              web: 'F12',
-            })}
-          </ThemedText>{' '}
-          to open developer tools.
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <Link href="/modal">
-          <Link.Trigger>
-            <ThemedText type="subtitle">Step 2: Explore</ThemedText>
-          </Link.Trigger>
-          <Link.Preview />
-          <Link.Menu>
-            <Link.MenuAction title="Action" icon="cube" onPress={() => alert('Action pressed')} />
-            <Link.MenuAction
-              title="Share"
-              icon="square.and.arrow.up"
-              onPress={() => alert('Share pressed')}
-            />
-            <Link.Menu title="More" icon="ellipsis">
-              <Link.MenuAction
-                title="Delete"
-                icon="trash"
-                destructive
-                onPress={() => alert('Delete pressed')}
-              />
-            </Link.Menu>
-          </Link.Menu>
-        </Link>
+    <SafeAreaView style={[styles.safeArea, { backgroundColor }]}>
+      <StatusBar
+        barStyle={colorScheme === 'dark' ? 'light-content' : 'dark-content'}
+        backgroundColor={backgroundColor}
+      />
+      <ScrollView
+        style={styles.scrollView}
+        contentContainerStyle={styles.contentContainer}
+        showsVerticalScrollIndicator={false}
+      >
+        {/* Screen Header */}
+        <View style={styles.header}>
+          <Text style={[styles.headerTitle, { color: textColor }]}>
+            Your Dashboard
+          </Text>
+        </View>
 
-        <ThemedText>
-          {`Tap the Explore tab to learn more about what's included in this starter app.`}
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 3: Get a fresh start</ThemedText>
-        <ThemedText>
-          {`When you're ready, run `}
-          <ThemedText type="defaultSemiBold">npm run reset-project</ThemedText> to get a fresh{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> directory. This will move the current{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> to{' '}
-          <ThemedText type="defaultSemiBold">app-example</ThemedText>.
-        </ThemedText>
-      </ThemedView>
-    </ParallaxScrollView>
+        {/* 1. Streak Card */}
+        <StreakCard
+          days={streakDays}
+          status={streakStatus}
+        />
+
+        {/* 2. Current Goals Section Header */}
+        <View style={styles.goalsHeaderRow}>
+          <Text style={[styles.sectionTitle, { color: textColor }]}>
+            Current Goals
+          </Text>
+          <Button
+            title="add goal"
+            variant="pill"
+            customColor={activeColor}
+            size="small"
+            style={styles.addGoalBtn}
+          />
+        </View>
+
+        {/* 3. Goals List (Streak -> Meta 1 -> Meta 2 ...) */}
+        {mockGoals.map((goal) => (
+          <GoalTimelineCard
+            key={goal.id}
+            id={goal.id}
+            title={goal.title}
+            completed={goal.completed}
+            subGoals={goal.subGoals}
+            targetMilestone={goal.targetMilestone}
+          />
+        ))}
+      </ScrollView>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  titleContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
+  safeArea: {
+    flex: 1,
   },
-  stepContainer: {
-    gap: 8,
+  scrollView: {
+    flex: 1,
+  },
+  contentContainer: {
+    paddingHorizontal: 20,
+    paddingTop: 16,
+    paddingBottom: 40,
+  },
+  header: {
     marginBottom: 8,
   },
-  reactLogo: {
-    height: 178,
-    width: 290,
-    bottom: 0,
-    left: 0,
-    position: 'absolute',
+  headerTitle: {
+    fontSize: 28,
+    fontWeight: '800',
+    letterSpacing: -0.5,
+  },
+  stateSelector: {
+    flexDirection: 'row',
+    marginTop: 8,
+    gap: 8,
+  },
+  stateChip: {
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 12,
+    backgroundColor: 'rgba(0,0,0,0.05)',
+  },
+  stateChipText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#6B7280',
+  },
+  stateChipTextActive: {
+    color: '#FFFFFF',
+  },
+  goalsHeaderRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginTop: 20,
+    marginBottom: 12,
+  },
+  sectionTitle: {
+    fontSize: 26,
+    fontWeight: '800',
+  },
+  addGoalBtn: {
+    paddingHorizontal: 14,
+    paddingVertical: 6,
   },
 });
