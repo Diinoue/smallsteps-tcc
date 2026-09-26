@@ -1,19 +1,24 @@
+import { zodResolver } from "@hookform/resolvers/zod";
 import { Controller, useForm } from "react-hook-form";
-import { StyleSheet, Text, TextInput, View } from "react-native";
+import { Button, StyleSheet, Text, TextInput, View } from "react-native";
+import { z } from "zod";
 
-type FormSignUp = {
-  email: string,
-  password: string
-}
+const SignInSchema = z.object({
+  email: z.email("Email invalido."),
+  password: z.string().min(8, "Senha deve ter no mínimo 8 caracteres.")
+})
+
+type SignInSchema = z.infer<typeof SignInSchema>
 
 export default function Index () {  
-  const {control, handleSubmit} = {} = useForm<FormSignUp>({
+  const {control, handleSubmit, formState: {errors}} = useForm<SignInSchema>({
+      resolver: zodResolver(SignInSchema),
       defaultValues: { email: "",
                        password: "",
       },
   })
 
-  const onSubmit = (data: FormSignUp) => {
+  const handleLogIn = (data: SignInSchema) => {
     console.log(data);
   }
 
@@ -33,8 +38,7 @@ export default function Index () {
       placeholder="Senha"
       /> */}
 
-      <Text style={styles.label}>E-mail:</Text>
-
+    <Text style={styles.label}>E-mail:</Text>
       <Controller
           control={control}
           name="email"
@@ -51,8 +55,12 @@ export default function Index () {
           )
         } 
         />
+      {errors.email && (            
+              <Text style={styles.warning}>{errors.email.message}</Text>            
+      )}
 
-<Text style={styles.label}>Senha:</Text>
+
+      <Text style={styles.label}>Senha:</Text>
         <Controller
           control={control}
           name="password"
@@ -68,6 +76,15 @@ export default function Index () {
           )
         } 
         />
+
+        {errors.password && (            
+              <Text style={styles.warning}>{errors.password.message}</Text>            
+      )}
+
+        <Button
+          title="Entrar"
+          onPress={handleSubmit(handleLogIn)}
+          />
 
     </View>
         
@@ -107,5 +124,10 @@ const styles = StyleSheet.create({
     },
     label: {
       fontSize: 22
+    },
+    warning: {
+      fontSize: 15,
+      borderColor: 'red',
+      color: '#e63946',
     }
 })
