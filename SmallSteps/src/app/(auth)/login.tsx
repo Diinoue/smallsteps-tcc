@@ -1,7 +1,8 @@
+import ButtonConfirma from "@/src/components/ui/ButtonConfirma";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Link, useRouter } from "expo-router";
 import { Controller, useForm } from "react-hook-form";
-import { StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
+import { StyleSheet, Text, TextInput, View } from "react-native";
 import { z } from "zod";
 
 const SignInSchema = z.object({
@@ -82,12 +83,7 @@ return (
         <Link href="/cadastro" push style={styles.signUpTextUnd}>Cadastre-se!</Link>
       </View>
 
-      <TouchableOpacity
-        style={styles.confirmButton}
-        onPress={handleSubmit(handleLogIn)}
-      >
-        <Text style={styles.confirmText}>Confirmar</Text>
-      </TouchableOpacity>
+      <ButtonConfirma onPress={handleSubmit(handleLogIn)}/>
     </View>
   );
 }

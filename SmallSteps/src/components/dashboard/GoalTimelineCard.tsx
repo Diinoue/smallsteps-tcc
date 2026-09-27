@@ -1,8 +1,8 @@
-import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { useThemeColor } from '@/hooks/use-theme-color';
-import { IconSymbol } from '@/components/ui/icon-symbol';
-import { Button } from '@/components/ui/Button';
+import React from 'react';
+import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Button } from '../ui/Button';
+import { IconSymbol } from '../ui/icon-symbol';
 
 export interface SubGoal {
   id: string;

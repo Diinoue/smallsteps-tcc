@@ -15,7 +15,7 @@ export default function CommunitiesScreen() {
         <Text style={[styles.subtitle, { color: textColor }]}>
           Em breve você poderá explorar e participar de grupos da comunidade aqui!
         </Text>
-        <Link href="/login">IR PARA PAGINA LOGIN DIOGO JOINHA</Link>// DIOGOTESTE
+        <Link href="/login">IR PARA PAGINA LOGIN DIOGO TESTE JOINHA</Link>
       </View>
     </SafeAreaView>
   );

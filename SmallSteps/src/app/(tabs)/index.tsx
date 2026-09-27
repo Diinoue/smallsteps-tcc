@@ -1,18 +1,17 @@
+import { useColorScheme } from '@/hooks/use-color-scheme';
+import { useThemeColor } from '@/hooks/use-theme-color';
+import { GoalTimelineCard } from '@/src/components/dashboard/GoalTimelineCard';
+import { StreakCard, StreakStatus } from '@/src/components/dashboard/StreakCard';
+import { Button } from '@/src/components/ui/Button';
 import React, { useState } from 'react';
 import {
   ScrollView,
-  View,
-  Text,
-  StyleSheet,
   StatusBar,
-  TouchableOpacity,
+  StyleSheet,
+  Text,
+  View
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useThemeColor } from '@/hooks/use-theme-color';
-import { useColorScheme } from '@/hooks/use-color-scheme';
-import { StreakCard, StreakStatus } from '@/components/dashboard/StreakCard';
-import { GoalTimelineCard } from '@/components/dashboard/GoalTimelineCard';
-import { Button } from '@/components/ui/Button';
 
 export default function DashboardScreen() {
   //ALTERE AQUI PARA TESTE
