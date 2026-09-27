@@ -1,7 +1,8 @@
-import React from 'react';
-import { StyleSheet, View, Text } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { useThemeColor } from '@/hooks/use-theme-color';
+import { Link } from 'expo-router';
+import React from 'react';
+import { StyleSheet, Text, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function CommunitiesScreen() {
   const backgroundColor = useThemeColor({}, 'background');
@@ -14,6 +15,7 @@ export default function CommunitiesScreen() {
         <Text style={[styles.subtitle, { color: textColor }]}>
           Em breve você poderá explorar e participar de grupos da comunidade aqui!
         </Text>
+        <Link href="/login">IR PARA PAGINA LOGIN DIOGO JOINHA</Link>// DIOGOTESTE
       </View>
     </SafeAreaView>
   );
