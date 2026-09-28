@@ -21,7 +21,7 @@ const styles = StyleSheet.create({
       // botão confirmar
   confirmButton: {
     // marginTop: "auto",
-    marginVertical: 40,
+    marginVertical: 20,
     marginBottom: 30,
     // alignSelf: "flex-end",    
     backgroundColor: "#34c759",

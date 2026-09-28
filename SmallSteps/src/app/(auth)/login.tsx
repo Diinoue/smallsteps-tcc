@@ -1,8 +1,9 @@
 import ButtonConfirma from "@/src/components/ui/ButtonConfirma";
+import FormField from "@/src/components/ui/FormField";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Link, useRouter } from "expo-router";
-import { Controller, useForm } from "react-hook-form";
-import { StyleSheet, Text, TextInput, View } from "react-native";
+import { Link } from "expo-router";
+import { useForm } from "react-hook-form";
+import { StyleSheet, Text, View } from "react-native";
 import { z } from "zod";
 
 const SignInSchema = z.object({
@@ -13,8 +14,6 @@ const SignInSchema = z.object({
 type SignInSchema = z.infer<typeof SignInSchema>
 
 export default function Login () {  
-  const router = useRouter();
-
   const {
     control,
     handleSubmit,
@@ -26,7 +25,7 @@ export default function Login () {
   });
 
   const handleLogIn = (data: SignInSchema) => {
-    console.log(data); // depois colocar a logica pra validar o login
+    console.log(data); // TODO: depois colocar a logica pra validar o login
   }
 
 return (
@@ -38,7 +37,9 @@ return (
       <View style={styles.divider} />
 
       <View style={styles.fields}>
-        <Text style={styles.label}>E-mail:</Text>
+        
+      {/* Diogo - 27/09/2026 - Comentado para trocar pela componentização dos campos */}
+        {/* <Text style={styles.label}>E-mail:</Text>
         <Controller
           control={control}
           name="email"
@@ -56,26 +57,27 @@ return (
         />
         {errors.email && (
           <Text style={styles.warning}>{errors.email.message}</Text>
-        )}
+        )} */}
 
-        <Text style={styles.label}>Senha:</Text>
-        <Controller
-          control={control}
-          name="password"
-          render={({ field: { onChange, onBlur, value } }) => (
-            <TextInput
-              style={styles.field}
-              placeholder="Digite a sua senha"
-              secureTextEntry
-              onChangeText={onChange}
-              onBlur={onBlur}
-              value={value}
-            />
-          )}
-        />
-        {errors.password && (
-          <Text style={styles.warning}>{errors.password.message}</Text>
-        )}
+          <FormField
+            control={control}
+            name="email"
+            label="E-mail"
+            error={errors.email?.message}
+            placeholder="endereco@email.com"
+            autoCapitalize="none"
+            keyboardType="email-address"
+          />
+
+
+          <FormField
+            control={control}
+            name="password"
+            label="Senha:"
+            error={errors.password?.message}
+            placeholder="A sua senha aqui"
+            secureTextEntry
+          />
       </View>
 
       <View style={styles.signUpContainer}>
