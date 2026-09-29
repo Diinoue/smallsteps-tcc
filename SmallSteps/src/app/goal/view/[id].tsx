@@ -9,7 +9,7 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import { useThemeColor } from '@/hooks/use-theme-color';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { IconSymbol } from '@/src/components/ui/icon-symbol';
@@ -34,11 +34,13 @@ export default function GoalDetailScreen() {
   const surfaceColor = useThemeColor({}, 'surface');
   const colorScheme = useColorScheme();
 
-  useEffect(() => {
-    if (id) {
-      loadGoalDetail(id);
-    }
-  }, [id]);
+  useFocusEffect(
+    React.useCallback(() => {
+      if (id) {
+        loadGoalDetail(id);
+      }
+    }, [id])
+  );
 
   const loadGoalDetail = async (goalId: string) => {
     try {

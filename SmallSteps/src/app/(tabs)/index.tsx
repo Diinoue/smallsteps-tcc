@@ -9,7 +9,7 @@ import {
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useRouter } from 'expo-router';
+import { useFocusEffect, useRouter } from 'expo-router';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { useThemeColor } from '@/hooks/use-theme-color';
 import { StreakCard } from '@/src/components/dashboard/StreakCard';
@@ -30,9 +30,11 @@ export default function DashboardScreen() {
   const colorScheme = useColorScheme();
   const activeColor = useThemeColor({}, 'streakActive');
 
-  useEffect(() => {
-    loadDashboardData();
-  }, []);
+  useFocusEffect(
+    React.useCallback(() => {
+      loadDashboardData();
+    }, [])
+  );
 
   const loadDashboardData = async () => {
     try {
@@ -51,16 +53,15 @@ export default function DashboardScreen() {
   };
 
   const handleAddGoal = () => {
-    Alert.alert('Criar Meta', 'A funcionalidade de adicionar metas será implementada posteriormente.');
+    router.push(`/goal/add/`);
   };
 
   const handleViewGoal = (goalId: string) => {
-    router.push(`/goal/${goalId}`);
+    router.push(`/goal/view/${goalId}`);
   };
 
   const handleEditGoal = (goalId: string) => {
-    const goal = goals.find((g) => g.id === goalId);
-    Alert.alert('Editar Meta', `Editando a meta: "${goal?.title}"`);
+    router.push(`/goal/edit/${goalId}`);
   };
 
   const handleDeleteGoal = async (goalId: string) => {

@@ -12,12 +12,7 @@ import { Button } from '../ui/Button';
 import { IconSymbol } from '../ui/icon-symbol';
 
 
-export interface SubGoal {
-  id: string;
-  title: string;
-  timeAgo: string;
-  completed?: boolean;
-}
+import { SubGoal } from '@/src/types/goal';
 
 export interface GoalTimelineCardProps {
   id: string;

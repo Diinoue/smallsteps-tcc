@@ -1,4 +1,4 @@
-import { StreakData } from '@/types/goal';
+import { StreakData } from '@/src/types/goal';
 
 let MOCK_STREAK: StreakData = {
   days: 127,

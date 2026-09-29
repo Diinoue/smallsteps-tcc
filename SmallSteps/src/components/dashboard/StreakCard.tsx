@@ -93,7 +93,7 @@ const styles = StyleSheet.create({
   },
   daysRow: {
     flexDirection: 'row',
-    alignItems: 'flex-baseline',
+    alignItems: 'baseline',
   },
   daysNumber: {
     fontSize: 54,

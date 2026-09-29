@@ -1,4 +1,4 @@
-import { Goal } from '@/types/goal';
+import { Goal } from '@/src/types/goal';
 
 // Initial Mock Data Store
 let MOCK_GOALS: Goal[] = [
