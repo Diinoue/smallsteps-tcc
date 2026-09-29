@@ -9,7 +9,7 @@ export default function CommunitiesScreen() {
   const textColor = useThemeColor({}, 'text');
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor }]}>
+    <SafeAreaView edges={['top', 'left', 'right']} style={[styles.container, { backgroundColor }]}>
       <View style={styles.content}>
         <Text style={[styles.title, { color: textColor }]}>Comunidades</Text>
         <Text style={[styles.subtitle, { color: textColor }]}>
