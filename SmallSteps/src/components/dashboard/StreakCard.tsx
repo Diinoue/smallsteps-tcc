@@ -1,7 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { useThemeColor } from '@/hooks/use-theme-color';
-import { Button } from '@/components/ui/Button';
 
 export type StreakStatus = 'active' | 'warning' | 'frozen';
 
@@ -9,7 +8,6 @@ export interface StreakCardProps {
   days: number;
   status: StreakStatus;
   statusText?: string;
-  onPracticePress?: () => void;
 }
 
 export function StreakCard({
