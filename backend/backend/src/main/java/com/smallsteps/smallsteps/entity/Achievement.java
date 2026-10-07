@@ -3,7 +3,7 @@ package com.smallsteps.smallsteps.entity;
 import java.time.LocalDate;
 import java.util.List;
 
-import com.smallsteps.smallsteps.model.ObjectiveDTO;
+import com.smallsteps.smallsteps.dto.ObjectiveDTO;
 
 public class Achievement {
     private int id;

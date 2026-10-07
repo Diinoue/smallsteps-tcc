@@ -1,4 +1,4 @@
-package com.smallsteps.smallsteps.model;
+package com.smallsteps.smallsteps.dto;
 
 
 // get p um usuario no context de uma determinada comunidade, p saber role, pontos, etc...
