@@ -37,10 +37,6 @@ export const SignUpSchema = z.object({
 
 type SignUpSchema = z.infer<typeof SignUpSchema>
 
-// const createUser = async (data: SignUpSchema) => {
-//         api.post('/users', {nome: data.nome, email: data.email, senha: data.password})
-//     }
-
 export default function Cadastro () {
     const {
         control,
@@ -55,10 +51,7 @@ export default function Cadastro () {
             passwordConfirm: ""
         }
     });
-    const handleSignUp = async (data: SignUpSchema) => {
-        console.log(data); // TODO: depois colocar a logica pra realizar o cadastro
-        // createUser(data);
-
+    const handleSignUp = async (data: SignUpSchema) => {        
         try {
             const newUser = await cadastrarUser({
                 nome: data.nome,

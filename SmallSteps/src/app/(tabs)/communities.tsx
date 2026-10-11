@@ -9,13 +9,14 @@ export default function CommunitiesScreen() {
   const textColor = useThemeColor({}, 'text');
 
   return (
-    <SafeAreaView edges={['top', 'left', 'right']} style={[styles.container, { backgroundColor }]}>
+    <SafeAreaView edges={['top', 'left', 'right']} style={[styles.container, { backgroundColor }]}>      
       <View style={styles.content}>
         <Text style={[styles.title, { color: textColor }]}>Comunidades</Text>
         <Text style={[styles.subtitle, { color: textColor }]}>
           Em breve você poderá explorar e participar de grupos da comunidade aqui!
         </Text>
         <Link href="/login">IR PARA PAGINA LOGIN DIOGO TESTE JOINHA</Link>
+        <Link href="/(community)/addCommunity">PáginaAddComunidades</Link>                
       </View>
     </SafeAreaView>
   );
