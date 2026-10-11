@@ -5,7 +5,9 @@ Tela de cadastro de usuários
 
 import ButtonConfirma from "@/src/components/ui/ButtonConfirma"
 import FormField from "@/src/components/ui/FormField"
+import { cadastrarUser } from "@/src/services/userService"
 import { zodResolver } from "@hookform/resolvers/zod"
+import axios from "axios"
 import { useForm } from "react-hook-form"
 import { StyleSheet, Text, View } from "react-native"
 import { z } from "zod"
@@ -21,7 +23,7 @@ const passwordSenha = z
         // .refine((password) => /[!@#$%^&*]/.test(password), {message: "Senha deve ter pelo menos uma letra maiúscula, um número e um símbolo. (@, %, #, &, !)"});
 
 // Schema de cadastro
-const SignUpSchema = z.object({
+export const SignUpSchema = z.object({
     nome: z.string()
             .min(1, "Este campo é obrigatório."),
     email: z.email({error: "Email inválido."}),
@@ -34,6 +36,10 @@ const SignUpSchema = z.object({
     
 
 type SignUpSchema = z.infer<typeof SignUpSchema>
+
+// const createUser = async (data: SignUpSchema) => {
+//         api.post('/users', {nome: data.nome, email: data.email, senha: data.password})
+//     }
 
 export default function Cadastro () {
     const {
@@ -49,8 +55,24 @@ export default function Cadastro () {
             passwordConfirm: ""
         }
     });
-    const handleSignUp = (data: SignUpSchema) => {
+    const handleSignUp = async (data: SignUpSchema) => {
         console.log(data); // TODO: depois colocar a logica pra realizar o cadastro
+        // createUser(data);
+
+        try {
+            const newUser = await cadastrarUser({
+                nome: data.nome,
+                email: data.email,
+                password: data.password
+            })
+        }
+        catch (erro) {
+            if (axios.isAxiosError(erro)) {
+                console.log(erro.response?.status); // 400
+                console.log(erro.response?.data);   // corpo do erro enviado pelo Spring
+            }
+        }
+
     }
 
     return (
