@@ -53,7 +53,7 @@ export default function DashboardScreen() {
   };
 
   const handleAddGoal = () => {
-    router.push(`/goal/add/`);
+    router.push('/goal/add');
   };
 
   const handleViewGoal = (goalId: string) => {

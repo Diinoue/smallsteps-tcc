@@ -82,7 +82,8 @@ return (
 
       <View style={styles.signUpContainer}>
         <Text style={styles.signUpText}>Ainda não possui uma conta?</Text>        
-        <Link href="/cadastro" push style={styles.signUpTextUnd}>Cadastre-se!</Link>
+        <Link href="/cadastro" push style={styles.signUpTextUnd}>Cadastre-se!</Link>        
+        <Link href="/(community)/addCommunity" push style={styles.signUpTextUnd}>Cadastre-se!</Link>
       </View>
 
       <ButtonConfirma onPress={handleSubmit(handleLogIn)}/>

@@ -19,6 +19,7 @@ export default function RootLayout() {
         <Stack.Screen name="goal/view/[id]" options={{ headerShown: false }} />
         <Stack.Screen name="goal/edit/[id]" options={{ headerShown: false }} />
         <Stack.Screen name="goal/add/index" options={{ headerShown: false }} />
+        <Stack.Screen name="(community)/addCommunity" options={{ headerShown: false }} />
         <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'Modal' }} />
         
       </Stack>
