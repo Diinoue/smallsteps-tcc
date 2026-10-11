@@ -8,12 +8,12 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 
-@Entity 
-@Table(name = "users")
+// @Entity 
+// @Table(name = "users")
 public class User {
 
-    @Id 
-    @GeneratedValue(strategy=GenerationType.AUTO)
+    // @Id 
+    // @GeneratedValue(strategy=GenerationType.AUTO)
     private Integer id;
     private String nome;
     private String email;
