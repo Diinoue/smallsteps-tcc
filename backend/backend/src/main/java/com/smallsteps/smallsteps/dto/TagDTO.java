@@ -1,4 +1,4 @@
-package com.smallsteps.smallsteps.model;
+package com.smallsteps.smallsteps.dto;
 
 public class TagDTO {
     public int id;

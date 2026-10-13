@@ -1,4 +1,4 @@
-package com.smallsteps.smallsteps.model;
+package com.smallsteps.smallsteps.dto;
 
 import java.time.LocalDateTime;
 import com.smallsteps.smallsteps.enums.Cargo;
