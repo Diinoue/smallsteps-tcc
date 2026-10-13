@@ -3,33 +3,25 @@ package com.smallsteps.smallsteps.service;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.smallsteps.smallsteps.entity.User;
+import com.smallsteps.smallsteps.entity.Usuario;
 
 public class UserService {
 
-public List<User> readUsuario() {
-    List<User> lista = new ArrayList<User>();
+    public List<Usuario> readUsuario() {
+        List<Usuario> lista = new ArrayList<>();
+        return lista;
+    }
 
+    public Usuario createUsuario(Usuario user) {
+        return new Usuario();
+    }
 
-    return lista;
-}
+    public Usuario updateUsuario(Usuario user) {
+        return new Usuario();
+    }
 
-public User createUsuario(User user) {
-
-
-    return new User();
-}
-
-public User updateUsuario(User user) {
-
-
-    return new User();
-}
-
-public boolean deleteUsuario(int id) {
-
-
-    return true;
-}
+    public boolean deleteUsuario(int id) {
+        return true;
+    }
 
 }
