@@ -20,6 +20,8 @@ export interface SubGoalEditItemProps {
   onTitleChange: (index: number, newTitle: string) => void;
   onDelete: (index: number) => void;
   isLast: boolean;
+  /** Quando true, o conteúdo fica esmaecido e não editável (meta concluída). */
+  locked?: boolean;
 }
 
 export function SubGoalEditItem({
@@ -32,6 +34,7 @@ export function SubGoalEditItem({
   onTitleChange,
   onDelete,
   isLast,
+  locked = false,
 }: SubGoalEditItemProps) {
   const activeColor = useThemeColor({}, 'streakActive');
   const textColor = useThemeColor({}, 'text');
@@ -44,10 +47,14 @@ export function SubGoalEditItem({
   const canMoveUp = index > 0;
   const canMoveDown = index < totalCount - 1;
 
+  // A opacidade é aplicada apenas nos filhos, nunca no card com elevation/sombra.
+  // Aplicar opacity em um pai com elevation no Android gera o "retângulo fantasma".
+  const contentStyle = locked ? styles.lockedContent : undefined;
+
   return (
     <View style={styles.container}>
       {/* Left Timeline Column (Connector Line) */}
-      <View style={styles.timelineColumn}>
+      <View style={[styles.timelineColumn, contentStyle]}>
         {/* Circle Node */}
         <View
           style={[
@@ -69,14 +76,14 @@ export function SubGoalEditItem({
         )}
       </View>
 
-      {/* Main Subgoal Card Container */}
+      {/* Main Subgoal Card Container (sem opacity) */}
       <View style={[styles.card, { backgroundColor: surfaceColor, borderColor }]}>
         {/* Order Reorder Arrows (Up / Down) */}
-        <View style={styles.arrowsColumn}>
+        <View style={[styles.arrowsColumn, contentStyle]}>
           <TouchableOpacity
             style={[styles.arrowButton, !canMoveUp && styles.arrowDisabled]}
             onPress={() => canMoveUp && onMoveUp(index)}
-            disabled={!canMoveUp}
+            disabled={!canMoveUp || locked}
             activeOpacity={0.6}
           >
             <IconSymbol
@@ -89,7 +96,7 @@ export function SubGoalEditItem({
           <TouchableOpacity
             style={[styles.arrowButton, !canMoveDown && styles.arrowDisabled]}
             onPress={() => canMoveDown && onMoveDown(index)}
-            disabled={!canMoveDown}
+            disabled={!canMoveDown || locked}
             activeOpacity={0.6}
           >
             <IconSymbol
@@ -102,11 +109,12 @@ export function SubGoalEditItem({
 
         {/* Subgoal Title Input */}
         <TextInput
-          style={[styles.titleInput, { color: textColor }]}
+          style={[styles.titleInput, { color: textColor }, contentStyle]}
           value={subGoal.title}
           onChangeText={(text) => onTitleChange(index, text)}
           placeholder="Nome da submeta..."
           placeholderTextColor={textMuted}
+          editable={!locked}
         />
 
         {/* Completion Toggle Button */}
@@ -116,8 +124,10 @@ export function SubGoalEditItem({
             isCompleted
               ? { backgroundColor: activeColor, borderColor: activeColor }
               : { backgroundColor: 'transparent', borderColor: '#9CA3AF' },
+            contentStyle,
           ]}
           onPress={() => onToggleCompleted(index)}
+          disabled={locked}
           activeOpacity={0.7}
         >
           <IconSymbol
@@ -129,8 +139,9 @@ export function SubGoalEditItem({
 
         {/* Delete Subgoal Button */}
         <TouchableOpacity
-          style={styles.deleteButton}
+          style={[styles.deleteButton, contentStyle]}
           onPress={() => onDelete(index)}
+          disabled={locked}
           activeOpacity={0.6}
         >
           <IconSymbol name="trash.fill" size={18} color={errorColor} />
@@ -216,5 +227,8 @@ const styles = StyleSheet.create({
   deleteButton: {
     padding: 6,
     marginLeft: 4,
+  },
+  lockedContent: {
+    opacity: 0.5,
   },
 });

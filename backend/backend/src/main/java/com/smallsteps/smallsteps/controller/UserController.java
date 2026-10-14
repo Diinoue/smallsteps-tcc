@@ -7,7 +7,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.smallsteps.smallsteps.dto.UserDTO;
-import com.smallsteps.smallsteps.model.User;
+import com.smallsteps.smallsteps.entity.Usuario;
 import com.smallsteps.smallsteps.service.UserService;
 
 import org.springframework.web.bind.annotation.PostMapping;
@@ -31,11 +31,11 @@ public class UserController {
 
 @PostMapping
 @ResponseStatus(HttpStatus.CREATED)
-public User create(@RequestBody UserDTO dto) {
-    User user = new User();
+public Usuario create(@RequestBody UserDTO dto) {
+    Usuario user = new Usuario();
     user.setNome(dto.getName());
     user.setEmail(dto.getEmail());
-    user.setSenha(dto.getPassword());
+    //user.setSenha(dto.getPassword());
 
     System.out.println(user.toString());
     return userService.createUsuario(user);

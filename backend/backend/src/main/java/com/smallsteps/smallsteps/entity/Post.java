@@ -1,37 +1,47 @@
 package com.smallsteps.smallsteps.entity;
 
-import java.time.LocalDate;
+import java.time.LocalDateTime;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Table;
 
+@Entity
+@Table(name = "post")
 public class Post {
-    private String description;
-    private int id;
-    private LocalDate dtStart;
-    private String community;
-    private String photo;
-    private int numComment;
 
-    //fk do usuario
-    private User author;
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "id")
+    private int id;
+
+    @Column(name = "descricao", nullable = false, columnDefinition = "TEXT")
+    private String descricao;
+
+    @Column(name = "dt_criacao", nullable = false)
+    private LocalDateTime dtCriacao;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "id_usuario", nullable = false)
+    private Usuario usuario;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "id_comunidade", nullable = false)
+    private Comunidade comunidade;
 
     public Post() {}
 
-    public Post(String description, int id, LocalDate dtStart, String community, String photo, int numComment,
-            User author) {
-        this.description = description;
+    public Post(int id, String descricao, LocalDateTime dtCriacao, Usuario usuario, Comunidade comunidade) {
         this.id = id;
-        this.dtStart = dtStart;
-        this.community = community;
-        this.photo = photo;
-        this.numComment = numComment;
-        this.author = author;
-    }
-
-    public String getDescription() {
-        return description;
-    }
-
-    public void setDescription(String description) {
-        this.description = description;
+        this.descricao = descricao;
+        this.dtCriacao = dtCriacao;
+        this.usuario = usuario;
+        this.comunidade = comunidade;
     }
 
     public int getId() {
@@ -42,44 +52,43 @@ public class Post {
         this.id = id;
     }
 
-    public LocalDate getDtStart() {
-        return dtStart;
+    public String getDescricao() {
+        return descricao;
     }
 
-    public void setDtStart(LocalDate dtStart) {
-        this.dtStart = dtStart;
+    public void setDescricao(String descricao) {
+        this.descricao = descricao;
     }
 
-    public String getCommunity() {
-        return community;
+    public LocalDateTime getDtCriacao() {
+        return dtCriacao;
     }
 
-    public void setCommunity(String community) {
-        this.community = community;
+    public void setDtCriacao(LocalDateTime dtCriacao) {
+        this.dtCriacao = dtCriacao;
     }
 
-    public String getPhoto() {
-        return photo;
+    public Usuario getUsuario() {
+        return usuario;
     }
 
-    public void setPhoto(String photo) {
-        this.photo = photo;
+    public void setUsuario(Usuario usuario) {
+        this.usuario = usuario;
     }
 
-    public int getNumComment() {
-        return numComment;
+    public int getIdUsuario() {
+        return usuario != null ? usuario.getId() : 0;
     }
 
-    public void setNumComment(int numComment) {
-        this.numComment = numComment;
+    public Comunidade getComunidade() {
+        return comunidade;
     }
 
-    public User getAuthor() {
-        return author;
+    public void setComunidade(Comunidade comunidade) {
+        this.comunidade = comunidade;
     }
 
-    public void setAuthor(User author) {
-        this.author = author;
+    public int getIdComunidade() {
+        return comunidade != null ? comunidade.getId() : 0;
     }
-
 }
