@@ -20,7 +20,7 @@ import com.smallsteps.smallsteps.repository.UserRepository;
 
 @Service 
 public class UserService {
-
+    
     private final UserRepository userRepository;
     private final GoalRepository goalRepository;
 
@@ -32,18 +32,6 @@ public class UserService {
     public List<Usuario> readUsuario() {
         List<Usuario> lista = new ArrayList<>();
         return lista;
-    }
-
-    public Usuario createUsuario(Usuario user) {
-        return new Usuario();
-    }
-
-    public Usuario updateUsuario(Usuario user) {
-        return new Usuario();
-    }
-
-    public boolean deleteUsuario(int id) {
-        return true;
     }
 
     public DashboardDTOResponse getDashboard(int idUsuario) {
@@ -87,5 +75,19 @@ public class UserService {
 
         return dashboard;
     }
+
+// so esse funciona
+public Usuario createUsuario(Usuario user) { return userRepository.save(user); }
+
+public Usuario updateUsuario(Usuario user) {
+
+return new Usuario();
 }
 
+public boolean deleteUsuario(int id) {
+
+
+    return true;
+}
+
+}
