@@ -1,34 +1,110 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { useThemeColor } from '@/hooks/use-theme-color';
-
-export type StreakStatus = 'active' | 'warning' | 'frozen';
+import { StreakStatus } from '@/src/dto/DashboardResponse';
 
 export interface StreakCardProps {
-  days: number;
-  status: StreakStatus;
-  statusText?: string;
+  streakNum: number;
+  ultimaAtividade: string | null;
+  ultimoPrazo: string | null; // início de um ciclo (âncora)
+  intervaloAtividade: number | null; // duração de cada ciclo, em segundos
+}
+
+/**
+ * Calcula em qual ciclo o usuário está "agora".
+ * Os ciclos se repetem a partir do ultimoPrazo, cada um com intervaloAtividade segundos.
+ */
+function getCicloAtual(
+  ultimoPrazo: string,
+  intervaloAtividade: number,
+  agora: Date = new Date(),
+) {
+  const duracao = intervaloAtividade * 1000;
+  const inicio = new Date(ultimoPrazo).getTime();
+  const indice = Math.max(0, Math.floor((agora.getTime() - inicio) / duracao));
+
+  const inicioAtual = inicio + indice * duracao;
+  return { indice, inicioAtual, fimAtual: inicioAtual + duracao, duracao };
+}
+
+/**
+ * - ATIVO:     já fez a atividade no ciclo atual
+ * - PENDENTE:  ainda não fez no ciclo atual, mas fez no anterior (dá tempo)
+ * - CONGELADO: um ciclo inteiro passou sem atividade
+ */
+export function calcularStatusStreak(
+  ultimaAtividade: string | null,
+  ultimoPrazo: string | null,
+  intervaloAtividade: number | null,
+  agora: Date = new Date(),
+): StreakStatus {
+  // Sem dados suficientes (ex.: usuário antigo): não há como calcular
+  if (!ultimoPrazo || !intervaloAtividade || intervaloAtividade <= 0) {
+    return StreakStatus.ATIVO;
+  }
+
+  // O primeiro ciclo ainda não começou
+  if (agora.getTime() < new Date(ultimoPrazo).getTime()) return StreakStatus.ATIVO;
+
+  const { indice, inicioAtual, duracao } = getCicloAtual(
+    ultimoPrazo,
+    intervaloAtividade,
+    agora,
+  );
+
+  if (!ultimaAtividade) {
+    // Nunca fez atividade: pendente no primeiro ciclo, congelado depois
+    return indice === 0 ? StreakStatus.PENDENTE : StreakStatus.CONGELADO;
+  }
+
+  const ultima = new Date(ultimaAtividade).getTime();
+
+  // Fez a atividade no ciclo atual
+  if (ultima >= inicioAtual) return StreakStatus.ATIVO;
+
+  // Fez no ciclo anterior e ainda não fez neste: dá tempo
+  if (ultima >= inicioAtual - duracao) return StreakStatus.PENDENTE;
+
+  // Passou um ciclo inteiro sem atividade
+  return StreakStatus.CONGELADO;
+}
+
+function formatTimeLeft(ms: number): string {
+  if (ms <= 0) return 'Deadline passed';
+
+  const totalMin = Math.floor(ms / 60000);
+  const hours = Math.floor(totalMin / 60);
+  const minutes = totalMin % 60;
+
+  if (hours >= 24) {
+    const days = Math.floor(hours / 24);
+    return `${days} ${days === 1 ? 'day' : 'days'} until freeze`;
+  }
+  if (hours > 0) return `${hours}h ${minutes}min until freeze`;
+  return `${minutes} min until freeze`;
 }
 
 export function StreakCard({
-  days,
-  status = 'active',
-  statusText,
+  streakNum,
+  ultimaAtividade,
+  ultimoPrazo,
+  intervaloAtividade,
 }: StreakCardProps) {
   const activeColor = useThemeColor({}, 'streakActive');
   const warningColor = useThemeColor({}, 'streakWarning');
   const frozenColor = useThemeColor({}, 'streakFrozen');
-  const borderColor = useThemeColor({}, 'border');
   const surfaceColor = useThemeColor({}, 'surface');
 
-  // Determine state-specific color
+  const days = streakNum;
+  const status = calcularStatusStreak(ultimaAtividade, ultimoPrazo, intervaloAtividade);
+
   const getStatusColor = (): string => {
     switch (status) {
-      case 'active':
+      case StreakStatus.ATIVO:
         return activeColor;
-      case 'warning':
+      case StreakStatus.PENDENTE:
         return warningColor;
-      case 'frozen':
+      case StreakStatus.CONGELADO:
         return frozenColor;
       default:
         return activeColor;
@@ -37,16 +113,19 @@ export function StreakCard({
 
   const statusColor = getStatusColor();
 
-  // Default status messages if not provided
   const getSubtext = (): string => {
-    if (statusText) return statusText;
     switch (status) {
-      case 'active':
+      case StreakStatus.ATIVO:
         return 'Step Taken!';
-      case 'warning':
-        return '23 hours until freeze';
-      case 'frozen':
+      case StreakStatus.PENDENTE: {
+        if (!ultimoPrazo || !intervaloAtividade) return 'Pending';
+        const { fimAtual } = getCicloAtual(ultimoPrazo, intervaloAtividade);
+        return formatTimeLeft(fimAtual - Date.now());
+      }
+      case StreakStatus.CONGELADO:
         return 'Frozen';
+      default:
+        return '';
     }
   };
 
@@ -57,7 +136,9 @@ export function StreakCard({
         <View style={styles.daysRow}>
           <Text style={[styles.daysNumber, { color: statusColor }]}>{days}</Text>
           <View style={styles.daysLabelColumn}>
-            <Text style={[styles.daysText, { color: statusColor }]}>DAYS</Text>
+            <Text style={[styles.daysText, { color: statusColor }]}>
+              {days === 1 ? 'DAY' : 'DAYS'}
+            </Text>
             <Text style={[styles.streakSublabel, { color: statusColor }]}>
               Current Streak
             </Text>

@@ -35,46 +35,47 @@ public class UserService {
     }
 
     public DashboardDTOResponse getDashboard(int idUsuario) {
-        Usuario usuario = userRepository.findById(idUsuario)
-                .orElseThrow(() -> new ResponseStatusException(
-                        HttpStatus.NOT_FOUND, "Usuário não encontrado"));
+    Usuario usuario = userRepository.findById(idUsuario)
+            .orElseThrow(() -> new ResponseStatusException(
+                    HttpStatus.NOT_FOUND, "Usuário não encontrado"));
 
-        List<Meta> metas = goalRepository.findByUsuarioIdAndConcluidoFalse(idUsuario);
+    List<Meta> metas = goalRepository.findByUsuarioIdAndConcluidoFalse(idUsuario);
 
-        Map<Integer, List<SubMeta>> subMetasPorMeta = goalRepository
-                .findSubMetasByUsuario(idUsuario)
-                .stream()
-                .collect(Collectors.groupingBy(SubMeta::getIdMeta));
+    Map<Integer, List<SubMeta>> subMetasPorMeta = goalRepository
+            .findSubMetasByUsuario(idUsuario)
+            .stream()
+            .collect(Collectors.groupingBy(SubMeta::getIdMeta));
 
-        DashboardDTOResponse dashboard = new DashboardDTOResponse();
-        dashboard.streakNum = usuario.getStreakNum();
-        dashboard.streakStatus = usuario.getStreakStatus();
-        dashboard.ultimaAtividade = usuario.getUltimaAtividade();
+    DashboardDTOResponse dashboard = new DashboardDTOResponse();
+    dashboard.streakNum = usuario.getStreakNum();
+    dashboard.ultimaAtividade = usuario.getUltimaAtividade();
+    dashboard.ultimoPrazo = usuario.getUltimoPrazo();
+    dashboard.intervaloAtividade = usuario.getIntervaloAtividade();
 
-        for (Meta meta : metas) {
-            GoalDTOResponse goalDto = new GoalDTOResponse();
-            goalDto.id = meta.getId();
-            goalDto.title = meta.getTitulo();
-            goalDto.concluido = meta.isConcluido();
-            goalDto.dtInicio = meta.getDtInicio();
-            goalDto.dtFim = meta.getDtFim();
+    for (Meta meta : metas) {
+        GoalDTOResponse goalDto = new GoalDTOResponse();
+        goalDto.id = meta.getId();
+        goalDto.title = meta.getTitulo();
+        goalDto.concluido = meta.isConcluido();
+        goalDto.dtInicio = meta.getDtInicio();
+        goalDto.dtFim = meta.getDtFim();
 
-            for (SubMeta sub : subMetasPorMeta.getOrDefault(meta.getId(), List.of())) {
-                SubGoalDTOResponse subDto = new SubGoalDTOResponse();
-                subDto.id = sub.getId();
-                subDto.concluido = sub.isConcluido();
-                subDto.titulo = sub.getTitulo();
-                subDto.dtInicio = sub.getDtInicio();
-                subDto.dtFim = sub.getDtFim();
-                subDto.pos = sub.getPos();
-                goalDto.subMetas.add(subDto);
-            }
-
-            dashboard.metas.add(goalDto);
+        for (SubMeta sub : subMetasPorMeta.getOrDefault(meta.getId(), List.of())) {
+            SubGoalDTOResponse subDto = new SubGoalDTOResponse();
+            subDto.id = sub.getId();
+            subDto.concluido = sub.isConcluido();
+            subDto.titulo = sub.getTitulo();
+            subDto.dtInicio = sub.getDtInicio();
+            subDto.dtFim = sub.getDtFim();
+            subDto.pos = sub.getPos();
+            goalDto.subMetas.add(subDto);
         }
 
-        return dashboard;
+        dashboard.metas.add(goalDto);
     }
+
+    return dashboard;
+}
 
 // so esse funciona
 public Usuario createUsuario(Usuario user) { return userRepository.save(user); }

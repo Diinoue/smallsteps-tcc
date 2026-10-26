@@ -1,7 +1,14 @@
-import React, { useEffect, useState } from 'react';
+import { useColorScheme } from '@/hooks/use-color-scheme';
+import { useThemeColor } from '@/hooks/use-theme-color';
+import { GoalTimelineCard } from '@/src/components/dashboard/GoalTimelineCard';
+import { StreakCard } from '@/src/components/dashboard/StreakCard';
+import { Button } from '@/src/components/ui/Button';
+import { DashboardDTOResponse } from '@/src/dto/DashboardResponse';
+import { screenService } from '@/src/services';
+import { useFocusEffect, useRouter } from 'expo-router';
+import React, { useState } from 'react';
 import {
   ActivityIndicator,
-  Alert,
   ScrollView,
   StatusBar,
   StyleSheet,
@@ -9,20 +16,10 @@ import {
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useFocusEffect, useRouter } from 'expo-router';
-import { useColorScheme } from '@/hooks/use-color-scheme';
-import { useThemeColor } from '@/hooks/use-theme-color';
-import { StreakCard } from '@/src/components/dashboard/StreakCard';
-import { GoalTimelineCard } from '@/src/components/dashboard/GoalTimelineCard';
-import { Button } from '@/src/components/ui/Button';
-import { goalService, streakService } from '@/src/services';
-import { Goal, StreakData } from '@/src/types/goal';
-
 
 export default function DashboardScreen() {
   const router = useRouter();
-  const [streak, setStreak] = useState<StreakData | null>(null);
-  const [goals, setGoals] = useState<Goal[]>([]);
+  const [dashboardData, setDashboardData] = useState<DashboardDTOResponse | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   const backgroundColor = useThemeColor({}, 'background');
@@ -39,12 +36,8 @@ export default function DashboardScreen() {
   const loadDashboardData = async () => {
     try {
       setIsLoading(true);
-      const [streakData, goalsData] = await Promise.all([
-        streakService.getStreak(),
-        goalService.getGoals(),
-      ]);
-      setStreak(streakData);
-      setGoals(goalsData);
+      const response = await screenService.consultarDashboard(2);
+      setDashboardData(response);
     } catch (error) {
       console.error('Error loading dashboard data:', error);
     } finally {
@@ -56,31 +49,18 @@ export default function DashboardScreen() {
     router.push('/goal/add');
   };
 
-  const handleViewGoal = (goalId: string) => {
+  const handleViewGoal = (goalId: number) => {
     router.push(`/goal/view/${goalId}`);
   };
 
-  const handleEditGoal = (goalId: string) => {
+  const handleEditGoal = (goalId: number) => {
     router.push(`/goal/edit/${goalId}`);
   };
 
-  const handleDeleteGoal = async (goalId: string) => {
-    const goal = goals.find((g) => g.id === goalId);
-    Alert.alert(
-      'Deletar Meta',
-      `Tem certeza que deseja deletar a meta "${goal?.title}"?`,
-      [
-        { text: 'Cancelar', style: 'cancel' },
-        {
-          text: 'Deletar',
-          style: 'destructive',
-          onPress: async () => {
-            await goalService.deleteGoal(goalId);
-            setGoals((prev) => prev.filter((g) => g.id !== goalId));
-          },
-        },
-      ]
-    );
+  const handleDeleteGoal = async (goalId: number) => {
+    // TODO: implementar exclusão via service e recarregar o dashboard
+    // await goalService.deleteGoal(goalId);
+    // await loadDashboardData();
   };
 
   return (
@@ -109,11 +89,12 @@ export default function DashboardScreen() {
         ) : (
           <>
             {/* 1. Streak Card */}
-            {streak && (
+            {dashboardData && (
               <StreakCard
-                days={streak.days}
-                status={streak.status}
-                statusText={streak.statusText}
+                streakNum={dashboardData.streakNum}
+                ultimaAtividade={dashboardData.ultimaAtividade}
+                ultimoPrazo={dashboardData.ultimoPrazo}
+                intervaloAtividade={dashboardData.intervaloAtividade}
               />
             )}
 
@@ -133,14 +114,10 @@ export default function DashboardScreen() {
             </View>
 
             {/* 3. Goals List */}
-            {goals.map((goal) => (
+            {dashboardData?.metas.map((meta) => (
               <GoalTimelineCard
-                key={goal.id}
-                id={goal.id}
-                title={goal.title}
-                completed={goal.completed}
-                subGoals={goal.subGoals}
-                targetMilestone={goal.targetMilestone}
+                key={meta.id}
+                meta={meta}
                 onViewGoal={handleViewGoal}
                 onEditGoal={handleEditGoal}
                 onDeleteGoal={handleDeleteGoal}

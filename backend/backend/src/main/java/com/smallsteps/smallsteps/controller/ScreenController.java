@@ -22,7 +22,8 @@ public ScreenController(UserService userService) {
 
 @GetMapping("/dashboard/{idUsuario}")
 public DashboardDTOResponse getDashboard(@PathVariable int idUsuario) {
-    return userService.getDashboard(idUsuario);
+    System.out.println("teste");
+   return userService.getDashboard(idUsuario);
 }
 
 
