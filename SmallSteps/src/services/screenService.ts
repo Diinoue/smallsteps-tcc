@@ -8,6 +8,7 @@ export const screenService = {
     const { data } = await api.get<DashboardDTOResponse>(`/screen/dashboard/${idUsuario}`);
         console.log("recebendo");
         console.log(data);
+        console.log(idUsuario);
     return data;
 }
 }

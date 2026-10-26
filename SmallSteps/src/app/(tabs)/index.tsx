@@ -35,8 +35,9 @@ export default function DashboardScreen() {
 
   const loadDashboardData = async () => {
     try {
+      const n = Math.floor(Math.random() * 10) + 1;
       setIsLoading(true);
-      const response = await screenService.consultarDashboard(2);
+      const response = await screenService.consultarDashboard(n);
       setDashboardData(response);
     } catch (error) {
       console.error('Error loading dashboard data:', error);
