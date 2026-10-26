@@ -13,6 +13,7 @@ public class UserDTO {
     public boolean status;
     public LocalDate dtStart;
     public List<String> tags;
+    
     public int getId() {
         return id;
     }

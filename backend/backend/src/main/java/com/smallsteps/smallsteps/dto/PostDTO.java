@@ -1,15 +1,11 @@
 package com.smallsteps.smallsteps.dto;
 
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 public class PostDTO {
-    public String description;
     public int id;
-    public LocalDate dtStart;
-    public String community;
-    public String photo;
-    public int numComment;
-
-    //fk do usuario
-    public String author;
+    public String descricao;
+    public LocalDateTime dtCriacao;
+    public int idUsuario;
+    public int idComunidade;
 }

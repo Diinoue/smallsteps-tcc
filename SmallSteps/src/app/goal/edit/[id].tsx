@@ -269,43 +269,42 @@ export default function EditGoalScreen() {
             contentContainerStyle={styles.scrollContent}
             showsVerticalScrollIndicator={false}
           >
-            {/* 1. Goal Info Card ("informações") */}
+            {/* 1. Goal Info Card ("informações")
+                O card (com elevation) NÃO recebe opacity; só o conteúdo interno. */}
             <View
               pointerEvents={isLocked ? 'none' : 'auto'}
-              style={[
-                styles.infoCard,
-                { backgroundColor: surfaceColor, borderColor },
-                isLocked && styles.lockedContent,
-              ]}
+              style={[styles.infoCard, { backgroundColor: surfaceColor, borderColor }]}
             >
-              <Text style={[styles.cardHeaderTitle, { color: textColor }]}>
-                Informações da Meta
-              </Text>
-
-              <View style={styles.fieldGroup}>
-                <Text style={[styles.fieldLabel, { color: textMuted }]}>Título</Text>
-                <TextInput
-                  style={[styles.textInput, { color: textColor, borderColor }]}
-                  value={title}
-                  onChangeText={setTitle}
-                  placeholder="Ex: Aprender Alemão B1"
-                  placeholderTextColor={textMuted}
-                  editable={!isLocked}
-                />
-              </View>
-
-              <View style={styles.fieldGroup}>
-                <Text style={[styles.fieldLabel, { color: textMuted }]}>
-                  Objetivo Final (Milestone)
+              <View style={isLocked ? styles.lockedContent : undefined}>
+                <Text style={[styles.cardHeaderTitle, { color: textColor }]}>
+                  Informações da Meta
                 </Text>
-                <TextInput
-                  style={[styles.textInput, { color: textColor, borderColor }]}
-                  value={targetMilestone}
-                  onChangeText={setTargetMilestone}
-                  placeholder="Ex: Passar na prova oficial do Goethe"
-                  placeholderTextColor={textMuted}
-                  editable={!isLocked}
-                />
+
+                <View style={styles.fieldGroup}>
+                  <Text style={[styles.fieldLabel, { color: textMuted }]}>Título</Text>
+                  <TextInput
+                    style={[styles.textInput, { color: textColor, borderColor }]}
+                    value={title}
+                    onChangeText={setTitle}
+                    placeholder="Ex: Aprender Alemão B1"
+                    placeholderTextColor={textMuted}
+                    editable={!isLocked}
+                  />
+                </View>
+
+                <View style={styles.fieldGroup}>
+                  <Text style={[styles.fieldLabel, { color: textMuted }]}>
+                    Objetivo Final (Milestone)
+                  </Text>
+                  <TextInput
+                    style={[styles.textInput, { color: textColor, borderColor }]}
+                    value={targetMilestone}
+                    onChangeText={setTargetMilestone}
+                    placeholder="Ex: Passar na prova oficial do Goethe"
+                    placeholderTextColor={textMuted}
+                    editable={!isLocked}
+                  />
+                </View>
               </View>
             </View>
 
@@ -313,44 +312,48 @@ export default function EditGoalScreen() {
             <View style={styles.subGoalsSection}>
               <Text style={[styles.sectionTitle, { color: textColor }]}>Submetas</Text>
 
-              <View
-                pointerEvents={isLocked ? 'none' : 'auto'}
-                style={isLocked ? styles.lockedContent : undefined}
-              >
-              {subGoals.length === 0 ? (
-                <Text style={[styles.emptyText, { color: textMuted }]}>
-                  Nenhuma submeta criada ainda. Clique abaixo para adicionar!
-                </Text>
-              ) : (
-                subGoals.map((sg, index) => (
-                  <SubGoalEditItem
-                    key={sg.id}
-                    subGoal={sg}
-                    index={index}
-                    totalCount={subGoals.length}
-                    onMoveUp={handleMoveUp}
-                    onMoveDown={handleMoveDown}
-                    onToggleCompleted={handleToggleCompleted}
-                    onTitleChange={handleTitleChange}
-                    onDelete={handleDeleteSubGoal}
-                    isLast={index === subGoals.length - 1}
-                  />
-                ))
-              )}
+              {/* Wrapper sem opacity: cada SubGoalEditItem esmaece apenas seus filhos */}
+              <View pointerEvents={isLocked ? 'none' : 'auto'}>
+                {subGoals.length === 0 ? (
+                  <Text style={[styles.emptyText, { color: textMuted }]}>
+                    Nenhuma submeta criada ainda. Clique abaixo para adicionar!
+                  </Text>
+                ) : (
+                  subGoals.map((sg, index) => (
+                    <SubGoalEditItem
+                      key={sg.id}
+                      subGoal={sg}
+                      index={index}
+                      totalCount={subGoals.length}
+                      onMoveUp={handleMoveUp}
+                      onMoveDown={handleMoveDown}
+                      onToggleCompleted={handleToggleCompleted}
+                      onTitleChange={handleTitleChange}
+                      onDelete={handleDeleteSubGoal}
+                      isLast={index === subGoals.length - 1}
+                      locked={isLocked}
+                    />
+                  ))
+                )}
 
-              {/* Add Subgoal Button */}
-              <TouchableOpacity
-                style={[styles.addSubGoalBtn, { borderColor: activeColor }]}
-                onPress={handleAddSubGoal}
-                activeOpacity={0.7}
-              >
-                <View style={[styles.plusIconBg, { backgroundColor: activeColor }]}>
-                  <IconSymbol name="plus" size={18} color="#FFF" />
-                </View>
-                <Text style={[styles.addSubGoalText, { color: activeColor }]}>
-                  (adicionar submeta)
-                </Text>
-              </TouchableOpacity>
+                {/* Add Subgoal Button (sem elevation, pode receber opacity) */}
+                <TouchableOpacity
+                  style={[
+                    styles.addSubGoalBtn,
+                    { borderColor: activeColor },
+                    isLocked && styles.lockedContent,
+                  ]}
+                  onPress={handleAddSubGoal}
+                  disabled={isLocked}
+                  activeOpacity={0.7}
+                >
+                  <View style={[styles.plusIconBg, { backgroundColor: activeColor }]}>
+                    <IconSymbol name="plus" size={18} color="#FFF" />
+                  </View>
+                  <Text style={[styles.addSubGoalText, { color: activeColor }]}>
+                    (adicionar submeta)
+                  </Text>
+                </TouchableOpacity>
               </View>
 
               {/* Concluir / Reabrir Meta (efetivado ao salvar) */}
