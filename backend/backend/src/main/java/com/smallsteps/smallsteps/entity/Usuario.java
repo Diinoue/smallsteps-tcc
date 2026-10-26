@@ -1,6 +1,11 @@
 package com.smallsteps.smallsteps.entity;
 
+import java.time.Duration;
 import java.time.LocalDateTime;
+
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -9,7 +14,6 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
-import com.smallsteps.smallsteps.enums.StreakStatus;
 
 @Entity
 @Table(name = "usuario")
@@ -32,23 +36,29 @@ public class Usuario {
     @Column(name = "streak_num", nullable = false)
     private int streakNum;
 
-    @Enumerated(EnumType.STRING)
-    @Column(name = "streak_status", nullable = false)
-    private StreakStatus streakStatus;
-
     @Column(name = "ultima_atividade")
     private LocalDateTime ultimaAtividade;
 
+    @Column(name = "ultimo_prazo")
+    private LocalDateTime ultimoPrazo;
+
+    @JdbcTypeCode(SqlTypes.INTERVAL_SECOND)
+    @Column(name = "intervalo_atividade")
+    private Duration intervaloAtividade;
+
     public Usuario() {}
 
-    public Usuario(int id, String nome, String email, String descricao, int streakNum, StreakStatus streakStatus, LocalDateTime ultimaAtividade) {
+    public Usuario(int id, String nome, String email, String descricao, int streakNum,
+                   LocalDateTime ultimaAtividade, LocalDateTime ultimoPrazo, 
+                   Duration intervaloAtividade) {
         this.id = id;
         this.nome = nome;
         this.email = email;
         this.descricao = descricao;
         this.streakNum = streakNum;
-        this.streakStatus = streakStatus;
         this.ultimaAtividade = ultimaAtividade;
+        this.ultimoPrazo = ultimoPrazo;
+        this.intervaloAtividade = intervaloAtividade;
     }
 
     public int getId() {
@@ -91,19 +101,27 @@ public class Usuario {
         this.streakNum = streakNum;
     }
 
-    public StreakStatus getStreakStatus() {
-        return streakStatus;
-    }
-
-    public void setStreakStatus(StreakStatus streakStatus) {
-        this.streakStatus = streakStatus;
-    }
-
     public LocalDateTime getUltimaAtividade() {
         return ultimaAtividade;
     }
 
     public void setUltimaAtividade(LocalDateTime ultimaAtividade) {
         this.ultimaAtividade = ultimaAtividade;
+    }
+
+    public LocalDateTime getUltimoPrazo() {
+        return ultimoPrazo;
+    }
+
+    public void setUltimoPrazo(LocalDateTime ultimoPrazo) {
+        this.ultimoPrazo = ultimoPrazo;
+    }
+
+    public Duration getIntervaloAtividade() {
+        return intervaloAtividade;
+    }
+
+    public void setIntervaloAtividade(Duration intervaloAtividade) {
+        this.intervaloAtividade = intervaloAtividade;
     }
 }

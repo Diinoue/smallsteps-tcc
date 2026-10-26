@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import {
   Modal,
   StyleSheet,
@@ -10,34 +10,63 @@ import {
 import { useThemeColor } from '@/hooks/use-theme-color';
 import { Button } from '../ui/Button';
 import { IconSymbol } from '../ui/icon-symbol';
-
-
-import { SubGoal } from '@/src/types/goal';
+import { GoalDTOResponse, SubGoalDTOResponse } from '@/src/dto/DashboardResponse';
 
 export interface GoalTimelineCardProps {
-  id: string;
-  title: string;
-  subGoals: SubGoal[];
-  completed?: boolean;
-  targetMilestone?: string;
-  onViewGoal?: (id: string) => void;
-  onEditGoal?: (id: string) => void;
-  onDeleteGoal?: (id: string) => void;
+  meta: GoalDTOResponse;
+  onViewGoal?: (id: number) => void;
+  onEditGoal?: (id: number) => void;
+  onDeleteGoal?: (id: number) => void;
   onOptionsPress?: () => void;
 }
 
+// ---------- Helpers ----------
+
+const formatDate = (iso: string) => new Date(iso).toLocaleDateString('pt-BR');
+
+const formatTimeAgo = (iso: string): string => {
+  const diffMs = Date.now() - new Date(iso).getTime();
+  if (Number.isNaN(diffMs) || diffMs < 0) return formatDate(iso);
+
+  const minutes = Math.floor(diffMs / 60000);
+  if (minutes < 1) return 'agora';
+  if (minutes < 60) return `há ${minutes} min`;
+
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `há ${hours} h`;
+
+  const days = Math.floor(hours / 24);
+  if (days < 30) return `há ${days} ${days === 1 ? 'dia' : 'dias'}`;
+
+  return formatDate(iso);
+};
+
+const getSubGoalTimeText = (sub: SubGoalDTOResponse): string =>
+  sub.concluido ? formatTimeAgo(sub.dtFim) : `Prazo: ${formatDate(sub.dtFim)}`;
+
+// ---------- Componente ----------
+
 export function GoalTimelineCard({
-  id,
-  title,
-  subGoals,
-  completed = false,
-  targetMilestone = 'Clean full track run!!',
+  meta,
   onViewGoal,
   onEditGoal,
   onDeleteGoal,
   onOptionsPress,
 }: GoalTimelineCardProps) {
   const [menuVisible, setMenuVisible] = useState(false);
+
+  const { id, title, concluido: completed } = meta;
+
+  const subGoals = useMemo(
+    () => [...(meta.subMetas ?? [])].sort((a, b) => a.pos - b.pos),
+    [meta.subMetas]
+  );
+
+  // Próxima subtarefa pendente (ou a última, se tudo estiver concluído)
+  const targetMilestone = useMemo(() => {
+    const nextPending = subGoals.find((s) => !s.concluido);
+    return nextPending?.titulo ?? subGoals[subGoals.length - 1]?.titulo ?? '';
+  }, [subGoals]);
 
   const activeColor = useThemeColor({}, 'streakActive');
   const inactiveColor = '#9CA3AF';
@@ -57,21 +86,21 @@ export function GoalTimelineCard({
 
   const handleEdit = () => {
     setMenuVisible(false);
-    if (onEditGoal) onEditGoal(id);
+    onEditGoal?.(id);
   };
 
   const handleDelete = () => {
     setMenuVisible(false);
-    if (onDeleteGoal) onDeleteGoal(id);
+    onDeleteGoal?.(id);
   };
 
   const handleView = () => {
-    if (onViewGoal) onViewGoal(id);
+    onViewGoal?.(id);
   };
 
   return (
     <View style={[styles.cardContainer, { backgroundColor: surfaceColor }]}>
-      {/* Options Dropdown Modal */}
+      {/* Options Dropdown Modal (sem alterações) */}
       <Modal
         visible={menuVisible}
         transparent={true}
@@ -114,36 +143,23 @@ export function GoalTimelineCard({
       {/* Timeline List */}
       <View style={styles.timelineContainer}>
         {subGoals.map((item) => {
-          const isSubGoalCompleted = item.completed ?? true;
-          const nodeColor = isSubGoalCompleted ? activeColor : inactiveColor;
+          const nodeColor = item.concluido ? activeColor : inactiveColor;
 
           return (
             <View key={item.id} style={styles.timelineItemRow}>
-              {/* Timeline Column (Line + Dot Node) */}
               <View style={styles.timelineColumn}>
-                {/* Node Icon */}
                 <View style={[styles.nodeCircle, { backgroundColor: nodeColor }]}>
                   <IconSymbol name="eye.fill" size={10} color="#FFF" />
                 </View>
-
-                {/* Vertical Line */}
-                <View
-                  style={[
-                    styles.verticalLine,
-                    {
-                      backgroundColor: nodeColor,
-                    },
-                  ]}
-                />
+                <View style={[styles.verticalLine, { backgroundColor: nodeColor }]} />
               </View>
 
-              {/* Subgoal Info */}
               <View style={styles.subGoalContent}>
                 <Text style={[styles.subGoalTitle, { color: nodeColor }]}>
-                  {item.title}
+                  {item.titulo}
                 </Text>
                 <Text style={[styles.subGoalTime, { color: textMuted }]}>
-                  {item.timeAgo}
+                  {getSubGoalTimeText(item)}
                 </Text>
               </View>
             </View>
@@ -151,10 +167,9 @@ export function GoalTimelineCard({
         })}
 
         {/* Milestone Target Row */}
-        {targetMilestone && (
+        {!!targetMilestone && (
           <View style={styles.milestoneRow}>
             <View style={styles.milestoneColumn}>
-              {/* Star Icon Node */}
               <Text style={[styles.starIcon, { color: completed ? activeColor : inactiveColor }]}>
                 ★
               </Text>
@@ -185,6 +200,8 @@ export function GoalTimelineCard({
     </View>
   );
 }
+
+// const styles = StyleSheet.create({ ... })  // mantenha exatamente o mesmo
 
 const styles = StyleSheet.create({
   cardContainer: {
