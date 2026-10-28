@@ -9,51 +9,17 @@ BEGIN;
 -- ---------------------------------------------------------------------
 -- USUARIO
 -- ---------------------------------------------------------------------
-
-INSERT INTO usuario (id, streak_num, intervalo_atividade, ultima_atividade, ultimo_prazo, descricao, email, nome) VALUES
-
--- 1. ATIVO: ciclo de 1 dia, fez a atividade há 2h, prazo daqui a 6h
-(1,  12, INTERVAL '1 day',  NOW() - INTERVAL '2 hours',  NOW() + INTERVAL '6 hours',
-     'Apaixonada por corrida e café.', 'ana.souza@email.com', 'Ana Souza (ATIVO)'),
-
--- 2. PENDENTE (carência): prazo passou há 5h, ainda faltam 19h para congelar
-(2,   5, INTERVAL '1 day',  NOW() - INTERVAL '1 day 2 hours',  NOW() - INTERVAL '5 hours',
-     'Organizo treinos nos fins de semana.', 'bruno.lima@email.com', 'Bruno Lima (PENDENTE)'),
-
--- 3. CONGELADO: prazo + 1 dia já passou há 2 dias
-(3,  30, INTERVAL '1 day',  NOW() - INTERVAL '4 days',  NOW() - INTERVAL '3 days',
-     'Leio um livro por semana.', 'carla.mendes@email.com', 'Carla Mendes (CONGELADO)'),
-
--- 4. FALLBACK (ATIVO): sem ultimo_prazo, não há como calcular
-(4,   0, INTERVAL '2 days', NOW() - INTERVAL '8 days',  NULL,
-     'Desenvolvedor backend em transição.', 'diego.ferreira@email.com', 'Diego Ferreira (ATIVO - sem prazo)'),
-
--- 5. PENDENTE (prazo no futuro, sem atividade no ciclo): última atividade fora da janela
-(5,   8, INTERVAL '1 day',  NOW() - INTERVAL '3 days',  NOW() + INTERVAL '20 hours',
-     'Meditação todas as manhãs.', 'elisa.rocha@email.com', 'Elisa Rocha (PENDENTE)'),
-
--- 6. CONGELADO (no limite): congelou há 1h
-(6,   3, INTERVAL '1 day',  NOW() - INTERVAL '2 days',  NOW() - INTERVAL '1 day 1 hour',
-     NULL, 'felipe.alves@email.com', 'Felipe Alves (CONGELADO)'),
-
--- 7. ATIVO (ciclo semanal): fez a atividade ontem, prazo daqui a 5 dias
-(7,  21, INTERVAL '7 days', NOW() - INTERVAL '1 day',   NOW() + INTERVAL '5 days',
-     'Cultivo temperos na varanda.', 'gabriela.costa@email.com', 'Gabriela Costa (ATIVO)'),
-
--- 8. PENDENTE (nunca fez atividade): ciclo de 3 dias, prazo no futuro, sem ultima_atividade
-(8,   1, INTERVAL '3 days', NULL,                       NOW() + INTERVAL '2 days',
-     'Estudando para certificações.', 'henrique.duarte@email.com', 'Henrique Duarte (PENDENTE)'),
-
--- 9. PENDENTE (quase congelando): prazo passou há 23h, congela em 1h
-(9,  15, INTERVAL '1 day',  NOW() - INTERVAL '2 days',  NOW() - INTERVAL '23 hours',
-     'Gosto de tecnologia e jardinagem.', 'isabela.martins@email.com', 'Isabela Martins (PENDENTE)'),
-
--- 10. ATIVO (no limite da janela): atividade 1 minuto depois do início do ciclo
-(10,  7, INTERVAL '1 day',  NOW() - INTERVAL '59 minutes',  NOW() + INTERVAL '23 hours',
-     'Instrutor de yoga.', 'joao.pereira@email.com', 'João Pereira (ATIVO)');
-
--- Como os ids foram inseridos manualmente, ajusta a sequência para próximos inserts sem id
-SELECT setval(pg_get_serial_sequence('usuario', 'id'), (SELECT MAX(id) FROM usuario));
+INSERT INTO usuario (id, streak_num, intervalo_atividade, ultima_atividade, ultimo_prazo, descricao, email, nome, senha) VALUES
+(1,  12, INTERVAL '1 day', '2026-10-21 08:15:00', '2026-10-25 23:59:00', 'Apaixonada por corrida e café.',          'ana.souza@email.com',        'Ana Souza',          '$2a$12$7xckK2W3HgDhvFgtc4oVmOb58rxYc0836PAdPdGouGl9Di.IRVgoO'),
+(2,   5, INTERVAL '1 day', '2026-10-21 19:40:00', '2026-10-24 23:59:00', 'Organizo treinos nos fins de semana.',    'bruno.lima@email.com',       'Bruno Lima',         '$2a$12$QdtyIQlnExPEsKDg6ULdBeamK.FT2f0eVLAEYOrZF51v57ae/oYqa'),
+(3,  30, INTERVAL '1 day', '2026-10-22 07:05:00', '2026-10-30 23:59:00', 'Leio um livro por semana.',               'carla.mendes@email.com',     'Carla Mendes',       '$2a$12$2AMCNug677FPfXL4ulDMAuwBVbm09ChCMCmYMaOTZ6Go.Nr9NGeEe'),
+(4,   0, INTERVAL '2 days','2026-10-18 21:00:00', NULL,                  'Desenvolvedor backend em transição.',    'diego.ferreira@email.com',   'Diego Ferreira',      '$2a$12$c4G5ML6AsZH09mQw./OcF.a1KpuLW0lo1RqneLrwXw8dwMycleXky'),
+(5,   8, INTERVAL '1 day', '2026-10-21 06:30:00', '2026-10-28 23:59:00', 'Meditação todas as manhãs.',              'elisa.rocha@email.com',      'Elisa Rocha',        '$2a$12$aYQeMEt4yff//GTwo5Takukc1vuBdPLNKewosKMcTyWVDOzqG1c4.'),
+(6,   3, INTERVAL '1 day', '2026-10-20 18:20:00', '2026-10-23 23:59:00', NULL,                                      'felipe.alves@email.com',     'Felipe Alves',       '$2a$12$0Ik06mWY2.UB3gHaZtRD.uv0IqQe8hUbZrAC0GmhpJQUYJ8.dLFXa'),
+(7,  21, INTERVAL '1 day', '2026-10-22 09:10:00', '2026-11-02 23:59:00', 'Cultivo temperos na varanda.',            'gabriela.costa@email.com',   'Gabriela Costa',     '$2a$12$caxCqdW9mIvzCKJ9cNUhge6JByvyXBu7EMip6aWz8zbgl2T8fTHsO'),
+(8,   1, INTERVAL '3 days','2026-10-19 14:00:00', NULL,                  'Estudando para certificações.',          'henrique.duarte@email.com',  'Henrique Duarte',     '$2a$12$ga/inMVIpAxEJOGi/BRADuxglv7cI3MrpVM50Tqjy1YxTFNJDf8i2'),
+(9,  15, INTERVAL '1 day', '2026-10-21 22:45:00', '2026-10-27 23:59:00', 'Gosto de tecnologia e jardinagem.',       'isabela.martins@email.com',  'Isabela Martins',    '$2a$12$a6Xo4xPEhQpIzvAk.ZOUmeGFMdUtuY.fxthPNu.0WJB/l.vGbFfem'),
+(10,  7, INTERVAL '1 day', '2026-10-22 05:50:00', '2026-10-26 23:59:00', 'Instrutor de yoga.',                      'joao.pereira@email.com',     'João Pereira',       '$2a$12$Ko1Na7Ai.NjvuPOI4xXWQ.LfhZj9DbVv45YKzobrfoJmX.FtuCctS');
 
 -- ---------------------------------------------------------------------
 -- COMUNIDADE

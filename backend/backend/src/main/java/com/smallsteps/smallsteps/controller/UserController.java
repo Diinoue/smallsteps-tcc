@@ -1,12 +1,15 @@
 package com.smallsteps.smallsteps.controller;
 
 import org.springframework.http.HttpStatus;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.smallsteps.smallsteps.dto.UserDTO;
+// import com.smallsteps.smallsteps.model.User;
+// import com.smallsteps.smallsteps.entity.User;
 import com.smallsteps.smallsteps.entity.Usuario;
 import com.smallsteps.smallsteps.service.UserService;
 
@@ -24,9 +27,11 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 public class UserController {
 
     private final UserService userService;
+    private final PasswordEncoder passwordEncoder;
 
-    public UserController(UserService userService) {
+    public UserController(UserService userService, PasswordEncoder passwordEncoder) {
         this.userService = userService;
+        this.passwordEncoder = passwordEncoder;
     }
 
 @PostMapping
@@ -35,7 +40,7 @@ public Usuario create(@RequestBody UserDTO dto) {
     Usuario user = new Usuario();
     user.setNome(dto.getName());
     user.setEmail(dto.getEmail());
-    //user.setSenha(dto.getPassword());
+    user.setSenha(passwordEncoder.encode(dto.getPassword()));
 
     System.out.println(user.toString());
     return userService.createUsuario(user);
