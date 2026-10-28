@@ -6,6 +6,8 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 import org.springframework.http.HttpStatus;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
@@ -17,9 +19,10 @@ import com.smallsteps.smallsteps.entity.SubMeta;
 import com.smallsteps.smallsteps.entity.Usuario;
 import com.smallsteps.smallsteps.repository.GoalRepository;
 import com.smallsteps.smallsteps.repository.UserRepository;
+import com.smallsteps.smallsteps.security.UserAuthenticated;
 
 @Service 
-public class UserService {
+public class UserService implements UserServiceDetails{
     
     private final UserRepository userRepository;
     private final GoalRepository goalRepository;
@@ -91,4 +94,11 @@ public boolean deleteUsuario(int id) {
     return true;
 }
 
+// Método de login
+@Override
+    public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
+        return userRepository.findByEmail(email)
+                .map(UserAuthenticated::new)
+                .orElseThrow(() -> new UsernameNotFoundException("Usuário não encontrado com o e-mail: " + email));
+    }
 }

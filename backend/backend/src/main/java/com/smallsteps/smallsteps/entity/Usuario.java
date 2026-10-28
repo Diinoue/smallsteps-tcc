@@ -30,8 +30,12 @@ public class Usuario {
     @Column(name = "email", nullable = false)
     private String email;
 
+    @Column (name = "senha", nullable = false)
+    private String senha;
+
     @Column(name = "descricao")
     private String descricao;
+
 
     @Column(name = "streak_num", nullable = false)
     private int streakNum;
@@ -124,4 +128,14 @@ public class Usuario {
     public void setIntervaloAtividade(Duration intervaloAtividade) {
         this.intervaloAtividade = intervaloAtividade;
     }
+
+    public String getSenha() {
+        return senha;
+    }
+
+    public void setSenha(String senha) {
+        this.senha = senha;
+    }
+
+    
 }
