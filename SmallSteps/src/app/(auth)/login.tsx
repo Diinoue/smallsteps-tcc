@@ -1,5 +1,6 @@
 import ButtonConfirma from "@/src/components/ui/ButtonConfirma";
 import FormField from "@/src/components/ui/FormField";
+import { loginService } from "@/src/services/loginService";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Link } from "expo-router";
 import { useForm } from "react-hook-form";
@@ -13,7 +14,10 @@ const SignInSchema = z.object({
 
 type SignInSchema = z.infer<typeof SignInSchema>
 
+const JWT_KEY = "jwtToken";
+
 export default function Login () {  
+
   const {
     control,
     handleSubmit,
@@ -24,8 +28,14 @@ export default function Login () {
       },
   });
 
-  const handleLogIn = (data: SignInSchema) => {
-    console.log(data); // TODO: depois colocar a logica pra validar o login
+  const handleLogIn = async (data: SignInSchema) => {    
+    try {
+      const token = await loginService.logIn(data);          
+      await loginService.save(JWT_KEY, token);
+      loginService.getValueFor(JWT_KEY);
+    } catch (error) {
+      console.error("Falha no login:", error);
+    }
   }
 
 return (
