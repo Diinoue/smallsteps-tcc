@@ -6,70 +6,103 @@ import { StreakStatus } from '@/src/dto/DashboardResponse';
 export interface StreakCardProps {
   streakNum: number;
   ultimaAtividade: string | null;
-  ultimoPrazo: string | null; // início de um ciclo (âncora)
-  intervaloAtividade: number | null; // duração de cada ciclo, em segundos
+  ultimoPrazo: string | null; // prazo (deadline) do ciclo atual
+  // duração do ciclo: segundos (number) ou ISO-8601 (ex.: "PT24H"), dependendo do Jackson
+  intervaloAtividade: number | string | null;
 }
 
 /**
- * Calcula em qual ciclo o usuário está "agora".
- * Os ciclos se repetem a partir do ultimoPrazo, cada um com intervaloAtividade segundos.
+ * Converte "2026-07-27T10:00:00.123456" em timestamp (ms).
+ * O Postgres/Jackson podem mandar 6+ casas decimais, que o Date do React Native
+ * (Hermes) pode não entender e devolver NaN. Mantemos só 3 (milissegundos).
  */
-function getCicloAtual(
-  ultimoPrazo: string,
-  intervaloAtividade: number,
-  agora: Date = new Date(),
-) {
-  const duracao = intervaloAtividade * 1000;
-  const inicio = new Date(ultimoPrazo).getTime();
-  const indice = Math.max(0, Math.floor((agora.getTime() - inicio) / duracao));
-
-  const inicioAtual = inicio + indice * duracao;
-  return { indice, inicioAtual, fimAtual: inicioAtual + duracao, duracao };
+function parseData(valor: string): number {
+  const normalizado = valor.replace(/(\.\d{3})\d+/, '$1');
+  return new Date(normalizado).getTime();
 }
 
 /**
- * - ATIVO:     já fez a atividade no ciclo atual
- * - PENDENTE:  ainda não fez no ciclo atual, mas fez no anterior (dá tempo)
- * - CONGELADO: um ciclo inteiro passou sem atividade
+ * Converte a duração para segundos. Aceita:
+ * - número (86400 ou 86400.000000000)
+ * - string numérica ("86400.0")
+ * - ISO-8601 ("PT24H", "P1D", "PT1H30M", "PT0.5S")
+ */
+function parseDuracaoSegundos(valor: number | string | null): number | null {
+  if (valor == null) return null;
+  if (typeof valor === 'number') return Number.isFinite(valor) ? valor : null;
+
+  const num = Number(valor);
+  if (valor.trim() !== '' && Number.isFinite(num)) return num;
+
+  const m = valor.match(
+    /^P(?:(\d+)D)?(?:T(?:(\d+)H)?(?:(\d+)M)?(?:(\d+(?:\.\d+)?)S)?)?$/,
+  );
+  if (!m) return null;
+
+  const [, d = '0', h = '0', min = '0', s = '0'] = m;
+  return Number(d) * 86400 + Number(h) * 3600 + Number(min) * 60 + Number(s);
+}
+
+/** Retorna o prazo e o fim da carência (prazo + intervalo), ou null se os dados forem inválidos. */
+function getJanela(
+  ultimoPrazo: string | null,
+  intervaloAtividade: number | string | null,
+) {
+  if (!ultimoPrazo) return null;
+
+  const prazo = parseData(ultimoPrazo);
+  const segundos = parseDuracaoSegundos(intervaloAtividade);
+  if (Number.isNaN(prazo) || segundos == null || segundos <= 0) return null;
+
+  const duracao = segundos * 1000;
+  return { prazo, duracao, fim: prazo + duracao };
+}
+
+/**
+ * Linha do tempo (prazo = ultimoPrazo, intervalo = intervaloAtividade):
+ *
+ *   [prazo - intervalo ........ prazo] [prazo ........ prazo + intervalo] [prazo + intervalo ...
+ *      ciclo atual (ATIVO se fez)         pendente (carência)                  CONGELADO
+ *
+ * - ATIVO:     o prazo está no futuro E a última atividade está em [prazo - intervalo, prazo]
+ * - PENDENTE:  hoje está em [prazo, prazo + intervalo]
+ *              (ou o prazo está no futuro, mas ainda não há atividade no ciclo)
+ * - CONGELADO: hoje é maior que prazo + intervalo
  */
 export function calcularStatusStreak(
   ultimaAtividade: string | null,
   ultimoPrazo: string | null,
-  intervaloAtividade: number | null,
+  intervaloAtividade: number | string | null,
   agora: Date = new Date(),
 ): StreakStatus {
-  // Sem dados suficientes (ex.: usuário antigo): não há como calcular
-  if (!ultimoPrazo || !intervaloAtividade || intervaloAtividade <= 0) {
-    return StreakStatus.ATIVO;
+  const janela = getJanela(ultimoPrazo, intervaloAtividade);
+
+  // Sem dados válidos (ex.: usuário antigo): não há como calcular
+  if (!janela) return StreakStatus.ATIVO;
+
+  const { prazo, duracao, fim } = janela;
+  const now = agora.getTime();
+
+  // Passou do prazo + intervalo
+  if (now > fim) return StreakStatus.CONGELADO;
+
+  // Prazo já passou, mas ainda está dentro do intervalo de carência
+  if (now >= prazo) return StreakStatus.PENDENTE;
+
+  // Prazo no futuro: ATIVO se a última atividade está dentro do ciclo atual
+  if (ultimaAtividade) {
+    const ultima = parseData(ultimaAtividade);
+    if (!Number.isNaN(ultima) && ultima >= prazo - duracao && ultima <= prazo) {
+      return StreakStatus.ATIVO;
+    }
   }
 
-  // O primeiro ciclo ainda não começou
-  if (agora.getTime() < new Date(ultimoPrazo).getTime()) return StreakStatus.ATIVO;
-
-  const { indice, inicioAtual, duracao } = getCicloAtual(
-    ultimoPrazo,
-    intervaloAtividade,
-    agora,
-  );
-
-  if (!ultimaAtividade) {
-    // Nunca fez atividade: pendente no primeiro ciclo, congelado depois
-    return indice === 0 ? StreakStatus.PENDENTE : StreakStatus.CONGELADO;
-  }
-
-  const ultima = new Date(ultimaAtividade).getTime();
-
-  // Fez a atividade no ciclo atual
-  if (ultima >= inicioAtual) return StreakStatus.ATIVO;
-
-  // Fez no ciclo anterior e ainda não fez neste: dá tempo
-  if (ultima >= inicioAtual - duracao) return StreakStatus.PENDENTE;
-
-  // Passou um ciclo inteiro sem atividade
-  return StreakStatus.CONGELADO;
+  // Prazo no futuro, mas ainda sem atividade neste ciclo
+  return StreakStatus.PENDENTE;
 }
 
 function formatTimeLeft(ms: number): string {
+  if (!Number.isFinite(ms)) return 'Pending';
   if (ms <= 0) return 'Deadline passed';
 
   const totalMin = Math.floor(ms / 60000);
@@ -118,9 +151,10 @@ export function StreakCard({
       case StreakStatus.ATIVO:
         return 'Step Taken!';
       case StreakStatus.PENDENTE: {
-        if (!ultimoPrazo || !intervaloAtividade) return 'Pending';
-        const { fimAtual } = getCicloAtual(ultimoPrazo, intervaloAtividade);
-        return formatTimeLeft(fimAtual - Date.now());
+        const janela = getJanela(ultimoPrazo, intervaloAtividade);
+        if (!janela) return 'Pending';
+        // O congelamento acontece em prazo + intervalo
+        return formatTimeLeft(janela.fim - Date.now());
       }
       case StreakStatus.CONGELADO:
         return 'Frozen';
