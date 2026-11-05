@@ -1,5 +1,5 @@
 export interface CriarUserRequest {    
-    nome: String;
+    name: String;
     email: String;
     password: String;
 }

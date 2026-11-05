@@ -3,36 +3,39 @@ import { StyleSheet, Text, TouchableOpacity } from "react-native";
 type ButtonConfirmaProps = {
     onPress: () => void;
     label?: string;
+    disabled?: boolean;
 }
 
-export default function ButtonConfirma ({onPress, label = "Confirmar"}: ButtonConfirmaProps) {
+export default function ButtonConfirma ({onPress, label = "Confirmar", disabled = false}: ButtonConfirmaProps) {
     return (
-
       <TouchableOpacity
-        style={styles.confirmButton}
+        style={[styles.confirmButton, disabled && styles.disabledButton]}
         onPress={onPress}
+        disabled={disabled}
+        activeOpacity={0.8}
       >
-        <Text style={styles.confirmText}>Confirmar</Text>
+        <Text style={styles.confirmText}>{label}</Text>
       </TouchableOpacity>
-    )
+    );
 }
 
 const styles = StyleSheet.create({
-      // botão confirmar
+  // botão confirmar
   confirmButton: {
-    // marginTop: "auto",
     marginVertical: 20,
     marginBottom: 30,
-    // alignSelf: "flex-end",    
     backgroundColor: "#34c759",
     borderRadius: 30,
     paddingVertical: 12,
     paddingHorizontal: 28,
   },
-    confirmText: {
+  disabledButton: {
+    opacity: 0.6,
+  },
+  confirmText: {
     color: "#fff",
     fontWeight: "600",
     fontSize: 15,
     textAlign: "center",
   },
-})
+});

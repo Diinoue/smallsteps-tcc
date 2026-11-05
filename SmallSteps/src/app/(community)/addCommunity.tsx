@@ -54,7 +54,7 @@ export default function AddCommunity() {
   };
 
   const handleCreateCommunity = () => {
-    Alert.alert('Criar Comunidade', 'Funcionalidade para criar uma nova comunidade.');
+    router.push('/(community)/newCommunity');
   };
 
   return (

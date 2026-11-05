@@ -1,30 +1,44 @@
-import * as SecureStore from 'expo-secure-store';
+import * as SecureStore from "expo-secure-store";
 import { LoginRequest } from "../dto/LoginRequest";
 import { LoginResponse } from "../dto/LoginResponse";
 import { api } from "./api";
 
+const TOKEN_KEY = "token";
+
 export const loginService = {
-
-// guradar o token da autenticação
-    async save(key: string, value: string) {
+  // Salva o token JWT no armazenamento seguro
+  async save(key: string = TOKEN_KEY, value: string) {
     await SecureStore.setItemAsync(key, value);
-    },
+  },
 
-    // gera jwt se login ok
-    async logIn (data: LoginRequest): Promise<string> {        
-        const response = await api.post<LoginResponse>("/login", data);        
-        return response.data.token;
-    },
+  // Retorna o token armazenado
+  async getToken(key: string = TOKEN_KEY): Promise<string | null> {
+    return await SecureStore.getItemAsync(key);
+  },
 
-    // teste só pra ver se guardou mesmo
-    async getValueFor(key: string) {
-    console.log("Keyyy:" + key);
-    let result = await SecureStore.getItemAsync(key);
-    console.log("Result:" + result);
-        if (result) {
-            alert("🔐 Token JWT: 🔐 \n" + result);
-        } else {
-            alert('Sem token.');
-        }
+  // Remove o token para logout
+  async removeToken(key: string = TOKEN_KEY): Promise<void> {
+    await SecureStore.deleteItemAsync(key);
+  },
+
+  // Realiza autenticação no backend
+  async logIn(data: LoginRequest): Promise<string> {
+    const response = await api.post<LoginResponse>("/login", data);
+    return response.data.token;
+  },
+
+  // Realiza logout limpando a sessão
+  async logOut(): Promise<void> {
+    await this.removeToken();
+  },
+
+  // Método auxiliar para testes e depuração
+  async getValueFor(key: string = TOKEN_KEY) {
+    const result = await SecureStore.getItemAsync(key);
+    if (result) {
+      alert("🔐 Token JWT: 🔐 \n" + result);
+    } else {
+      alert("Sem token.");
     }
-}
+  },
+};
