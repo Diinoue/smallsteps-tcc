@@ -11,7 +11,6 @@ import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
-import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
@@ -35,16 +34,35 @@ public class SecurityConfig {
     private RSAPrivateKey priv;
 
     @Bean
-    SecurityFilterChain filterChain(HttpSecurity http) throws Exception{
+    SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+        // =========================================================================
+        // MODO DE TESTES (ATUAL): Todas as rotas liberadas sem exigência de JWT
+        // =========================================================================
         http.csrf(csrf -> csrf.disable())
-            .authorizeHttpRequests(
-                auth -> auth.requestMatchers("/login").permitAll()
+            .cors(Customizer.withDefaults())
+            .authorizeHttpRequests(auth -> auth
+                .anyRequest().permitAll()
+            );
+        return http.build();
+
+        /*
+        // =========================================================================
+        // CÓDIGO ORIGINAL (COM AUTENTICAÇÃO JWT E ROTAS PROTEGIDAS):
+        // =========================================================================
+        http.csrf(csrf -> csrf.disable())
+            .cors(Customizer.withDefaults())
+            .authorizeHttpRequests(auth -> auth
+                .requestMatchers("/login").permitAll()
                 .requestMatchers("/users").permitAll()
-                .anyRequest().authenticated())
-                .httpBasic(Customizer.withDefaults())
-                .oauth2ResourceServer(
-                    conf -> conf.jwt(Customizer.withDefaults()));
-            return http.build();
+                .requestMatchers("/screen", "/screen/**").permitAll()
+                .requestMatchers("/community", "/community/**").permitAll()
+                .requestMatchers("/participam", "/participam/**").permitAll()
+                .anyRequest().authenticated()
+            )
+            .httpBasic(Customizer.withDefaults())
+            .oauth2ResourceServer(conf -> conf.jwt(Customizer.withDefaults()));
+        return http.build();
+        */
     }
 
     @Bean

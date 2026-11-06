@@ -1,6 +1,7 @@
 package com.smallsteps.smallsteps.entity;
 
 import java.time.LocalDateTime;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -26,10 +27,12 @@ public class Participam {
     @Column(name = "id_comunidade")
     private int idComunidade;
 
+    @JsonIgnore
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "id_usuario", insertable = false, updatable = false)
     private Usuario usuario;
 
+    @JsonIgnore
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "id_comunidade", insertable = false, updatable = false)
     private Comunidade comunidade;

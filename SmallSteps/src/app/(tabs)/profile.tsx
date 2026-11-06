@@ -1,7 +1,8 @@
-import React from 'react';
-import { StyleSheet, View, Text } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { useThemeColor } from '@/hooks/use-theme-color';
+import { Link } from 'expo-router';
+import React from 'react';
+import { StyleSheet, Text, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function ProfileScreen() {
   const backgroundColor = useThemeColor({}, 'background');
@@ -14,6 +15,11 @@ export default function ProfileScreen() {
         <Text style={[styles.subtitle, { color: textColor }]}>
           Seu perfil, conquistas e configurações da conta aparecerão aqui.
         </Text>
+
+        {/* LINK DE TESTE / AUTENTICAÇÃO */}
+        <Link href="/login" style={styles.authLink}>
+          IR PARA PAGINA LOGIN DIOGO TESTE JOINHA
+        </Link>
       </View>
     </SafeAreaView>
   );
@@ -39,5 +45,12 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     opacity: 0.7,
     lineHeight: 22,
+  },
+  authLink: {
+    marginTop: 24,
+    fontSize: 15,
+    fontWeight: '600',
+    color: '#34C759',
+    textDecorationLine: 'underline',
   },
 });

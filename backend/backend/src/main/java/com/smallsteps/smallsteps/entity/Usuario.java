@@ -8,8 +8,6 @@ import org.hibernate.type.SqlTypes;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -30,12 +28,11 @@ public class Usuario {
     @Column(name = "email", nullable = false)
     private String email;
 
-    @Column (name = "senha", nullable = false)
+    @Column(name = "senha")
     private String senha;
 
     @Column(name = "descricao")
     private String descricao;
-
 
     @Column(name = "streak_num", nullable = false)
     private int streakNum;
@@ -136,6 +133,4 @@ public class Usuario {
     public void setSenha(String senha) {
         this.senha = senha;
     }
-
-    
 }

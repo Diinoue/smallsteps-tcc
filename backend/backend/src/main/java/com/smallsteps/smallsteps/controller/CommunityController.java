@@ -1,5 +1,8 @@
 package com.smallsteps.smallsteps.controller;
 
+import java.util.List;
+
+import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -8,36 +11,48 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
-// POSTS, COMENTARIOS, COMUNIDADES, EVENTOS, JOIN REQUESTS
+import com.smallsteps.smallsteps.dto.ComunidadeDTO;
+import com.smallsteps.smallsteps.entity.Comunidade;
+import com.smallsteps.smallsteps.service.CommunityService;
 
 @CrossOrigin
 @RestController
 @RequestMapping("/community")
 public class CommunityController {
 
-@PostMapping("")
-public String postMethodName(@RequestBody String entity) {
-    
-    return entity;
-}
+    private final CommunityService communityService;
 
-@PutMapping("/{id}")
-public String putMethodName(@PathVariable String id, @RequestBody String entity) {
-    
-    return entity;
-}
+    public CommunityController(CommunityService communityService) {
+        this.communityService = communityService;
+    }
 
-@GetMapping("")
-public String getMethodName(@RequestParam String param) {
-    return new String();
-}
+    @GetMapping
+    public List<Comunidade> getAll() {
+        return communityService.findAll();
+    }
 
-@DeleteMapping("")
-public String deleteMethodName(@PathVariable String param) {
-    return new String();
-}
+    @GetMapping("/{id}")
+    public Comunidade getById(@PathVariable int id) {
+        return communityService.findById(id);
+    }
 
+    @PostMapping
+    @ResponseStatus(HttpStatus.CREATED)
+    public Comunidade create(@RequestBody ComunidadeDTO dto) {
+        return communityService.create(dto);
+    }
+
+    @PutMapping("/{id}")
+    public Comunidade update(@PathVariable int id, @RequestBody ComunidadeDTO dto) {
+        return communityService.update(id, dto);
+    }
+
+    @DeleteMapping("/{id}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void delete(@PathVariable int id) {
+        communityService.delete(id);
+    }
 }

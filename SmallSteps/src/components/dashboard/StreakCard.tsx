@@ -17,7 +17,7 @@ export interface StreakCardProps {
  * (Hermes) pode não entender e devolver NaN. Mantemos só 3 (milissegundos).
  */
 function parseData(valor: string): number {
-  const normalizado = valor.replace(/(\.\d{3})\d+/, '$1');
+  const normalizado = valor.replace(' ', 'T').replace(/(\.\d{3})\d+/, '$1');
   return new Date(normalizado).getTime();
 }
 
@@ -101,20 +101,41 @@ export function calcularStatusStreak(
   return StreakStatus.PENDENTE;
 }
 
-function formatTimeLeft(ms: number): string {
-  if (!Number.isFinite(ms)) return 'Pending';
-  if (ms <= 0) return 'Deadline passed';
+/**
+ * Retorna o tempo que falta a partir de hoje até o dia do ultimo_prazo.
+ * Aceita a string da data (ex: "2026-10-26 23:59:00") ou milissegundos restantes.
+ */
+export function formatTimeLeft(
+  prazoOrMs: string | number | null,
+  agora: Date = new Date(),
+): string {
+  if (prazoOrMs == null) return 'Pending';
 
-  const totalMin = Math.floor(ms / 60000);
+  let diffMs: number;
+  if (typeof prazoOrMs === 'number') {
+    diffMs = prazoOrMs;
+  } else {
+    const prazo = parseData(prazoOrMs);
+    if (!Number.isFinite(prazo) || Number.isNaN(prazo)) return 'Pending';
+    diffMs = prazo - agora.getTime();
+  }
+
+  if (!Number.isFinite(diffMs)) return 'Pending';
+  if (diffMs <= 0) return 'Deadline passed';
+
+  const totalMin = Math.floor(diffMs / 60000);
   const hours = Math.floor(totalMin / 60);
   const minutes = totalMin % 60;
 
   if (hours >= 24) {
     const days = Math.floor(hours / 24);
-    return `${days} ${days === 1 ? 'day' : 'days'} until freeze`;
+    const remHours = hours % 24;
+    const dayLabel = days === 1 ? 'day' : 'days';
+    const hourLabel = remHours === 1 ? 'hour' : 'hours';
+    return `${days} ${dayLabel} ${remHours} ${hourLabel} left`;
   }
-  if (hours > 0) return `${hours}h ${minutes}min until freeze`;
-  return `${minutes} min until freeze`;
+  if (hours > 0) return `${hours}h ${minutes}min left`;
+  return `${minutes} min left`;
 }
 
 export function StreakCard({
@@ -151,10 +172,7 @@ export function StreakCard({
       case StreakStatus.ATIVO:
         return 'Step Taken!';
       case StreakStatus.PENDENTE: {
-        const janela = getJanela(ultimoPrazo, intervaloAtividade);
-        if (!janela) return 'Pending';
-        // O congelamento acontece em prazo + intervalo
-        return formatTimeLeft(janela.fim - Date.now());
+        return formatTimeLeft(ultimoPrazo);
       }
       case StreakStatus.CONGELADO:
         return 'Frozen';
