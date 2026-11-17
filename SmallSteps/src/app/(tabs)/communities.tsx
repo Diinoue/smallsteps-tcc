@@ -16,6 +16,8 @@ import {
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { loginService } from '@/src/services/loginService';
+import { Button } from '@/src/components/ui/Button';
 
 const ACCENT_GREEN = '#34C759';
 
@@ -95,6 +97,17 @@ export default function CommunitiesScreen() {
       </View>
     </TouchableOpacity>
   );
+
+// TEMPORÁRIO: exibe o JWT salvo no SecureStore
+  const handlePrintJwt = async () => {
+    await loginService.getValueFor();
+  };
+
+  // TEMPORÁRIO: remove o JWT do SecureStore
+  const handleClearJwt = async () => {
+    await loginService.removeToken();
+    Alert.alert('JWT removido', 'O token foi apagado do armazenamento seguro.');
+  };
 
   return (
     <SafeAreaView edges={['top', 'left', 'right']} style={[styles.container, { backgroundColor }]}>
@@ -241,5 +254,10 @@ const styles = StyleSheet.create({
   },
   emptyText: {
     fontSize: 16,
+  },
+   debugButtons: {
+    marginTop: 24,
+    gap: 12,
+    width: '100%',
   },
 });

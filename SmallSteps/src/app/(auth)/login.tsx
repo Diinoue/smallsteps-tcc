@@ -2,101 +2,97 @@ import ButtonConfirma from "@/src/components/ui/ButtonConfirma";
 import FormField from "@/src/components/ui/FormField";
 import { loginService } from "@/src/services/loginService";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Link } from "expo-router";
+import { Link, useRouter } from "expo-router";
+import React, { useState } from "react";
 import { useForm } from "react-hook-form";
-import { StyleSheet, Text, View } from "react-native";
+import { Alert, Platform, StyleSheet, Text, View } from "react-native";
 import { z } from "zod";
 
 const SignInSchema = z.object({
-  email: z.email("Email invalido."),
-  password: z.string().min(8, "Senha deve ter no mínimo 8 caracteres.")
-})
+  email: z.email({ error: "Email inválido." }),
+  password: z.string().min(8, "Senha deve ter no mínimo 8 caracteres."),
+});
 
-type SignInSchema = z.infer<typeof SignInSchema>
+type SignInSchema = z.infer<typeof SignInSchema>;
 
-const JWT_KEY = "jwtToken";
+const JWT_KEY = "token";
 
-export default function Login () {  
+export default function Login() {
+  const router = useRouter();
+  const [loading, setLoading] = useState(false);
 
   const {
     control,
     handleSubmit,
     formState: { errors },
   } = useForm<SignInSchema>({
-      resolver: zodResolver(SignInSchema),
-      defaultValues: { email: "", password: "",
-      },
+    resolver: zodResolver(SignInSchema),
+    defaultValues: {
+      email: "",
+      password: "",
+    },
   });
 
-  const handleLogIn = async (data: SignInSchema) => {    
+  const handleLogIn = async (data: SignInSchema) => {
     try {
-      const token = await loginService.logIn(data);          
+      setLoading(true);
+      const token = await loginService.logIn(data);
       await loginService.save(JWT_KEY, token);
-      loginService.getValueFor(JWT_KEY);
+      router.replace("/(tabs)");
     } catch (error) {
       console.error("Falha no login:", error);
+      const msg = "E-mail ou senha incorretos. Verifique suas credenciais.";
+      if (Platform.OS === "web") {
+        alert(msg);
+      } else {
+        Alert.alert("Falha no login", msg);
+      }
+    } finally {
+      setLoading(false);
     }
-  }
+  };
 
-return (
+  return (
     <View style={styles.container}>
       <View style={styles.headerContainer}>
         <Text style={styles.header}>Login</Text>
       </View>
-     
+
       <View style={styles.divider} />
 
       <View style={styles.fields}>
-        
-      {/* Diogo - 27/09/2026 - Comentado para trocar pela componentização dos campos */}
-        {/* <Text style={styles.label}>E-mail:</Text>
-        <Controller
+        <FormField
           control={control}
           name="email"
-          render={({ field: { onChange, onBlur, value } }) => (
-            <TextInput
-              style={styles.field}
-              placeholder="endereco@email.com"
-              autoCapitalize="none"
-              keyboardType="email-address"
-              onChangeText={onChange}
-              onBlur={onBlur}
-              value={value}
-            />
-          )}
+          label="E-mail"
+          error={errors.email?.message}
+          placeholder="endereco@email.com"
+          autoCapitalize="none"
+          keyboardType="email-address"
         />
-        {errors.email && (
-          <Text style={styles.warning}>{errors.email.message}</Text>
-        )} */}
 
-          <FormField
-            control={control}
-            name="email"
-            label="E-mail"
-            error={errors.email?.message}
-            placeholder="endereco@email.com"
-            autoCapitalize="none"
-            keyboardType="email-address"
-          />
-
-
-          <FormField
-            control={control}
-            name="password"
-            label="Senha:"
-            error={errors.password?.message}
-            placeholder="A sua senha aqui"
-            secureTextEntry
-          />
+        <FormField
+          control={control}
+          name="password"
+          label="Senha:"
+          error={errors.password?.message}
+          placeholder="A sua senha aqui"
+          secureTextEntry
+        />
       </View>
 
       <View style={styles.signUpContainer}>
-        <Text style={styles.signUpText}>Ainda não possui uma conta?</Text>        
-        <Link href="/cadastro" push style={styles.signUpTextUnd}>Cadastre-se!</Link>        
-        <Link href="/(community)/addCommunity" push style={styles.signUpTextUnd}>Cadastre-se!</Link>
+        <Text style={styles.signUpText}>Ainda não possui uma conta?</Text>
+        <Link href="/cadastro" style={styles.signUpTextUnd}>
+          Cadastre-se!
+        </Link>
       </View>
 
-      <ButtonConfirma onPress={handleSubmit(handleLogIn)}/>
+      <ButtonConfirma
+        onPress={handleSubmit(handleLogIn)}
+        disabled={loading}
+        label={loading ? "Entrando..." : "Confirmar"}
+      />
     </View>
   );
 }
@@ -111,7 +107,7 @@ const styles = StyleSheet.create({
   // header
   headerContainer: {
     alignItems: "center",
-    marginBottom: 16,    
+    marginBottom: 16,
   },
   header: {
     color: "#000",
@@ -129,55 +125,19 @@ const styles = StyleSheet.create({
 
   // campos
   fields: {},
-  label: {
-    fontSize: 15,
-    fontWeight: "600",
-    marginBottom: 6,
-  },
-  field: {
-    borderWidth: 1,
-    borderRadius: 6,
-    borderColor: "#c5c5c5",
-    paddingVertical: 10,
-    paddingHorizontal: 12,
-    marginBottom: 16,
-  },
-  warning: {
-    fontSize: 13,
-    color: "#e63946",
-    marginTop: -12,
+  signUpContainer: {
+    flexDirection: "row",
+    gap: 4,
     marginBottom: 12,
   },
-
-  // botão confirmar
-  confirmButton: {
-    // marginTop: "auto",
-    marginVertical: 40,
-    marginBottom: 30,
-    // alignSelf: "flex-end",    
-    backgroundColor: "#34c759",
-    borderRadius: 30,
-    paddingVertical: 12,
-    paddingHorizontal: 28,
+  signUpText: {
+    color: "#737373",
+    fontSize: 13,
   },
-  confirmText: {
-    color: "#fff",
+  signUpTextUnd: {
+    color: "#1f2937",
+    fontSize: 13,
     fontWeight: "600",
-    fontSize: 15,
-    textAlign: "center",
+    textDecorationLine: "underline",
   },
-  signUpContainer: {
-  flexDirection: "row",
-  gap: 4,
-  marginBottom: 12,
-},
-signUpText: {
-  color: "#c0c0c0",
-  fontSize: 13,
-},
-signUpTextUnd: {
-  color: "#494949",
-  fontSize: 13,
-  textDecorationLine: 'underline'
-},
 });

@@ -1,6 +1,7 @@
 import axios from 'axios';
 import Constants from 'expo-constants';
 import { Platform } from 'react-native';
+import * as SecureStore from 'expo-secure-store';
 
 const getBaseUrl = (): string => {
   if(process.env.EXPO_PUBLIC_API_URL) {
@@ -25,15 +26,22 @@ export const api = axios.create({
 });
 
 // Interceptor para injetar o JWT nas requisições
-// api.interceptors.request.use(async (config) => {
-//   const token = await SecureStore.getItemAsync('token');
-//   if (token && config.headers) {
-//     config.headers.Authorization = `Bearer ${token}`;
-//   }
-//   return config;
-// });
+api.interceptors.request.use(async (config) => {
+  // rotas que nao precisa enviar rotas
+  const rotasPublicas = ['/users', '/login'];
+  const ehRotaPublica = rotasPublicas.some(rota => config.url?.includes(rota));
 
-// Interceptor para tratar 401 do Spring Security
+  if (!ehRotaPublica) {
+    const token = await SecureStore.getItemAsync('token');
+    if (token && config.headers) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  }
+  
+  return config;
+});
+
+// // Interceptor para tratar 401 do Spring Security
 // api.interceptors.response.use(
 //   (response) => response,
 //   (error) => {

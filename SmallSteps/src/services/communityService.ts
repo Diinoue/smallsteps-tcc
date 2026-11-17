@@ -17,6 +17,15 @@ export interface ParticipamResponse {
   dtInicio: string;
 }
 
+
+export interface CriarCommunityRequest {
+  nome: string;
+  descricao?: string;
+  privado: boolean;
+  foto?: string | null;
+  tags?: string[];
+}
+
 const DEFAULT_COMMUNITIES: CommunityItem[] = [
   { id: 1, nome: 'Piano Barigui', privado: false, foto: null },
   { id: 2, nome: 'Grupo #1 musica', privado: false, foto: null },
@@ -78,3 +87,8 @@ export const communityService = {
     }
   },
 };
+
+export async function criarComunidade(dados: CriarCommunityRequest): Promise<any> {
+  const { data } = await api.post("/community", dados);
+  return data;
+}
