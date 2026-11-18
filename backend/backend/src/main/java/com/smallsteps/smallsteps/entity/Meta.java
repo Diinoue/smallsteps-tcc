@@ -9,7 +9,12 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToMany;
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Table;
+
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(name = "meta")
@@ -38,6 +43,12 @@ public class Meta {
 
     @Column(name = "dt_fim")
     private LocalDateTime dtFim;
+
+    @Column(name = "milestone", nullable = false)
+    private String milestone;
+
+    @OneToMany(mappedBy = "meta", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    private List<SubMeta> subMetas = new ArrayList<>();
 
     public Meta() {}
 
@@ -109,5 +120,21 @@ public class Meta {
 
     public void setDtFim(LocalDateTime dtFim) {
         this.dtFim = dtFim;
+    }
+
+    public String getMilestone() {
+        return milestone;
+    }
+
+    public void setMilestone(String milestone) {
+        this.milestone = milestone;
+    }
+
+    public List<SubMeta> getSubMetas() {
+        return subMetas;
+    }
+
+    public void setSubMetas(List<SubMeta> subMetas) {
+        this.subMetas = subMetas;
     }
 }

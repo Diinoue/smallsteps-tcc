@@ -1,27 +1,38 @@
 import { Tabs } from 'expo-router';
 import React from 'react';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 
-import { Colors } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { HapticTab } from '@/src/components/haptic-tab';
-import { IconSymbol } from '@/src/components/ui/icon-symbol';
 
 export default function TabLayout() {
   const colorScheme = useColorScheme();
-  const activeColor = Colors[colorScheme ?? 'light'].tint;
+  const isDark = colorScheme === 'dark';
   const insets = useSafeAreaInsets();
+
+  const activeGreen = '#34C759';
+  const inactiveColor = isDark ? '#64748B' : '#94A3B8';
+  const tabBgColor = isDark ? '#111827' : '#FFFFFF';
+  const tabBorderColor = isDark ? '#1E293B' : '#E5E7EB';
 
   return (
     <Tabs
       screenOptions={{
-        tabBarActiveTintColor: activeColor,
+        tabBarActiveTintColor: activeGreen,
+        tabBarInactiveTintColor: inactiveColor,
+        tabBarShowLabel: false,
         headerShown: false,
         tabBarButton: HapticTab,
+        tabBarHideOnKeyboard: true,
         tabBarStyle: {
-          height: 60 + insets.bottom,
-          paddingBottom: insets.bottom > 0 ? insets.bottom : 8,
-          paddingTop: 6,
+          backgroundColor: tabBgColor,
+          borderTopColor: tabBorderColor,
+          borderTopWidth: 1,
+          height: 56 + insets.bottom,
+          paddingBottom: insets.bottom > 0 ? insets.bottom : 6,
+          paddingTop: 8,
+          elevation: 0,
         },
       }}>
       {/* 1. Left Tab: Comunidades */}
@@ -29,7 +40,7 @@ export default function TabLayout() {
         name="communities"
         options={{
           title: 'Comunidades',
-          tabBarIcon: ({ color }) => <IconSymbol size={26} name="person.3.fill" color={color} />,
+          tabBarIcon: ({ color }) => <MaterialIcons size={28} name="groups" color={color} />,
         }}
       />
 
@@ -38,7 +49,7 @@ export default function TabLayout() {
         name="index"
         options={{
           title: 'Dashboard',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="bolt.fill" color={color} />,
+          tabBarIcon: ({ color }) => <MaterialIcons size={32} name="bolt" color={color} />,
         }}
       />
 
@@ -47,7 +58,7 @@ export default function TabLayout() {
         name="profile"
         options={{
           title: 'Perfil',
-          tabBarIcon: ({ color }) => <IconSymbol size={26} name="person.fill" color={color} />,
+          tabBarIcon: ({ color }) => <MaterialIcons size={28} name="person" color={color} />,
         }}
       />
 

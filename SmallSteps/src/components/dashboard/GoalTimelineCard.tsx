@@ -22,9 +22,17 @@ export interface GoalTimelineCardProps {
 
 // ---------- Helpers ----------
 
-const formatDate = (iso: string) => new Date(iso).toLocaleDateString('pt-BR');
+const formatDate = (iso: string) => {
+  if (!iso) return '—';
+  try {
+    return new Date(iso).toLocaleDateString('pt-BR');
+  } catch {
+    return iso;
+  }
+};
 
 const formatTimeAgo = (iso: string): string => {
+  if (!iso) return '';
   const diffMs = Date.now() - new Date(iso).getTime();
   if (Number.isNaN(diffMs) || diffMs < 0) return formatDate(iso);
 
@@ -41,8 +49,12 @@ const formatTimeAgo = (iso: string): string => {
   return formatDate(iso);
 };
 
-const getSubGoalTimeText = (sub: SubGoalDTOResponse): string =>
-  sub.concluido ? formatTimeAgo(sub.dtFim) : `Prazo: ${formatDate(sub.dtFim)}`;
+const getSubGoalTimeText = (sub: SubGoalDTOResponse): string => {
+  if (sub.concluido) {
+    return sub.dtFim ? `Concluída ${formatTimeAgo(sub.dtFim)}` : 'Concluída';
+  }
+  return sub.dtFim ? `Prazo: ${formatDate(sub.dtFim)}` : 'Status: Pendente';
+};
 
 // ---------- Componente ----------
 
@@ -62,11 +74,7 @@ export function GoalTimelineCard({
     [meta.subMetas]
   );
 
-  // Próxima subtarefa pendente (ou a última, se tudo estiver concluído)
-  const targetMilestone = useMemo(() => {
-    const nextPending = subGoals.find((s) => !s.concluido);
-    return nextPending?.titulo ?? subGoals[subGoals.length - 1]?.titulo ?? '';
-  }, [subGoals]);
+  const hasMilestone = !!meta.milestone?.trim();
 
   const activeColor = useThemeColor({}, 'streakActive');
   const inactiveColor = '#9CA3AF';
@@ -100,7 +108,7 @@ export function GoalTimelineCard({
 
   return (
     <View style={[styles.cardContainer, { backgroundColor: surfaceColor }]}>
-      {/* Options Dropdown Modal (sem alterações) */}
+      {/* Options Dropdown Modal */}
       <Modal
         visible={menuVisible}
         transparent={true}
@@ -142,16 +150,32 @@ export function GoalTimelineCard({
 
       {/* Timeline List */}
       <View style={styles.timelineContainer}>
-        {subGoals.map((item) => {
-          const nodeColor = item.concluido ? activeColor : inactiveColor;
+        {subGoals.map((item, index) => {
+          const isCompleted = item.concluido;
+          const nodeColor = isCompleted ? activeColor : inactiveColor;
+          const hasLineBelow = index < subGoals.length - 1 || hasMilestone;
 
           return (
             <View key={item.id} style={styles.timelineItemRow}>
               <View style={styles.timelineColumn}>
-                <View style={[styles.nodeCircle, { backgroundColor: nodeColor }]}>
-                  <IconSymbol name="eye.fill" size={10} color="#FFF" />
+                <View
+                  style={[
+                    styles.nodeCircle,
+                    {
+                      borderColor: nodeColor,
+                      backgroundColor: isCompleted ? activeColor : surfaceColor,
+                    },
+                  ]}
+                >
+                  {isCompleted ? (
+                    <IconSymbol name="checkmark" size={9} color="#FFF" />
+                  ) : (
+                    <IconSymbol name="eye.fill" size={9} color={inactiveColor} />
+                  )}
                 </View>
-                <View style={[styles.verticalLine, { backgroundColor: nodeColor }]} />
+                {hasLineBelow && (
+                  <View style={[styles.verticalLine, { backgroundColor: nodeColor }]} />
+                )}
               </View>
 
               <View style={styles.subGoalContent}>
@@ -167,23 +191,41 @@ export function GoalTimelineCard({
         })}
 
         {/* Milestone Target Row */}
-        {!!targetMilestone && (
+        {hasMilestone && (
           <View style={styles.milestoneRow}>
-            <View style={styles.milestoneColumn}>
-              <Text style={[styles.starIcon, { color: completed ? activeColor : inactiveColor }]}>
-                ★
-              </Text>
+            <View style={styles.timelineColumn}>
+              <View
+                style={[
+                  styles.milestoneNode,
+                  {
+                    borderColor: completed ? activeColor : inactiveColor,
+                    backgroundColor: completed ? activeColor : surfaceColor,
+                  },
+                ]}
+              >
+                <IconSymbol
+                  name="star.fill"
+                  size={12}
+                  color={completed ? '#FFF' : inactiveColor}
+                />
+              </View>
             </View>
 
             <View style={styles.milestoneContentRow}>
-              <Text
-                style={[
-                  styles.milestoneText,
-                  { color: completed ? activeColor : textMuted },
-                ]}
-              >
-                {targetMilestone}
-              </Text>
+              <View style={styles.milestoneTextContainer}>
+                <Text style={[styles.milestoneLabel, { color: completed ? activeColor : inactiveColor }]}>
+                  OBJETIVO FINAL
+                </Text>
+                <Text
+                  style={[
+                    styles.milestoneText,
+                    { color: completed ? activeColor : inactiveColor },
+                  ]}
+                  numberOfLines={2}
+                >
+                  {meta.milestone}
+                </Text>
+              </View>
 
               <Button
                 title="view goal"
@@ -196,12 +238,24 @@ export function GoalTimelineCard({
             </View>
           </View>
         )}
+
+        {/* Fallback button if goal has no milestone */}
+        {!hasMilestone && (
+          <View style={styles.noMilestoneViewGoalRow}>
+            <Button
+              title="view goal"
+              variant="pill"
+              customColor="#6B7280"
+              size="small"
+              onPress={handleView}
+              style={styles.editBtn}
+            />
+          </View>
+        )}
       </View>
     </View>
   );
 }
-
-// const styles = StyleSheet.create({ ... })  // mantenha exatamente o mesmo
 
 const styles = StyleSheet.create({
   cardContainer: {
@@ -269,30 +323,39 @@ const styles = StyleSheet.create({
   timelineItemRow: {
     flexDirection: 'row',
     alignItems: 'flex-start',
-    minHeight: 56,
   },
   timelineColumn: {
     alignItems: 'center',
     width: 24,
     marginRight: 12,
+    alignSelf: 'stretch',
   },
   nodeCircle: {
     width: 20,
     height: 20,
     borderRadius: 10,
+    borderWidth: 2,
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 2,
+  },
+  milestoneNode: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    borderWidth: 2,
     justifyContent: 'center',
     alignItems: 'center',
     zIndex: 2,
   },
   verticalLine: {
-    width: 3,
+    width: 2,
     flex: 1,
-    marginTop: -2,
-    marginBottom: -2,
+    minHeight: 28,
   },
   subGoalContent: {
     flex: 1,
-    paddingBottom: 14,
+    paddingBottom: 16,
   },
   subGoalTitle: {
     fontSize: 16,
@@ -305,27 +368,35 @@ const styles = StyleSheet.create({
   },
   milestoneRow: {
     flexDirection: 'row',
-    alignItems: 'center',
-    marginTop: 4,
-  },
-  milestoneColumn: {
-    width: 24,
-    alignItems: 'center',
-    marginRight: 12,
-  },
-  starIcon: {
-    fontSize: 20,
+    alignItems: 'flex-start',
+    marginTop: 2,
   },
   milestoneContentRow: {
     flex: 1,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+    paddingBottom: 4,
+  },
+  milestoneTextContainer: {
+    flex: 1,
+    marginRight: 10,
+  },
+  milestoneLabel: {
+    fontSize: 10,
+    fontWeight: '800',
+    letterSpacing: 0.5,
+    marginBottom: 2,
   },
   milestoneText: {
-    fontSize: 16,
-    fontWeight: '600',
-    flex: 1,
+    fontSize: 15,
+    fontWeight: '700',
+    lineHeight: 20,
+  },
+  noMilestoneViewGoalRow: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    marginTop: 8,
   },
   editBtn: {
     paddingHorizontal: 14,

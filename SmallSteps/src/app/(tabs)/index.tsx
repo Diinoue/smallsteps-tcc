@@ -6,9 +6,10 @@ import { Button } from '@/src/components/ui/Button';
 import { DashboardDTOResponse } from '@/src/dto/DashboardResponse';
 import { screenService } from '@/src/services';
 import { useFocusEffect, useRouter } from 'expo-router';
-import React, { useState } from 'react';
+import React, { useCallback, useRef, useState } from 'react';
 import {
   ActivityIndicator,
+  RefreshControl,
   ScrollView,
   StatusBar,
   StyleSheet,
@@ -21,29 +22,47 @@ export default function DashboardScreen() {
   const router = useRouter();
   const [dashboardData, setDashboardData] = useState<DashboardDTOResponse | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const isFetchingRef = useRef(false);
 
   const backgroundColor = useThemeColor({}, 'background');
   const textColor = useThemeColor({}, 'text');
   const colorScheme = useColorScheme();
   const activeColor = useThemeColor({}, 'streakActive');
 
-  useFocusEffect(
-    React.useCallback(() => {
-      loadDashboardData();
-    }, [])
-  );
+  const loadDashboardData = useCallback(async (force = false) => {
+    if (isFetchingRef.current) return;
 
-  const loadDashboardData = async () => {
+    if (!force && dashboardData !== null) {
+      setIsLoading(false);
+      return;
+    }
+
+    isFetchingRef.current = true;
+    if (!dashboardData) setIsLoading(true);
+
     try {
       const n = Math.floor(Math.random() * 10) + 1;
-      setIsLoading(true);
       const response = await screenService.consultarDashboard(n);
       setDashboardData(response);
     } catch (error) {
       console.error('Error loading dashboard data:', error);
     } finally {
       setIsLoading(false);
+      setIsRefreshing(false);
+      isFetchingRef.current = false;
     }
+  }, [dashboardData]);
+
+  useFocusEffect(
+    useCallback(() => {
+      loadDashboardData(false);
+    }, [loadDashboardData])
+  );
+
+  const handleRefresh = () => {
+    setIsRefreshing(true);
+    loadDashboardData(true);
   };
 
   const handleAddGoal = () => {
@@ -74,6 +93,14 @@ export default function DashboardScreen() {
         style={styles.scrollView}
         contentContainerStyle={styles.contentContainer}
         showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl
+            refreshing={isRefreshing}
+            onRefresh={handleRefresh}
+            tintColor={activeColor}
+            colors={[activeColor]}
+          />
+        }
       >
         {/* Screen Header */}
         <View style={styles.header}>

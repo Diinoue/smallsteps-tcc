@@ -20,12 +20,12 @@ export default function RootLayout() {
 
    useEffect(() => {
     async function verificarAutenticacao() {
-      const token = await loginService.getToken();
-      const inAuthGroup = segments[0] === '(auth)';
-      // Se não tem token e não está na tela de login/cadastro, manda pro login
-      if (!token && !inAuthGroup) {        
-        router.replace('/login');
-      }
+      // const token = await loginService.getToken();
+      // const inAuthGroup = segments[0] === '(auth)';
+      // // Se não tem token e não está na tela de login/cadastro, manda pro login
+      // if (!token && !inAuthGroup) {        
+      //   router.replace('/login');
+      // }
       setLoading(false);
     }
 

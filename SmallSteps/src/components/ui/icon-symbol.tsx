@@ -28,6 +28,12 @@ const MAPPING = {
   'checkmark': 'check',
   'trash.fill': 'delete',
   'arrow.left': 'arrow-back',
+  'magnifyingglass': 'search',
+  'location.fill': 'location-on',
+  'gearshape.fill': 'settings',
+  'bubble.right': 'chat-bubble-outline',
+  'play.fill': 'play-arrow',
+  'doc.badge.plus': 'post-add',
 } as IconMapping;
 
 /**

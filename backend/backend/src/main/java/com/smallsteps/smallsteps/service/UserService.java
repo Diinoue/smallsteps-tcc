@@ -9,6 +9,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 import com.smallsteps.smallsteps.dto.DashboardDTOResponse;
@@ -37,6 +38,7 @@ public class UserService implements UserServiceDetails{
         return lista;
     }
 
+    @Transactional(readOnly = true)
     public DashboardDTOResponse getDashboard(int idUsuario) {
     Usuario usuario = userRepository.findById(idUsuario)
             .orElseThrow(() -> new ResponseStatusException(
@@ -59,6 +61,7 @@ public class UserService implements UserServiceDetails{
         GoalDTOResponse goalDto = new GoalDTOResponse();
         goalDto.id = meta.getId();
         goalDto.title = meta.getTitulo();
+        goalDto.milestone = meta.getMilestone();
         goalDto.concluido = meta.isConcluido();
         goalDto.dtInicio = meta.getDtInicio();
         goalDto.dtFim = meta.getDtFim();
@@ -81,6 +84,7 @@ public class UserService implements UserServiceDetails{
 }
 
 // so esse funciona
+@Transactional
 public Usuario createUsuario(Usuario user) { return userRepository.save(user); }
 
 public Usuario updateUsuario(Usuario user) {

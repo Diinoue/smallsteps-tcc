@@ -5,6 +5,7 @@ import java.util.List;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 import com.smallsteps.smallsteps.dto.ComunidadeDTO;
@@ -20,15 +21,18 @@ public class CommunityService {
         this.communityRepository = communityRepository;
     }
 
+    @Transactional(readOnly = true)
     public List<Comunidade> findAll() {
         return communityRepository.findAll();
     }
 
+    @Transactional(readOnly = true)
     public Comunidade findById(int id) {
         return communityRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Comunidade não encontrada"));
     }
 
+    @Transactional
     public Comunidade create(ComunidadeDTO dto) {
         Comunidade comunidade = new Comunidade();
         comunidade.setNome(dto.getNome());
@@ -39,6 +43,7 @@ public class CommunityService {
         return communityRepository.save(comunidade);
     }
 
+    @Transactional
     public Comunidade update(int id, ComunidadeDTO dto) {
         Comunidade comunidade = findById(id);
 
@@ -53,6 +58,7 @@ public class CommunityService {
         return communityRepository.save(comunidade);
     }
 
+    @Transactional
     public void delete(int id) {
         if (!communityRepository.existsById(id)) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Comunidade não encontrada");

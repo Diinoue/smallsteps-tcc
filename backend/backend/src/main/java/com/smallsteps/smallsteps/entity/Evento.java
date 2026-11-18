@@ -42,6 +42,9 @@ public class Evento {
     @Column(name = "dia_fim", nullable = false)
     private LocalDate diaFim;
 
+    @Column(name = "foto", length = 500)
+    private String foto;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "id_usuario", nullable = false)
     private Usuario usuario;
@@ -151,5 +154,13 @@ public class Evento {
 
     public int getIdComunidade() {
         return comunidade != null ? comunidade.getId() : 0;
+    }
+
+    public String getFoto() {
+        return foto;
+    }
+
+    public void setFoto(String foto) {
+        this.foto = foto;
     }
 }

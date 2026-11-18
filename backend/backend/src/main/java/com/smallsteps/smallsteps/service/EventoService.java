@@ -1,0 +1,127 @@
+package com.smallsteps.smallsteps.service;
+
+import java.time.LocalDate;
+import java.time.LocalTime;
+import java.util.List;
+import java.util.stream.Collectors;
+
+import org.springframework.http.HttpStatus;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
+
+import com.smallsteps.smallsteps.dto.CriarEventoDTO;
+import com.smallsteps.smallsteps.dto.EventoResponseDTO;
+import com.smallsteps.smallsteps.entity.Comunidade;
+import com.smallsteps.smallsteps.entity.Evento;
+import com.smallsteps.smallsteps.entity.Usuario;
+import com.smallsteps.smallsteps.repository.CommunityRepository;
+import com.smallsteps.smallsteps.repository.EventoRepository;
+import com.smallsteps.smallsteps.repository.UserRepository;
+
+@Service
+public class EventoService {
+
+    private final EventoRepository eventoRepository;
+    private final CommunityRepository communityRepository;
+    private final UserRepository userRepository;
+
+    public EventoService(
+            EventoRepository eventoRepository,
+            CommunityRepository communityRepository,
+            UserRepository userRepository) {
+        this.eventoRepository = eventoRepository;
+        this.communityRepository = communityRepository;
+        this.userRepository = userRepository;
+    }
+
+    @Transactional(readOnly = true)
+    public List<EventoResponseDTO> findAll() {
+        return eventoRepository.findAll().stream()
+                .map(EventoResponseDTO::new)
+                .collect(Collectors.toList());
+    }
+
+    @Transactional(readOnly = true)
+    public List<EventoResponseDTO> findByComunidade(int comunidadeId) {
+        return eventoRepository.findByComunidadeIdOrderByDiaInicioAsc(comunidadeId).stream()
+                .map(EventoResponseDTO::new)
+                .collect(Collectors.toList());
+    }
+
+    @Transactional(readOnly = true)
+    public EventoResponseDTO findById(int id) {
+        Evento evento = eventoRepository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Evento não encontrado com id: " + id));
+        return new EventoResponseDTO(evento);
+    }
+
+    @Transactional
+    public EventoResponseDTO create(int comunidadeId, CriarEventoDTO dto) {
+        Comunidade comunidade = communityRepository.findById(comunidadeId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Comunidade não encontrada com id: " + comunidadeId));
+
+        Usuario usuario = null;
+        if (dto.getIdUsuario() != null && dto.getIdUsuario() > 0) {
+            usuario = userRepository.findById(dto.getIdUsuario()).orElse(null);
+        }
+
+        if (usuario == null) {
+            List<Usuario> usuarios = userRepository.findAll();
+            if (!usuarios.isEmpty()) {
+                usuario = usuarios.get(0);
+            }
+        }
+
+        if (usuario == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Usuário não encontrado para criar o evento");
+        }
+
+        Evento evento = new Evento();
+        evento.setComunidade(comunidade);
+        evento.setUsuario(usuario);
+        evento.setTitulo(dto.getTitulo());
+        evento.setDescricao(dto.getDescricao());
+        evento.setLocal(dto.getLocal());
+        evento.setFoto(dto.getFoto());
+
+        evento.setDiaInicio(dto.getDiaInicio() != null ? dto.getDiaInicio() : LocalDate.now());
+        evento.setDiaFim(dto.getDiaFim() != null ? dto.getDiaFim() : evento.getDiaInicio());
+        evento.setHorarioInicio(dto.getHorarioInicio() != null ? dto.getHorarioInicio() : LocalTime.of(12, 0));
+        evento.setHorarioFim(dto.getHorarioFim() != null ? dto.getHorarioFim() : LocalTime.of(18, 0));
+
+        Evento salvo = eventoRepository.save(evento);
+        return new EventoResponseDTO(salvo);
+    }
+
+    @Transactional
+    public EventoResponseDTO update(int id, CriarEventoDTO dto) {
+        Evento evento = eventoRepository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Evento não encontrado com id: " + id));
+
+        if (dto.getTitulo() != null) evento.setTitulo(dto.getTitulo());
+        if (dto.getDescricao() != null) evento.setDescricao(dto.getDescricao());
+        if (dto.getLocal() != null) evento.setLocal(dto.getLocal());
+        if (dto.getFoto() != null) evento.setFoto(dto.getFoto());
+        if (dto.getDiaInicio() != null) evento.setDiaInicio(dto.getDiaInicio());
+        if (dto.getDiaFim() != null) evento.setDiaFim(dto.getDiaFim());
+        if (dto.getHorarioInicio() != null) evento.setHorarioInicio(dto.getHorarioInicio());
+        if (dto.getHorarioFim() != null) evento.setHorarioFim(dto.getHorarioFim());
+
+        if (dto.getIdComunidade() != null && dto.getIdComunidade() > 0) {
+            Comunidade com = communityRepository.findById(dto.getIdComunidade()).orElse(null);
+            if (com != null) evento.setComunidade(com);
+        }
+
+        Evento atualizado = eventoRepository.save(evento);
+        return new EventoResponseDTO(atualizado);
+    }
+
+    @Transactional
+    public void delete(int id) {
+        if (!eventoRepository.existsById(id)) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Evento não encontrado com id: " + id);
+        }
+        eventoRepository.deleteById(id);
+    }
+}

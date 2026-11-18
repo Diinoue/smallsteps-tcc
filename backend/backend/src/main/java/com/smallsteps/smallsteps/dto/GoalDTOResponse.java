@@ -7,6 +7,7 @@ import java.util.List;
 public class GoalDTOResponse {
     public int id;
     public String title;
+    public String milestone;
     public boolean concluido;
     public LocalDateTime dtInicio;
     public LocalDateTime dtFim;

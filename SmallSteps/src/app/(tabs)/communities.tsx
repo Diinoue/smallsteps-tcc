@@ -2,10 +2,12 @@ import { useColorScheme } from '@/hooks/use-color-scheme';
 import { useThemeColor } from '@/hooks/use-theme-color';
 import { CommunityItem, communityService } from '@/src/services';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
-import { useFocusEffect, useRouter } from 'expo-router';
-import React, { useCallback, useState } from 'react';
+import { useFocusEffect, useNavigation, useRouter } from 'expo-router';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
+  Alert,
+  BackHandler,
   FlatList,
   Image,
   RefreshControl,
@@ -15,14 +17,17 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { loginService } from '@/src/services/loginService';
 import { Button } from '@/src/components/ui/Button';
+import { CommunityFeedScreen } from '@/src/components/community/CommunityFeedScreen';
+import { CommunityEventsScreen } from '@/src/components/community/CommunityEventsScreen';
 
 const ACCENT_GREEN = '#34C759';
 
 export default function CommunitiesScreen() {
   const router = useRouter();
+  const navigation = useNavigation();
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
 
@@ -32,11 +37,70 @@ export default function CommunitiesScreen() {
   const borderColor = isDark ? '#2D3748' : '#EEEEEE';
 
   const [communities, setCommunities] = useState<CommunityItem[]>([]);
+  const [selectedCommunity, setSelectedCommunity] = useState<CommunityItem | null>(null);
+  const [currentView, setCurrentView] = useState<'feed' | 'events'>('feed');
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const isFetchingRef = useRef(false);
 
-  const loadCommunities = useCallback(async (showLoading = true) => {
-    if (showLoading) setIsLoading(true);
+  const insets = useSafeAreaInsets();
+
+  const defaultTabBarStyle = useMemo(
+    () => ({
+      backgroundColor: isDark ? '#111827' : '#FFFFFF',
+      borderTopColor: isDark ? '#1E293B' : '#E5E7EB',
+      borderTopWidth: 1,
+      height: 56 + insets.bottom,
+      paddingBottom: insets.bottom > 0 ? insets.bottom : 6,
+      paddingTop: 8,
+      elevation: 0,
+    }),
+    [isDark, insets.bottom]
+  );
+
+  useEffect(() => {
+    navigation.setOptions({
+      tabBarStyle: selectedCommunity ? { display: 'none' } : defaultTabBarStyle,
+    });
+    return () => {
+      navigation.setOptions({
+        tabBarStyle: defaultTabBarStyle,
+      });
+    };
+  }, [selectedCommunity, navigation, defaultTabBarStyle]);
+
+  // Suporte ao botão voltar físico / nativo do Android
+  useFocusEffect(
+    useCallback(() => {
+      const onBackPress = () => {
+        if (currentView === 'events') {
+          setCurrentView('feed');
+          return true;
+        }
+        if (selectedCommunity) {
+          setSelectedCommunity(null);
+          setCurrentView('feed');
+          return true;
+        }
+        return false;
+      };
+
+      const subscription = BackHandler.addEventListener('hardwareBackPress', onBackPress);
+      return () => subscription.remove();
+    }, [currentView, selectedCommunity])
+  );
+
+  const loadCommunities = useCallback(async (force = false) => {
+    if (isFetchingRef.current) return;
+
+    if (!force && communities.length > 0) {
+      setIsLoading(false);
+      return;
+    }
+
+    isFetchingRef.current = true;
+    if (communities.length === 0) setIsLoading(true);
+
     try {
       const data = await communityService.getCommunities();
       setCommunities(data);
@@ -45,18 +109,19 @@ export default function CommunitiesScreen() {
     } finally {
       setIsLoading(false);
       setIsRefreshing(false);
+      isFetchingRef.current = false;
     }
-  }, []);
+  }, [communities.length]);
 
   useFocusEffect(
     useCallback(() => {
-      loadCommunities(communities.length === 0);
-    }, [loadCommunities, communities.length])
+      loadCommunities(false);
+    }, [loadCommunities])
   );
 
   const handleRefresh = () => {
     setIsRefreshing(true);
-    loadCommunities(false);
+    loadCommunities(true);
   };
 
   const handleAddCommunity = () => {
@@ -64,8 +129,7 @@ export default function CommunitiesScreen() {
   };
 
   const handleSelectCommunity = (community: CommunityItem) => {
-    // Ação ao clicar na comunidade
-    console.log('Comunidade selecionada:', community.id, community.nome);
+    setSelectedCommunity(community);
   };
 
   const renderCommunityItem = ({ item }: { item: CommunityItem }) => (
@@ -108,6 +172,32 @@ export default function CommunitiesScreen() {
     await loginService.removeToken();
     Alert.alert('JWT removido', 'O token foi apagado do armazenamento seguro.');
   };
+
+  // Se uma comunidade for selecionada, exibe a tela de feed ou de eventos da comunidade
+  if (selectedCommunity) {
+    if (currentView === 'events') {
+      return (
+        <CommunityEventsScreen
+          communityId={selectedCommunity.id}
+          communityName={selectedCommunity.nome}
+          isAdmin={selectedCommunity.cargo === 'DONO' || selectedCommunity.cargo === 'ADMINISTRADOR' || !selectedCommunity.cargo}
+          onBackPress={() => setCurrentView('feed')}
+        />
+      );
+    }
+
+    return (
+      <CommunityFeedScreen
+        communityId={selectedCommunity.id}
+        communityName={selectedCommunity.nome}
+        onBackPress={() => {
+          setSelectedCommunity(null);
+          setCurrentView('feed');
+        }}
+        onEventsPress={() => setCurrentView('events')}
+      />
+    );
+  }
 
   return (
     <SafeAreaView edges={['top', 'left', 'right']} style={[styles.container, { backgroundColor }]}>
@@ -156,6 +246,25 @@ export default function CommunitiesScreen() {
               <Text style={[styles.emptyText, { color: textMuted }]}>
                 Nenhuma comunidade encontrada.
               </Text>
+              <TouchableOpacity
+                style={{
+                  marginTop: 16,
+                  paddingVertical: 10,
+                  paddingHorizontal: 16,
+                  borderRadius: 20,
+                  backgroundColor: isDark ? '#2D3748' : '#E2E8F0',
+                }}
+                onPress={() =>
+                  setSelectedCommunity({
+                    id: 1,
+                    nome: 'Grupo #1 musica',
+                  })
+                }
+              >
+                <Text style={{ fontWeight: '700', color: textColor }}>
+                  Ver Grupo #1 musica (Protótipo)
+                </Text>
+              </TouchableOpacity>
             </View>
           }
         />

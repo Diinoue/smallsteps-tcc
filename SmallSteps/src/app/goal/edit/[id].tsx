@@ -18,7 +18,37 @@ import { SubGoalEditItem } from '@/src/components/dashboard/SubGoalEditItem';
 import { Button } from '@/src/components/ui/Button';
 import { IconSymbol } from '@/src/components/ui/icon-symbol';
 import { goalService } from '@/src/services';
-import { Goal, SubGoal } from '@/src/types/goal';
+import { SubGoal } from '@/src/types/goal';
+
+function toBackendDateTime(dateStr?: string | null): string | null {
+  if (!dateStr) return null;
+  const trimmed = dateStr.trim();
+  if (!trimmed) return null;
+
+  // Se já for formato ISO (ano-mês-dia)
+  if (trimmed.includes('-')) {
+    const d = new Date(trimmed);
+    if (!isNaN(d.getTime())) {
+      return d.toISOString();
+    }
+    return trimmed;
+  }
+
+  // Se for formato brasileiro dd/MM/yyyy
+  const parts = trimmed.split('/');
+  if (parts.length === 3) {
+    const day = parts[0].padStart(2, '0');
+    const month = parts[1].padStart(2, '0');
+    let year = parts[2];
+    if (year.length === 2) year = `20${year}`;
+    const d = new Date(`${year}-${month}-${day}T12:00:00`);
+    if (!isNaN(d.getTime())) {
+      return d.toISOString();
+    }
+  }
+
+  return trimmed;
+}
 
 export default function EditGoalScreen() {
   const router = useRouter();
@@ -57,12 +87,23 @@ export default function EditGoalScreen() {
       const goal = await goalService.getGoalById(id);
       if (goal) {
         setTitle(goal.title);
-        setTargetMilestone(goal.targetMilestone || '');
-        setSubGoals(goal.subGoals || []);
-        setIsGoalCompleted(goal.completed ?? false);
-        setGoalCompletedDate(goal.completedDate ?? null);
-        setWasCompletedOnLoad(goal.completed ?? false);
-        setInitialCompletedDate(goal.completedDate ?? null);
+        setTargetMilestone(goal.milestone ?? '');
+        // Mapeia SubGoalDTOResponse → SubGoal (formato local da tela)
+        setSubGoals(
+          (goal.subMetas ?? [])
+            .sort((a, b) => a.pos - b.pos)
+            .map((s) => ({
+              id: String(s.id),
+              title: s.titulo,
+              completed: s.concluido,
+              startDate: s.dtInicio ?? undefined,
+              completedDate: s.concluido && s.dtFim ? s.dtFim : null,
+            }))
+        );
+        setIsGoalCompleted(goal.concluido ?? false);
+        setGoalCompletedDate(goal.dtFim ?? null);
+        setWasCompletedOnLoad(goal.concluido ?? false);
+        setInitialCompletedDate(goal.dtFim ?? null);
       } else {
         Alert.alert('Erro', 'Meta não encontrada.');
         router.back();
@@ -106,7 +147,7 @@ export default function EditGoalScreen() {
       updated[index] = {
         ...updated[index],
         completed: !currentStatus,
-        completedDate: !currentStatus ? new Date().toLocaleDateString('pt-BR') : null,
+        completedDate: !currentStatus ? new Date().toISOString() : null,
       };
       return updated;
     });
@@ -150,7 +191,7 @@ export default function EditGoalScreen() {
       id: `sg_${Date.now()}`,
       title: '',
       completed: false,
-      startDate: new Date().toLocaleDateString('pt-BR'),
+      startDate: new Date().toISOString(),
       timeAgo: 'Recém criada',
     };
     setSubGoals((prev) => [...prev, newSubGoal]);
@@ -162,17 +203,23 @@ export default function EditGoalScreen() {
       Alert.alert('Atenção', 'O título da meta não pode estar vazio.');
       return;
     }
+    if (!targetMilestone.trim()) {
+      Alert.alert('Atenção', 'O objetivo final (milestone) é obrigatório.');
+      return;
+    }
 
     try {
       setIsSaving(true);
       await goalService.updateGoal(id, {
-        title: title.trim(),
-        targetMilestone: targetMilestone.trim(),
-        completed: isGoalCompleted,
-        completedDate: isGoalCompleted ? goalCompletedDate : null,
-        subGoals: subGoals.map((sg) => ({
-          ...sg,
-          title: sg.title.trim() || 'Nova submeta',
+        titulo: title.trim(),
+        milestone: targetMilestone.trim(),
+        concluido: isGoalCompleted,
+        dtFim: isGoalCompleted ? (toBackendDateTime(goalCompletedDate) ?? new Date().toISOString()) : undefined,
+        subMetas: subGoals.map((sg) => ({
+          titulo: sg.title.trim() || 'Nova submeta',
+          concluido: sg.completed ?? false,
+          dtInicio: toBackendDateTime(sg.startDate) ?? new Date().toISOString(),
+          dtFim: sg.completed ? (toBackendDateTime(sg.completedDate) ?? new Date().toISOString()) : null,
         })),
       });
       Alert.alert('Sucesso', 'Alterações salvas com sucesso!');
@@ -234,7 +281,7 @@ export default function EditGoalScreen() {
     } else {
       if (!allSubGoalsCompleted) return;
       setIsGoalCompleted(true);
-      setGoalCompletedDate(initialCompletedDate ?? new Date().toLocaleDateString('pt-BR'));
+      setGoalCompletedDate(initialCompletedDate ?? new Date().toISOString());
     }
   };
 
@@ -294,7 +341,7 @@ export default function EditGoalScreen() {
 
                 <View style={styles.fieldGroup}>
                   <Text style={[styles.fieldLabel, { color: textMuted }]}>
-                    Objetivo Final (Milestone)
+                    Objetivo Final (Milestone) *
                   </Text>
                   <TextInput
                     style={[styles.textInput, { color: textColor, borderColor }]}

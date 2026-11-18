@@ -26,6 +26,15 @@ public class Post {
     @Column(name = "dt_criacao", nullable = false)
     private LocalDateTime dtCriacao;
 
+    @Column(name = "tipo_midia", nullable = false, length = 20, columnDefinition = "varchar(20) default 'TEXT'")
+    private String tipoMidia = "TEXT";
+
+    @Column(name = "url_midia", nullable = true, length = 500)
+    private String urlMidia;
+
+    @Column(name = "url_thumbnail", nullable = true, length = 500)
+    private String urlThumbnail;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "id_usuario", nullable = false)
     private Usuario usuario;
@@ -66,6 +75,30 @@ public class Post {
 
     public void setDtCriacao(LocalDateTime dtCriacao) {
         this.dtCriacao = dtCriacao;
+    }
+
+    public String getTipoMidia() {
+        return tipoMidia;
+    }
+
+    public void setTipoMidia(String tipoMidia) {
+        this.tipoMidia = tipoMidia;
+    }
+
+    public String getUrlMidia() {
+        return urlMidia;
+    }
+
+    public void setUrlMidia(String urlMidia) {
+        this.urlMidia = urlMidia;
+    }
+
+    public String getUrlThumbnail() {
+        return urlThumbnail;
+    }
+
+    public void setUrlThumbnail(String urlThumbnail) {
+        this.urlThumbnail = urlThumbnail;
     }
 
     public Usuario getUsuario() {

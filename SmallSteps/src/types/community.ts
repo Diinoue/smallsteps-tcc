@@ -1,0 +1,28 @@
+export type MediaType = 'text' | 'image' | 'video';
+
+export interface PostAuthor {
+  id: string | number;
+  name: string;
+  avatarUrl?: string | null;
+  streakDays: number;
+}
+
+export interface Post {
+  id: string | number;
+  communityId: string | number;
+  author: PostAuthor;
+  content: string;
+  createdAt: string;
+  mediaType: MediaType;
+  mediaUrl?: string | null;
+  thumbnailUrl?: string | null;
+  aspectRatio?: number;
+  commentsCount: number;
+}
+
+export interface CreatePostInput {
+  content: string;
+  mediaType?: MediaType;
+  mediaUrl?: string | null;
+  thumbnailUrl?: string | null;
+}

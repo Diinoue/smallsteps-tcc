@@ -4,22 +4,20 @@
 --        participam, solicitam, post, evento, comentario, meta, sub_meta
 -- =====================================================================
 
-BEGIN;
-
 -- ---------------------------------------------------------------------
 -- USUARIO
 -- ---------------------------------------------------------------------
 INSERT INTO usuario (id, streak_num, intervalo_atividade, ultima_atividade, ultimo_prazo, descricao, email, nome, senha) VALUES
 (1,  12, INTERVAL '1 day', '2026-10-21 08:15:00', '2026-10-25 23:59:00', 'Apaixonada por corrida e café.',          'ana.souza@email.com',        'Ana Souza',          '$2a$12$7xckK2W3HgDhvFgtc4oVmOb58rxYc0836PAdPdGouGl9Di.IRVgoO'),
-(2,   5, INTERVAL '1 day', '2026-10-21 19:40:00', '2026-10-24 23:59:00', 'Organizo treinos nos fins de semana.',    'bruno.lima@email.com',       'Bruno Lima',         '$2a$12$QdtyIQlnExPEsKDg6ULdBeamK.FT2f0eVLAEYOrZF51v57ae/oYqa'),
-(3,  30, INTERVAL '1 day', '2026-10-22 07:05:00', '2026-10-30 23:59:00', 'Leio um livro por semana.',               'carla.mendes@email.com',     'Carla Mendes',       '$2a$12$2AMCNug677FPfXL4ulDMAuwBVbm09ChCMCmYMaOTZ6Go.Nr9NGeEe'),
-(4,   0, INTERVAL '2 days','2026-10-18 21:00:00', NULL,                  'Desenvolvedor backend em transição.',    'diego.ferreira@email.com',   'Diego Ferreira',      '$2a$12$c4G5ML6AsZH09mQw./OcF.a1KpuLW0lo1RqneLrwXw8dwMycleXky'),
-(5,   8, INTERVAL '1 day', '2026-10-21 06:30:00', '2026-10-28 23:59:00', 'Meditação todas as manhãs.',              'elisa.rocha@email.com',      'Elisa Rocha',        '$2a$12$aYQeMEt4yff//GTwo5Takukc1vuBdPLNKewosKMcTyWVDOzqG1c4.'),
-(6,   3, INTERVAL '1 day', '2026-10-20 18:20:00', '2026-10-23 23:59:00', NULL,                                      'felipe.alves@email.com',     'Felipe Alves',       '$2a$12$0Ik06mWY2.UB3gHaZtRD.uv0IqQe8hUbZrAC0GmhpJQUYJ8.dLFXa'),
-(7,  21, INTERVAL '1 day', '2026-10-22 09:10:00', '2026-11-02 23:59:00', 'Cultivo temperos na varanda.',            'gabriela.costa@email.com',   'Gabriela Costa',     '$2a$12$caxCqdW9mIvzCKJ9cNUhge6JByvyXBu7EMip6aWz8zbgl2T8fTHsO'),
-(8,   1, INTERVAL '3 days','2026-10-19 14:00:00', NULL,                  'Estudando para certificações.',          'henrique.duarte@email.com',  'Henrique Duarte',     '$2a$12$ga/inMVIpAxEJOGi/BRADuxglv7cI3MrpVM50Tqjy1YxTFNJDf8i2'),
-(9,  15, INTERVAL '1 day', '2026-10-21 22:45:00', '2026-10-27 23:59:00', 'Gosto de tecnologia e jardinagem.',       'isabela.martins@email.com',  'Isabela Martins',    '$2a$12$a6Xo4xPEhQpIzvAk.ZOUmeGFMdUtuY.fxthPNu.0WJB/l.vGbFfem'),
-(10,  7, INTERVAL '1 day', '2026-10-22 05:50:00', '2026-10-26 23:59:00', 'Instrutor de yoga.',                      'joao.pereira@email.com',     'João Pereira',       '$2a$12$Ko1Na7Ai.NjvuPOI4xXWQ.LfhZj9DbVv45YKzobrfoJmX.FtuCctS');
+(2,   5, INTERVAL '3 day', '2026-10-21 19:40:00', '2026-10-24 23:59:00', 'Organizo treinos nos fins de semana.',    'bruno.lima@email.com',       'Bruno Lima',         '$2a$12$QdtyIQlnExPEsKDg6ULdBeamK.FT2f0eVLAEYOrZF51v57ae/oYqa'),
+(3,  30, INTERVAL '7 day', '2026-10-22 07:05:00', '2026-10-30 23:59:00', 'Leio um livro por semana.',               'carla.mendes@email.com',     'Carla Mendes',       '$2a$12$2AMCNug677FPfXL4ulDMAuwBVbm09ChCMCmYMaOTZ6Go.Nr9NGeEe'),
+(4,   0, INTERVAL '7 days','2026-10-18 21:00:00', NULL,                  'Desenvolvedor backend em transição.',    'diego.ferreira@email.com',   'Diego Ferreira',      '$2a$12$c4G5ML6AsZH09mQw./OcF.a1KpuLW0lo1RqneLrwXw8dwMycleXky'),
+(5,   8, INTERVAL '7 day', '2026-10-21 06:30:00', '2026-10-28 23:59:00', 'Meditação todas as manhãs.',              'elisa.rocha@email.com',      'Elisa Rocha',        '$2a$12$aYQeMEt4yff//GTwo5Takukc1vuBdPLNKewosKMcTyWVDOzqG1c4.'),
+(6,   3, INTERVAL '28 day', '2026-10-20 18:20:00', '2026-10-23 23:59:00', NULL,                                      'felipe.alves@email.com',     'Felipe Alves',       '$2a$12$0Ik06mWY2.UB3gHaZtRD.uv0IqQe8hUbZrAC0GmhpJQUYJ8.dLFXa'),
+(7,  21, INTERVAL '28 day', '2026-10-22 09:10:00', '2026-11-02 23:59:00', 'Cultivo temperos na varanda.',            'gabriela.costa@email.com',   'Gabriela Costa',     '$2a$12$caxCqdW9mIvzCKJ9cNUhge6JByvyXBu7EMip6aWz8zbgl2T8fTHsO'),
+(8,   1, INTERVAL '28 days','2026-10-19 14:00:00', NULL,                  'Estudando para certificações.',          'henrique.duarte@email.com',  'Henrique Duarte',     '$2a$12$ga/inMVIpAxEJOGi/BRADuxglv7cI3MrpVM50Tqjy1YxTFNJDf8i2'),
+(9,  15, INTERVAL '12 day', '2026-10-21 22:45:00', '2026-10-27 23:59:00', 'Gosto de tecnologia e jardinagem.',       'isabela.martins@email.com',  'Isabela Martins',    '$2a$12$a6Xo4xPEhQpIzvAk.ZOUmeGFMdUtuY.fxthPNu.0WJB/l.vGbFfem'),
+(10,  7, INTERVAL '14 day', '2026-10-22 05:50:00', '2026-10-26 23:59:00', 'Instrutor de yoga.',                      'joao.pereira@email.com',     'João Pereira',       '$2a$12$Ko1Na7Ai.NjvuPOI4xXWQ.LfhZj9DbVv45YKzobrfoJmX.FtuCctS');
 
 -- ---------------------------------------------------------------------
 -- COMUNIDADE
@@ -114,25 +112,25 @@ INSERT INTO solicitam (id_comunidade, id_usuario, dt_inicio) VALUES
 -- ---------------------------------------------------------------------
 -- POST
 -- ---------------------------------------------------------------------
-INSERT INTO post (id, id_comunidade, id_usuario, dt_criacao, descricao) VALUES
-(1, 1, 1, '2026-10-10 08:00:00', 'Bom dia, pessoal! Quem topa uma corrida de 5 km no domingo?'),
-(2, 1, 2, '2026-10-11 19:30:00', 'Dica: alongar por 10 minutos depois do treino reduz muito a dor muscular.'),
-(3, 2, 3, '2026-10-12 20:00:00', 'O livro do mês será "Dom Casmurro". Vamos discutir no dia 30!'),
-(4, 3, 4, '2026-10-13 09:15:00', 'Alguém tem recomendação de curso de PostgreSQL para quem está começando?'),
-(5, 3, 9, '2026-10-14 21:40:00', 'Compartilhando um resumo sobre índices e performance de consultas.'),
-(6, 4, 7, '2026-10-15 07:45:00', 'Minhas mudas de manjericão finalmente brotaram!'),
-(7, 5, 10,'2026-10-16 06:00:00', 'Sessão guiada de respiração de 10 minutos hoje às 6h30.'),
-(8, 5, 5, '2026-10-17 06:50:00', 'Consegui meditar 21 dias seguidos. Obrigada pelo apoio, grupo!');
+INSERT INTO post (id, id_comunidade, id_usuario, dt_criacao, descricao, tipo_midia, url_midia, url_thumbnail) VALUES
+(1, 1, 1, '2026-10-10 08:00:00', 'Bom dia, pessoal! Quem topa uma corrida de 5 km no domingo?', 'TEXT', NULL, NULL),
+(2, 1, 2, '2026-10-11 19:30:00', 'Dica: alongar por 10 minutos depois do treino reduz muito a dor muscular.', 'TEXT', NULL, NULL),
+(3, 2, 3, '2026-10-12 20:00:00', 'O livro do mês será "Dom Casmurro". Vamos discutir no dia 30!', 'IMAGE', 'https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?w=800', NULL),
+(4, 3, 4, '2026-10-13 09:15:00', 'Alguém tem recomendação de curso de PostgreSQL para quem está começando?', 'TEXT', NULL, NULL),
+(5, 3, 9, '2026-10-14 21:40:00', 'Compartilhando um resumo sobre índices e performance de consultas.', 'TEXT', NULL, NULL),
+(6, 4, 7, '2026-10-15 07:45:00', 'Minhas mudas de manjericão finalmente brotaram!', 'IMAGE', 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=800', NULL),
+(7, 5, 10,'2026-10-16 06:00:00', 'Sessão guiada de respiração de 10 minutos hoje às 6h30.', 'VIDEO', 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4', NULL),
+(8, 5, 5, '2026-10-17 06:50:00', 'Consegui meditar 21 dias seguidos. Obrigada pelo apoio, grupo!', 'TEXT', NULL, NULL);
 
 -- ---------------------------------------------------------------------
 -- EVENTO
 -- ---------------------------------------------------------------------
-INSERT INTO evento (id, id_comunidade, id_usuario, dia_inicio, dia_fim, horario_inicio, horario_fim, titulo, local, descricao) VALUES
-(1, 1, 1,  '2026-10-25', '2026-10-25', '07:00', '09:00', 'Corrida no Parque',         'Parque Ibirapuera, portão 3',   'Corrida leve de 5 km seguida de café coletivo.'),
-(2, 2, 3,  '2026-10-30', '2026-10-30', '19:30', '21:30', 'Debate: Dom Casmurro',       'Biblioteca Central, sala 2',    'Discussão do livro do mês com lanche.'),
-(3, 3, 4,  '2026-11-07', '2026-11-08', '09:00', '17:00', 'Hackathon de Banco de Dados','Online (Meet)',                 'Maratona de modelagem e otimização de consultas.'),
-(4, 4, 7,  '2026-11-01', '2026-11-01', '10:00', '12:30', 'Oficina de Compostagem',     'Horta Comunitária da Vila',     'Aprenda a montar sua composteira caseira.'),
-(5, 5, 10, '2026-11-14', '2026-11-14', '06:00', '08:00', 'Retiro de Meditação',        'Sítio Recanto Verde',           'Manhã de práticas guiadas e silêncio.');
+INSERT INTO evento (id, id_comunidade, id_usuario, dia_inicio, dia_fim, horario_inicio, horario_fim, titulo, local, descricao, foto) VALUES
+(1, 1, 1,  '2026-10-25', '2026-10-25', '07:00', '09:00', 'Corrida no Parque',         'Parque Ibirapuera, portão 3',   'Corrida leve de 5 km seguida de café coletivo.', NULL),
+(2, 2, 3,  '2026-10-30', '2026-10-30', '19:30', '21:30', 'Debate: Dom Casmurro',       'Biblioteca Central, sala 2',    'Discussão do livro do mês com lanche.', NULL),
+(3, 3, 4,  '2026-11-07', '2026-11-08', '09:00', '17:00', 'Hackathon de Banco de Dados','Online (Meet)',                 'Maratona de modelagem e otimização de consultas.', NULL),
+(4, 4, 7,  '2026-11-01', '2026-11-01', '10:00', '12:30', 'Oficina de Compostagem',     'Horta Comunitária da Vila',     'Aprenda a montar sua composteira caseira.', NULL),
+(5, 5, 10, '2026-11-14', '2026-11-14', '06:00', '08:00', 'Retiro de Meditação',        'Sítio Recanto Verde',           'Manhã de práticas guiadas e silêncio.', NULL);
 
 -- ---------------------------------------------------------------------
 -- COMENTARIO (id_evento OU id_post preenchido; o outro fica NULL)
@@ -150,12 +148,12 @@ INSERT INTO comentario (id, id_evento, id_post, id_usuario, dt_criacao, conteudo
 -- ---------------------------------------------------------------------
 -- META
 -- ---------------------------------------------------------------------
-INSERT INTO meta (id, id_usuario, concluido, visivel, dt_inicio, dt_fim, titulo) VALUES
-(1, 1, false, true,  '2026-09-01 00:00:00', '2026-12-31 23:59:00', 'Correr uma meia maratona'),
-(2, 3, false, true,  '2026-01-01 00:00:00', '2026-12-31 23:59:00', 'Ler 52 livros em 2026'),
-(3, 4, false, false, '2026-10-01 00:00:00', NULL,                  'Aprender PostgreSQL avançado'),
-(4, 5, true,  true,  '2026-09-01 00:00:00', '2026-09-30 23:59:00', 'Meditar 30 dias seguidos'),
-(5, 7, false, true,  '2026-04-20 00:00:00', '2026-11-30 23:59:00', 'Montar horta com 10 espécies');
+INSERT INTO meta (id, id_usuario, concluido, visivel, dt_inicio, dt_fim, titulo, milestone) VALUES
+(1, 1, false, true,  '2026-09-01 00:00:00', '2026-12-31 23:59:00', 'Correr uma meia maratona', 'Completar os 21 km oficiais em menos de 2h'),
+(2, 3, false, true,  '2026-01-01 00:00:00', '2026-12-31 23:59:00', 'Ler 52 livros em 2026', 'Completar a leitura e resenha dos 52 livros'),
+(3, 4, false, false, '2026-10-01 00:00:00', NULL,                  'Aprender PostgreSQL avançado', 'Certificação e otimização de queries em produção'),
+(4, 5, true,  true,  '2026-09-01 00:00:00', '2026-09-30 23:59:00', 'Meditar 30 dias seguidos', 'Completar os 30 dias ininterruptos de prática matinal'),
+(5, 7, false, true,  '2026-04-20 00:00:00', '2026-11-30 23:59:00', 'Montar horta com 10 espécies', 'Colheita própria de temperos e hortaliças frescas');
 
 -- ---------------------------------------------------------------------
 -- SUB_META
@@ -173,60 +171,41 @@ INSERT INTO sub_meta (id, id_meta, pos, concluido, dt_inicio, dt_fim, titulo) VA
 (10, 5, 2, false, '2026-05-11 00:00:00', NULL,                  'Plantar 10 espécies diferentes');
 
 -- ---------------------------------------------------------------------
--- (OPCIONAL) USERS - tabela aparentemente legada, com colunas diferentes
--- As senhas abaixo são apenas textos fictícios, NÃO são hashes reais.
--- streak_status só aceita 0, 1 ou 2.
+-- META (continuação)
 -- ---------------------------------------------------------------------
-INSERT INTO users (id, streak_num, streak_status, ultima_atividade, descricao, email, nome, senha) VALUES
-(1, 4, 1, '2026-10-21 08:00:00', 'Usuário de teste 1', 'teste1@email.com', 'Teste Um',   'senha_fake_1'),
-(2, 0, 0, NULL,                  'Usuário de teste 2', 'teste2@email.com', 'Teste Dois', 'senha_fake_2'),
-(3, 9, 2, '2026-10-22 07:30:00', 'Usuário de teste 3', 'teste3@email.com', 'Teste Três', 'senha_fake_3');
-
--- ---------------------------------------------------------------------
--- Ajusta as sequences, já que os IDs foram inseridos manualmente
--- ---------------------------------------------------------------------
-SELECT setval('usuario_id_seq',    (SELECT MAX(id) FROM usuario));
-SELECT setval('comunidade_id_seq', (SELECT MAX(id) FROM comunidade));
-SELECT setval('tag_id_seq',        (SELECT MAX(id) FROM tag));
-SELECT setval('post_id_seq',       (SELECT MAX(id) FROM post));
-SELECT setval('evento_id_seq',     (SELECT MAX(id) FROM evento));
-SELECT setval('comentario_id_seq', (SELECT MAX(id) FROM comentario));
-SELECT setval('meta_id_seq',       (SELECT MAX(id) FROM meta));
-SELECT setval('sub_meta_id_seq',   (SELECT MAX(id) FROM sub_meta));
-
-INSERT INTO meta (id, id_usuario, concluido, visivel, dt_inicio, dt_fim, titulo) VALUES
-(6, 1, true, true, '2026-01-05 00:00:00', '2026-04-05 23:59:00', 'Treinar 3x por semana durante 3 meses'),
-(7, 1, false, true, '2026-10-01 00:00:00', '2026-12-20 23:59:00', 'Baixar o tempo dos 5 km para 25 minutos'),
-(8, 1, false, false, '2026-10-10 00:00:00', NULL, 'Aprender a preparar cafés especiais'),
-(9, 2, true, true, '2026-02-01 00:00:00', '2026-05-31 23:59:00', 'Organizar 12 treinos de fim de semana'),
-(10, 2, false, true, '2026-09-01 00:00:00', '2026-12-31 23:59:00', 'Completar 10 km em menos de 55 minutos'),
-(11, 2, false, false, '2026-10-15 00:00:00', NULL, 'Fazer check-up médico completo'),
-(12, 3, true, true, '2026-01-01 00:00:00', '2026-03-31 23:59:00', 'Escrever 10 resenhas de livros'),
-(13, 3, false, true, '2026-07-01 00:00:00', '2026-12-15 23:59:00', 'Ler 3 clássicos da literatura brasileira'),
-(14, 3, false, false, '2026-08-01 00:00:00', NULL, 'Organizar a estante e catalogar o acervo'),
-(15, 3, true, true, '2026-05-01 00:00:00', '2026-06-30 23:59:00', 'Ler 30 minutos por dia durante 60 dias'),
-(16, 4, false, true, '2026-03-05 00:00:00', '2026-12-31 23:59:00', 'Contribuir com um projeto open source'),
-(17, 4, false, true, '2026-09-15 00:00:00', '2026-12-31 23:59:00', 'Tirar certificação em banco de dados'),
-(18, 5, false, true, '2026-10-01 00:00:00', '2026-12-31 23:59:00', 'Criar uma rotina de sono saudável'),
-(19, 6, true, true, '2026-01-10 00:00:00', '2026-04-10 23:59:00', 'Voltar a treinar após a lesão'),
-(20, 6, false, true, '2026-06-01 00:00:00', '2026-12-31 23:59:00', 'Nadar 1 km sem parar'),
-(21, 6, false, true, '2026-10-01 00:00:00', '2026-11-30 23:59:00', 'Ler 3 livros sobre formação de hábitos'),
-(22, 6, false, false, '2026-09-20 00:00:00', NULL, 'Começar uma horta de ervas'),
-(23, 7, true, true, '2026-01-15 00:00:00', '2026-03-15 23:59:00', 'Montar uma composteira caseira'),
-(24, 7, false, true, '2026-08-01 00:00:00', '2026-12-20 23:59:00', 'Cultivar 5 temperos na varanda'),
-(25, 7, false, true, '2026-10-01 00:00:00', '2026-11-30 23:59:00', 'Organizar a oficina de compostagem'),
-(26, 7, true, false, '2026-02-01 00:00:00', '2026-04-30 23:59:00', 'Ler 3 livros sobre permacultura'),
-(27, 7, false, false, '2026-09-01 00:00:00', NULL, 'Criar um blog de receitas com temperos'),
-(28, 8, false, true, '2026-09-01 00:00:00', '2026-12-31 23:59:00', 'Passar na certificação AWS Cloud Practitioner'),
-(29, 8, false, false, '2026-10-01 00:00:00', NULL, 'Montar um portfólio de projetos'),
-(30, 9, true, true, '2026-03-20 00:00:00', '2026-06-30 23:59:00', 'Estudar performance de consultas SQL'),
-(31, 9, false, true, '2026-09-01 00:00:00', '2026-12-31 23:59:00', 'Concluir curso de modelagem de dados'),
-(32, 9, false, true, '2026-05-05 00:00:00', '2026-11-30 23:59:00', 'Plantar 8 mudas na horta comunitária'),
-(33, 9, true, false, '2026-01-01 00:00:00', '2026-02-28 23:59:00', 'Organizar as finanças pessoais'),
-(34, 9, false, true, '2026-10-15 00:00:00', '2026-12-31 23:59:00', 'Escrever 4 artigos técnicos'),
-(35, 10, true, true, '2026-05-01 00:00:00', '2026-08-31 23:59:00', 'Conduzir 20 sessões de meditação guiada'),
-(36, 10, false, true, '2026-09-01 00:00:00', '2026-12-15 23:59:00', 'Concluir a formação em yoga avançado'),
-(37, 10, false, false, '2026-10-10 00:00:00', NULL, 'Organizar o retiro de meditação');
+INSERT INTO meta (id, id_usuario, concluido, visivel, dt_inicio, dt_fim, titulo, milestone) VALUES
+(6, 1, true, true, '2026-01-05 00:00:00', '2026-04-05 23:59:00', 'Treinar 3x por semana durante 3 meses', 'Consistência física de 12 semanas completadas'),
+(7, 1, false, true, '2026-10-01 00:00:00', '2026-12-20 23:59:00', 'Baixar o tempo dos 5 km para 25 minutos', 'Bater o recorde pessoal de 25 min nos 5 km'),
+(8, 1, false, false, '2026-10-10 00:00:00', NULL, 'Aprender a preparar cafés especiais', 'Dominar métodos de extração V60 e Aeropress'),
+(9, 2, true, true, '2026-02-01 00:00:00', '2026-05-31 23:59:00', 'Organizar 12 treinos de fim de semana', '12 encontros do grupo realizados com sucesso'),
+(10, 2, false, true, '2026-09-01 00:00:00', '2026-12-31 23:59:00', 'Completar 10 km em menos de 55 minutos', 'Tempo sub-55 nos 10 km em prova oficial'),
+(11, 2, false, false, '2026-10-15 00:00:00', NULL, 'Fazer check-up médico completo', 'Todos os exames realizados e validados pelo médico'),
+(12, 3, true, true, '2026-01-01 00:00:00', '2026-03-31 23:59:00', 'Escrever 10 resenhas de livros', 'Publicar as 10 resenhas na comunidade'),
+(13, 3, false, true, '2026-07-01 00:00:00', '2026-12-15 23:59:00', 'Ler 3 clássicos da literatura brasileira', 'Leitura concluída com notas de estudo'),
+(14, 3, false, false, '2026-08-01 00:00:00', NULL, 'Organizar a estante e catalogar o acervo', 'Catálogo digital completo de 100% dos livros'),
+(15, 3, true, true, '2026-05-01 00:00:00', '2026-06-30 23:59:00', 'Ler 30 minutos por dia durante 60 dias', '60 dias ininterruptos de leitura diária'),
+(16, 4, false, true, '2026-03-05 00:00:00', '2026-12-31 23:59:00', 'Contribuir com um projeto open source', 'Pull request aprovado e integrado em projeto público'),
+(17, 4, false, true, '2026-09-15 00:00:00', '2026-12-31 23:59:00', 'Tirar certificação em banco de dados', 'Aprovação no exame oficial de certificação'),
+(18, 5, false, true, '2026-10-01 00:00:00', '2026-12-31 23:59:00', 'Criar uma rotina de sono saudável', 'Dormir e acordar no mesmo horário por 30 dias'),
+(19, 6, true, true, '2026-01-10 00:00:00', '2026-04-10 23:59:00', 'Voltar a treinar após a lesão', 'Liberado pelo fisioterapeuta para treinos normais'),
+(20, 6, false, true, '2026-06-01 00:00:00', '2026-12-31 23:59:00', 'Nadar 1 km sem parar', 'Bater 1000m contínuos na piscina'),
+(21, 6, false, true, '2026-10-01 00:00:00', '2026-11-30 23:59:00', 'Ler 3 livros sobre formação de hábitos', 'Conclusão das 3 leituras com plano de ação prático'),
+(22, 6, false, false, '2026-09-20 00:00:00', NULL, 'Começar uma horta de ervas', 'Ervas frescas prontas para consumo diário'),
+(23, 7, true, true, '2026-01-15 00:00:00', '2026-03-15 23:59:00', 'Montar uma composteira caseira', 'Composteira ativa produzindo húmus de qualidade'),
+(24, 7, false, true, '2026-08-01 00:00:00', '2026-12-20 23:59:00', 'Cultivar 5 temperos na varanda', 'Vasos montados com colheita semanal'),
+(25, 7, false, true, '2026-10-01 00:00:00', '2026-11-30 23:59:00', 'Organizar a oficina de compostagem', 'Oficina comunitária realizada com 15 participantes'),
+(26, 7, true, false, '2026-02-01 00:00:00', '2026-04-30 23:59:00', 'Ler 3 livros sobre permacultura', 'Aplicação prática dos princípios no jardim comunitário'),
+(27, 7, false, false, '2026-09-01 00:00:00', NULL, 'Criar um blog de receitas com temperos', '10 primeiras receitas publicadas'),
+(28, 8, false, true, '2026-09-01 00:00:00', '2026-12-31 23:59:00', 'Passar na certificação AWS Cloud Practitioner', 'Certificado oficial obtido'),
+(29, 8, false, false, '2026-10-01 00:00:00', NULL, 'Montar um portfólio de projetos', 'Site pessoal no ar com 3 projetos completos'),
+(30, 9, true, true, '2026-03-20 00:00:00', '2026-06-30 23:59:00', 'Estudar performance de consultas SQL', 'Otimização de 5 queries complexas documentadas'),
+(31, 9, false, true, '2026-09-01 00:00:00', '2026-12-31 23:59:00', 'Concluir curso de modelagem de dados', 'Certificado de conclusão do curso'),
+(32, 9, false, true, '2026-05-05 00:00:00', '2026-11-30 23:59:00', 'Plantar 8 mudas na horta comunitária', 'Mudas estabelecidas e crescendo'),
+(33, 9, true, false, '2026-01-01 00:00:00', '2026-02-28 23:59:00', 'Organizar as finanças pessoais', 'Orçamento anual estruturado e reserva iniciada'),
+(34, 9, false, true, '2026-10-15 00:00:00', '2026-12-31 23:59:00', 'Escrever 4 artigos técnicos', '4 artigos publicados no Dev.to'),
+(35, 10, true, true, '2026-05-01 00:00:00', '2026-08-31 23:59:00', 'Conduzir 20 sessões de meditação guiada', '20 sessões gravadas e disponibilizadas'),
+(36, 10, false, true, '2026-09-01 00:00:00', '2026-12-15 23:59:00', 'Concluir a formação em yoga avançado', 'Diploma de formação avançada em mãos'),
+(37, 10, false, false, '2026-10-10 00:00:00', NULL, 'Organizar o retiro de meditação', 'Retiro de final de semana realizado');
 
 INSERT INTO sub_meta (id, id_meta, pos, concluido, dt_inicio, dt_fim, titulo) VALUES
 (11, 6, 1, true, '2026-01-05 00:00:00', '2026-02-04 23:59:00', 'Montar planilha de treinos'),
@@ -320,7 +299,11 @@ INSERT INTO sub_meta (id, id_meta, pos, concluido, dt_inicio, dt_fim, titulo) VA
 (99, 37, 2, false, '2026-10-25 00:00:00', NULL, 'Montar a programação'),
 (100, 37, 3, false, '2026-10-25 00:00:00', NULL, 'Abrir as inscrições');
 
-SELECT setval('meta_id_seq',     (SELECT MAX(id) FROM meta));
-SELECT setval('sub_meta_id_seq', (SELECT MAX(id) FROM sub_meta));
-
-COMMIT;
+SELECT setval('usuario_id_seq',    COALESCE((SELECT MAX(id) FROM usuario), 1));
+SELECT setval('comunidade_id_seq', COALESCE((SELECT MAX(id) FROM comunidade), 1));
+SELECT setval('tag_id_seq',        COALESCE((SELECT MAX(id) FROM tag), 1));
+SELECT setval('post_id_seq',       COALESCE((SELECT MAX(id) FROM post), 1));
+SELECT setval('evento_id_seq',     COALESCE((SELECT MAX(id) FROM evento), 1));
+SELECT setval('comentario_id_seq', COALESCE((SELECT MAX(id) FROM comentario), 1));
+SELECT setval('meta_id_seq',       COALESCE((SELECT MAX(id) FROM meta), 1));
+SELECT setval('sub_meta_id_seq',   COALESCE((SELECT MAX(id) FROM sub_meta), 1));

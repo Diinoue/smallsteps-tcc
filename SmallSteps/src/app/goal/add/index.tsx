@@ -19,8 +19,8 @@ import { IconSymbol } from '@/src/components/ui/icon-symbol';
 import { goalService } from '@/src/services';
 import { SubGoal } from '@/src/types/goal';
 
-// TODO: substituir pelo usuário logado quando existir autenticação
-const CURRENT_USER_NAME = 'Vitor Silva';
+// TODO: substituir pelo ID do usuário logado quando existir autenticação
+const CURRENT_USER_ID = 1;
 
 export default function CreateGoalScreen() {
   const router = useRouter();
@@ -71,7 +71,7 @@ export default function CreateGoalScreen() {
       updated[index] = {
         ...updated[index],
         completed: !currentStatus,
-        completedDate: !currentStatus ? new Date().toLocaleDateString('pt-BR') : null,
+        completedDate: !currentStatus ? new Date().toISOString() : null,
       };
       return updated;
     });
@@ -115,7 +115,7 @@ export default function CreateGoalScreen() {
       id: `sg_${Date.now()}`,
       title: '',
       completed: false,
-      startDate: new Date().toLocaleDateString('pt-BR'),
+      startDate: new Date().toISOString(),
       timeAgo: 'Recém criada',
     };
     setSubGoals((prev) => [...prev, newSubGoal]);
@@ -127,19 +127,24 @@ export default function CreateGoalScreen() {
       Alert.alert('Atenção', 'O título da meta não pode estar vazio.');
       return;
     }
+    if (!targetMilestone.trim()) {
+      Alert.alert('Atenção', 'O objetivo final (milestone) é obrigatório.');
+      return;
+    }
 
     try {
       setIsSaving(true);
       await goalService.createGoal({
-        title: title.trim(),
-        author: CURRENT_USER_NAME,
-        targetMilestone: targetMilestone.trim(),
-        startDate: new Date().toLocaleDateString('pt-BR'),
-        completed: false,
-        completedDate: null,
-        subGoals: subGoals.map((sg) => ({
-          ...sg,
-          title: sg.title.trim() || 'Nova submeta',
+        titulo: title.trim(),
+        milestone: targetMilestone.trim(),
+        idUsuario: CURRENT_USER_ID,
+        visivel: true,
+        dtInicio: new Date().toISOString(),
+        subMetas: subGoals.map((sg) => ({
+          titulo: sg.title.trim() || 'Nova submeta',
+          concluido: sg.completed ?? false,
+          dtInicio: new Date().toISOString(),
+          dtFim: null,
         })),
       });
       Alert.alert('Sucesso', 'Meta criada com sucesso!');
@@ -198,7 +203,7 @@ export default function CreateGoalScreen() {
 
             <View style={styles.fieldGroup}>
               <Text style={[styles.fieldLabel, { color: textMuted }]}>
-                Objetivo Final (Milestone)
+                Objetivo Final (Milestone) *
               </Text>
               <TextInput
                 style={[styles.textInput, { color: textColor, borderColor }]}
