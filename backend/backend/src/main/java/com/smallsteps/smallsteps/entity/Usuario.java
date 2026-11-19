@@ -50,6 +50,21 @@ public class Usuario {
     @Column(name = "intervalo_atividade")
     private Duration intervaloAtividade;
 
+    @Column(name = "foto")
+    private String foto;
+
+    @Column(name = "streak_publico")
+    private Boolean streakPublico = false;
+
+    @Column(name = "metas_publicas")
+    private Boolean metasPublicas = true;
+
+    @Column(name = "frequencia_num")
+    private Integer frequenciaNum = 2;
+
+    @Column(name = "frequencia_periodo")
+    private String frequenciaPeriodo = "week";
+
     public Usuario() {}
 
     public Usuario(int id, String nome, String email, String descricao, int streakNum,
@@ -129,12 +144,52 @@ public class Usuario {
         this.intervaloAtividade = intervaloAtividade;
     }
 
+    public String getFoto() {
+        return foto;
+    }
+
+    public void setFoto(String foto) {
+        this.foto = foto;
+    }
+
+    public boolean isStreakPublico() {
+        return streakPublico != null && streakPublico;
+    }
+
+    public void setStreakPublico(Boolean streakPublico) {
+        this.streakPublico = streakPublico != null ? streakPublico : false;
+    }
+
+    public boolean isMetasPublicas() {
+        return metasPublicas == null || metasPublicas;
+    }
+
+    public void setMetasPublicas(Boolean metasPublicas) {
+        this.metasPublicas = metasPublicas != null ? metasPublicas : true;
+    }
+
     public String getSenha() {
         return senha;
     }
 
     public void setSenha(String senha) {
         this.senha = senha;
+    }
+
+    public Integer getFrequenciaNum() {
+        return frequenciaNum != null ? frequenciaNum : 2;
+    }
+
+    public void setFrequenciaNum(Integer frequenciaNum) {
+        this.frequenciaNum = frequenciaNum;
+    }
+
+    public String getFrequenciaPeriodo() {
+        return frequenciaPeriodo != null ? frequenciaPeriodo : "week";
+    }
+
+    public void setFrequenciaPeriodo(String frequenciaPeriodo) {
+        this.frequenciaPeriodo = frequenciaPeriodo;
     }
 
     

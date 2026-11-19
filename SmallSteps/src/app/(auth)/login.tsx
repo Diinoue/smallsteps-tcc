@@ -39,9 +39,17 @@ export default function Login() {
       const token = await loginService.logIn(data);
       await loginService.save(JWT_KEY, token);
       router.replace("/(tabs)");
-    } catch (error) {
+    } catch (error: any) {
       console.error("Falha no login:", error);
-      const msg = "E-mail ou senha incorretos. Verifique suas credenciais.";
+      let msg = "E-mail ou senha incorretos. Verifique suas credenciais.";
+      if (!error.response) {
+        msg = "Não foi possível conectar ao servidor. Verifique sua conexão e se o backend está em execução.";
+      } else if (error.response?.status === 401) {
+        msg = "E-mail ou senha incorretos. Verifique suas credenciais.";
+      } else if (error.response?.data?.message) {
+        msg = error.response.data.message;
+      }
+
       if (Platform.OS === "web") {
         alert(msg);
       } else {

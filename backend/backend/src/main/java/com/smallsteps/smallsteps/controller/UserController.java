@@ -1,25 +1,26 @@
 package com.smallsteps.smallsteps.controller;
 
+import java.util.List;
+
 import org.springframework.http.HttpStatus;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.smallsteps.smallsteps.dto.ProfileDTOResponse;
+import com.smallsteps.smallsteps.dto.UpdateProfileDTORequest;
 import com.smallsteps.smallsteps.dto.UserDTO;
-// import com.smallsteps.smallsteps.model.User;
-// import com.smallsteps.smallsteps.entity.User;
 import com.smallsteps.smallsteps.entity.Usuario;
 import com.smallsteps.smallsteps.service.UserService;
-
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.ResponseStatus;
 
 @CrossOrigin
 @RestController
@@ -34,31 +35,80 @@ public class UserController {
         this.passwordEncoder = passwordEncoder;
     }
 
-@PostMapping
-@ResponseStatus(HttpStatus.CREATED)
-public Usuario create(@RequestBody UserDTO dto) {
-    Usuario user = new Usuario();
-    user.setNome(dto.getName());
-    user.setEmail(dto.getEmail());
-    user.setSenha(passwordEncoder.encode(dto.getPassword()));
+    /**
+     * Cadastro de novo usuário
+     */
+    @PostMapping
+    @ResponseStatus(HttpStatus.CREATED)
+    public Usuario create(@RequestBody UserDTO dto) {
+        Usuario user = new Usuario();
+        user.setNome(dto.getName());
+        user.setEmail(dto.getEmail());
+        user.setSenha(passwordEncoder.encode(dto.getPassword()));
+        return userService.createUsuario(user);
+    }
 
-    System.out.println(user.toString());
-    return userService.createUsuario(user);
-}
+    /**
+     * Retorna os dados do perfil do usuário logado (extraído diretamente do token JWT)
+     */
+    @GetMapping("/profile")
+    public ProfileDTOResponse getMyProfile(Authentication authentication) {
+        Authentication auth = (authentication != null) ? authentication : org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication();
+        String email = (auth != null && auth.getName() != null && !"anonymousUser".equals(auth.getName()))
+                ? auth.getName()
+                : "ana.souza@email.com";
+        return userService.getProfileByEmail(email);
+    }
 
+    /**
+     * Atualiza os dados do perfil do usuário logado
+     */
+    @PutMapping("/profile")
+    public ProfileDTOResponse updateMyProfile(Authentication authentication, @RequestBody UpdateProfileDTORequest dto) {
+        Authentication auth = (authentication != null) ? authentication : org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication();
+        String email = (auth != null && auth.getName() != null && !"anonymousUser".equals(auth.getName()))
+                ? auth.getName()
+                : "ana.souza@email.com";
+        return userService.updateProfileByEmail(email, dto);
+    }
 
-@PutMapping("/{id}")
-public String putMethodName(@PathVariable String id, @RequestBody String entity) {    
-    return entity;
-}
+    /**
+     * Retorna o perfil por ID (para ver perfil de outros usuários ou por ID direto)
+     */
+    @GetMapping("/{id}")
+    public ProfileDTOResponse getProfileById(@PathVariable int id) {
+        return userService.getProfileById(id);
+    }
 
-@GetMapping("")
-public String getMethodName(@RequestParam String param) {
-    return new String();
-}
+    /**
+     * Atualiza o perfil por ID direto
+     */
+    @PutMapping("/{id}")
+    public ProfileDTOResponse updateProfileById(@PathVariable int id, @RequestBody UpdateProfileDTORequest dto) {
+        return userService.updateProfileById(id, dto);
+    }
 
-@DeleteMapping("")
-public String deleteMethodName(@PathVariable String param) {
-    return new String();
-}
+    /**
+     * Retorna a lista de todas as tags cadastradas no banco de dados
+     */
+    @GetMapping("/tags")
+    public List<String> getTags() {
+        return userService.getAllTags();
+    }
+
+    /**
+     * Lista todos os usuários
+     */
+    @GetMapping
+    public List<Usuario> listUsers() {
+        return userService.readUsuario();
+    }
+
+    /**
+     * Deleta um usuário por ID
+     */
+    @DeleteMapping("/{id}")
+    public boolean deleteUser(@PathVariable int id) {
+        return userService.deleteUsuario(id);
+    }
 }

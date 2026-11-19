@@ -8,18 +8,20 @@ BEGIN;
 
 -- ---------------------------------------------------------------------
 -- USUARIO
+-- Senha padrao para todos os usuarios de teste: 12345678
+-- Hash BCrypt: $2a$10$bnYJsQKQ735u0V8tk/D5ku1I6zYF/dv/176iWedeD7WIO4u6wAqyG
 -- ---------------------------------------------------------------------
-INSERT INTO usuario (id, streak_num, intervalo_atividade, ultima_atividade, ultimo_prazo, descricao, email, nome, senha) VALUES
-(1,  12, INTERVAL '1 day', '2026-10-21 08:15:00', '2026-10-25 23:59:00', 'Apaixonada por corrida e café.',          'ana.souza@email.com',        'Ana Souza',          '$2a$12$7xckK2W3HgDhvFgtc4oVmOb58rxYc0836PAdPdGouGl9Di.IRVgoO'),
-(2,   5, INTERVAL '1 day', '2026-10-21 19:40:00', '2026-10-24 23:59:00', 'Organizo treinos nos fins de semana.',    'bruno.lima@email.com',       'Bruno Lima',         '$2a$12$QdtyIQlnExPEsKDg6ULdBeamK.FT2f0eVLAEYOrZF51v57ae/oYqa'),
-(3,  30, INTERVAL '1 day', '2026-10-22 07:05:00', '2026-10-30 23:59:00', 'Leio um livro por semana.',               'carla.mendes@email.com',     'Carla Mendes',       '$2a$12$2AMCNug677FPfXL4ulDMAuwBVbm09ChCMCmYMaOTZ6Go.Nr9NGeEe'),
-(4,   0, INTERVAL '2 days','2026-10-18 21:00:00', NULL,                  'Desenvolvedor backend em transição.',    'diego.ferreira@email.com',   'Diego Ferreira',      '$2a$12$c4G5ML6AsZH09mQw./OcF.a1KpuLW0lo1RqneLrwXw8dwMycleXky'),
-(5,   8, INTERVAL '1 day', '2026-10-21 06:30:00', '2026-10-28 23:59:00', 'Meditação todas as manhãs.',              'elisa.rocha@email.com',      'Elisa Rocha',        '$2a$12$aYQeMEt4yff//GTwo5Takukc1vuBdPLNKewosKMcTyWVDOzqG1c4.'),
-(6,   3, INTERVAL '1 day', '2026-10-20 18:20:00', '2026-10-23 23:59:00', NULL,                                      'felipe.alves@email.com',     'Felipe Alves',       '$2a$12$0Ik06mWY2.UB3gHaZtRD.uv0IqQe8hUbZrAC0GmhpJQUYJ8.dLFXa'),
-(7,  21, INTERVAL '1 day', '2026-10-22 09:10:00', '2026-11-02 23:59:00', 'Cultivo temperos na varanda.',            'gabriela.costa@email.com',   'Gabriela Costa',     '$2a$12$caxCqdW9mIvzCKJ9cNUhge6JByvyXBu7EMip6aWz8zbgl2T8fTHsO'),
-(8,   1, INTERVAL '3 days','2026-10-19 14:00:00', NULL,                  'Estudando para certificações.',          'henrique.duarte@email.com',  'Henrique Duarte',     '$2a$12$ga/inMVIpAxEJOGi/BRADuxglv7cI3MrpVM50Tqjy1YxTFNJDf8i2'),
-(9,  15, INTERVAL '1 day', '2026-10-21 22:45:00', '2026-10-27 23:59:00', 'Gosto de tecnologia e jardinagem.',       'isabela.martins@email.com',  'Isabela Martins',    '$2a$12$a6Xo4xPEhQpIzvAk.ZOUmeGFMdUtuY.fxthPNu.0WJB/l.vGbFfem'),
-(10,  7, INTERVAL '1 day', '2026-10-22 05:50:00', '2026-10-26 23:59:00', 'Instrutor de yoga.',                      'joao.pereira@email.com',     'João Pereira',       '$2a$12$Ko1Na7Ai.NjvuPOI4xXWQ.LfhZj9DbVv45YKzobrfoJmX.FtuCctS');
+INSERT INTO usuario (id, streak_num, intervalo_atividade, ultima_atividade, ultimo_prazo, descricao, email, nome, senha, foto, streak_publico, metas_publicas) VALUES
+(1,  12, INTERVAL '1 day', '2026-10-21 08:15:00', '2026-10-25 23:59:00', 'Apaixonada por corrida e café.',          'ana.souza@email.com',        'Ana Souza',          '$2a$10$bnYJsQKQ735u0V8tk/D5ku1I6zYF/dv/176iWedeD7WIO4u6wAqyG', NULL, false, true),
+(2,   5, INTERVAL '1 day', '2026-10-21 19:40:00', '2026-10-24 23:59:00', 'Organizo treinos nos fins de semana.',    'bruno.lima@email.com',       'Bruno Lima',         '$2a$10$bnYJsQKQ735u0V8tk/D5ku1I6zYF/dv/176iWedeD7WIO4u6wAqyG', NULL, false, true),
+(3,  30, INTERVAL '1 day', '2026-10-22 07:05:00', '2026-10-30 23:59:00', 'Leio um livro por semana.',               'carla.mendes@email.com',     'Carla Mendes',       '$2a$10$bnYJsQKQ735u0V8tk/D5ku1I6zYF/dv/176iWedeD7WIO4u6wAqyG', NULL, false, true),
+(4,   0, INTERVAL '2 days','2026-10-18 21:00:00', NULL,                  'Desenvolvedor backend em transição.',    'diego.ferreira@email.com',   'Diego Ferreira',      '$2a$10$bnYJsQKQ735u0V8tk/D5ku1I6zYF/dv/176iWedeD7WIO4u6wAqyG', NULL, false, true),
+(5,   8, INTERVAL '1 day', '2026-10-21 06:30:00', '2026-10-28 23:59:00', 'Meditação todas as manhãs.',              'elisa.rocha@email.com',      'Elisa Rocha',        '$2a$10$bnYJsQKQ735u0V8tk/D5ku1I6zYF/dv/176iWedeD7WIO4u6wAqyG', NULL, false, true),
+(6,   3, INTERVAL '1 day', '2026-10-20 18:20:00', '2026-10-23 23:59:00', NULL,                                      'felipe.alves@email.com',     'Felipe Alves',       '$2a$10$bnYJsQKQ735u0V8tk/D5ku1I6zYF/dv/176iWedeD7WIO4u6wAqyG', NULL, false, true),
+(7,  21, INTERVAL '1 day', '2026-10-22 09:10:00', '2026-11-02 23:59:00', 'Cultivo temperos na varanda.',            'gabriela.costa@email.com',   'Gabriela Costa',     '$2a$10$bnYJsQKQ735u0V8tk/D5ku1I6zYF/dv/176iWedeD7WIO4u6wAqyG', NULL, false, true),
+(8,   1, INTERVAL '3 days','2026-10-19 14:00:00', NULL,                  'Estudando para certificações.',          'henrique.duarte@email.com',  'Henrique Duarte',     '$2a$10$bnYJsQKQ735u0V8tk/D5ku1I6zYF/dv/176iWedeD7WIO4u6wAqyG', NULL, false, true),
+(9,  15, INTERVAL '1 day', '2026-10-21 22:45:00', '2026-10-27 23:59:00', 'Gosto de tecnologia e jardinagem.',       'isabela.martins@email.com',  'Isabela Martins',    '$2a$10$bnYJsQKQ735u0V8tk/D5ku1I6zYF/dv/176iWedeD7WIO4u6wAqyG', NULL, false, true),
+(10,  7, INTERVAL '1 day', '2026-10-22 05:50:00', '2026-10-26 23:59:00', 'Instrutor de yoga.',                      'joao.pereira@email.com',     'João Pereira',       '$2a$10$bnYJsQKQ735u0V8tk/D5ku1I6zYF/dv/176iWedeD7WIO4u6wAqyG', NULL, false, true);
 
 -- ---------------------------------------------------------------------
 -- COMUNIDADE
@@ -177,10 +179,10 @@ INSERT INTO sub_meta (id, id_meta, pos, concluido, dt_inicio, dt_fim, titulo) VA
 -- As senhas abaixo são apenas textos fictícios, NÃO são hashes reais.
 -- streak_status só aceita 0, 1 ou 2.
 -- ---------------------------------------------------------------------
-INSERT INTO users (id, streak_num, streak_status, ultima_atividade, descricao, email, nome, senha) VALUES
-(1, 4, 1, '2026-10-21 08:00:00', 'Usuário de teste 1', 'teste1@email.com', 'Teste Um',   'senha_fake_1'),
-(2, 0, 0, NULL,                  'Usuário de teste 2', 'teste2@email.com', 'Teste Dois', 'senha_fake_2'),
-(3, 9, 2, '2026-10-22 07:30:00', 'Usuário de teste 3', 'teste3@email.com', 'Teste Três', 'senha_fake_3');
+-- INSERT INTO users (id, streak_num, streak_status, ultima_atividade, descricao, email, nome, senha) VALUES
+-- (1, 4, 1, '2026-10-21 08:00:00', 'Usuário de teste 1', 'teste1@email.com', 'Teste Um',   'senha_fake_1'),
+-- (2, 0, 0, NULL,                  'Usuário de teste 2', 'teste2@email.com', 'Teste Dois', 'senha_fake_2'),
+-- (3, 9, 2, '2026-10-22 07:30:00', 'Usuário de teste 3', 'teste3@email.com', 'Teste Três', 'senha_fake_3');
 
 -- ---------------------------------------------------------------------
 -- Ajusta as sequences, já que os IDs foram inseridos manualmente
@@ -226,7 +228,11 @@ INSERT INTO meta (id, id_usuario, concluido, visivel, dt_inicio, dt_fim, titulo)
 (34, 9, false, true, '2026-10-15 00:00:00', '2026-12-31 23:59:00', 'Escrever 4 artigos técnicos'),
 (35, 10, true, true, '2026-05-01 00:00:00', '2026-08-31 23:59:00', 'Conduzir 20 sessões de meditação guiada'),
 (36, 10, false, true, '2026-09-01 00:00:00', '2026-12-15 23:59:00', 'Concluir a formação em yoga avançado'),
-(37, 10, false, false, '2026-10-10 00:00:00', NULL, 'Organizar o retiro de meditação');
+(37, 10, false, false, '2026-10-10 00:00:00', NULL, 'Organizar o retiro de meditação'),
+(38, 1, true, true,  '2026-02-01 00:00:00', '2026-05-01 23:59:00', 'Completar primeiros 5 km sem caminhar'),
+(39, 1, true, false, '2026-05-10 00:00:00', '2026-07-15 23:59:00', 'Correr sob chuva pela primeira vez'),
+(40, 1, true, false, '2026-07-20 00:00:00', '2026-09-10 23:59:00', 'Completar circuito de subidas'),
+(41, 1, true, false, '2026-08-01 00:00:00', '2026-09-01 23:59:00', 'Desafio 30 dias de café sem açúcar');
 
 INSERT INTO sub_meta (id, id_meta, pos, concluido, dt_inicio, dt_fim, titulo) VALUES
 (11, 6, 1, true, '2026-01-05 00:00:00', '2026-02-04 23:59:00', 'Montar planilha de treinos'),
@@ -318,7 +324,13 @@ INSERT INTO sub_meta (id, id_meta, pos, concluido, dt_inicio, dt_fim, titulo) VA
 (97, 36, 3, false, '2026-10-25 00:00:00', NULL, 'Fazer a prova final'),
 (98, 37, 1, true, '2026-10-10 00:00:00', '2026-10-24 23:59:00', 'Reservar o sítio'),
 (99, 37, 2, false, '2026-10-25 00:00:00', NULL, 'Montar a programação'),
-(100, 37, 3, false, '2026-10-25 00:00:00', NULL, 'Abrir as inscrições');
+(100, 37, 3, false, '2026-10-25 00:00:00', NULL, 'Abrir as inscrições'),
+(101, 38, 1, true,  '2026-02-01 00:00:00', '2026-03-01 23:59:00', 'Treino de corrida e caminhada alternada'),
+(102, 38, 2, true,  '2026-03-02 00:00:00', '2026-05-01 23:59:00', 'Correr 5 km direto'),
+(103, 39, 1, true,  '2026-05-10 00:00:00', '2026-07-15 23:59:00', 'Comprar corta-vento impermeável'),
+(104, 40, 1, true,  '2026-07-20 00:00:00', '2026-08-10 23:59:00', 'Treino em ladeira leve'),
+(105, 40, 2, true,  '2026-08-11 00:00:00', '2026-09-10 23:59:00', 'Subir ladeira íngreme 5 vezes'),
+(106, 41, 1, true,  '2026-08-01 00:00:00', '2026-09-01 23:59:00', '30 dias consumindo café especial puro');
 
 SELECT setval('meta_id_seq',     (SELECT MAX(id) FROM meta));
 SELECT setval('sub_meta_id_seq', (SELECT MAX(id) FROM sub_meta));

@@ -11,7 +11,11 @@ import com.smallsteps.smallsteps.entity.SubMeta;
 
 public interface GoalRepository extends JpaRepository<Meta, Integer> {
 
+    List<Meta> findByUsuarioId(int idUsuario);
+
     List<Meta> findByUsuarioIdAndConcluidoFalse(int idUsuario);
+
+    List<Meta> findByUsuarioIdAndConcluidoTrue(int idUsuario);
 
     @Query("""
         select s from SubMeta s
@@ -20,4 +24,11 @@ public interface GoalRepository extends JpaRepository<Meta, Integer> {
         order by s.meta.id, s.pos
         """)
     List<SubMeta> findSubMetasByUsuario(@Param("idUsuario") int idUsuario);
+
+    @Query("""
+        select s from SubMeta s
+        where s.meta.usuario.id = :idUsuario
+        order by s.meta.id, s.pos
+        """)
+    List<SubMeta> findAllSubMetasByUsuario(@Param("idUsuario") int idUsuario);
 }
