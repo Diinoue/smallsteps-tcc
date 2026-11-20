@@ -6,6 +6,7 @@ import { StatusBar } from 'expo-status-bar';
 import 'react-native-reanimated';
 
 import { useColorScheme } from '@/hooks/use-color-scheme';
+import { ProfileProvider } from '../context/ProfileContext';
 import { loginService } from '../services/loginService';
 
 export const unstable_settings = {
@@ -43,18 +44,22 @@ export default function RootLayout() {
 
   return (
     <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-      <Stack>
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen name="(auth)" options={{ headerShown: false }} />
-        <Stack.Screen name="goal/view/[id]" options={{ headerShown: false }} />
-        <Stack.Screen name="goal/edit/[id]" options={{ headerShown: false }} />
-        <Stack.Screen name="goal/add/index" options={{ headerShown: false }} />
-        <Stack.Screen name="(community)/addCommunity" options={{ headerShown: false }} />
-        <Stack.Screen name="(community)/newCommunity" options={{ headerShown: false }} />
-        <Stack.Screen name="(community)/findCommunity" options={{ headerShown: false }} />
-        <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'Modal' }} />
-      </Stack>
-      <StatusBar style="auto" />
+      <ProfileProvider>
+        <Stack>
+          <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+          <Stack.Screen name="(auth)" options={{ headerShown: false }} />
+          <Stack.Screen name="goal/view/[id]" options={{ headerShown: false }} />
+          <Stack.Screen name="goal/edit/[id]" options={{ headerShown: false }} />
+          <Stack.Screen name="goal/add/index" options={{ headerShown: false }} />
+          <Stack.Screen name="(community)/addCommunity" options={{ headerShown: false }} />
+          <Stack.Screen name="(community)/newCommunity" options={{ headerShown: false }} />
+          <Stack.Screen name="(community)/findCommunity" options={{ headerShown: false }} />
+          <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'Modal' }} />
+          <Stack.Screen name="profile/edit" options={{ headerShown: false }} />
+          <Stack.Screen name="profile/[id]" options={{ headerShown: false }} />
+        </Stack>
+        <StatusBar style="auto" />
+      </ProfileProvider>
     </ThemeProvider>
   );
 }

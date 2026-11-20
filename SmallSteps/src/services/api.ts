@@ -13,8 +13,11 @@ const getBaseUrl = (): string => {
   }
 
   const host = Constants.expoConfig?.hostUri?.split(':')[0];
-  // Se por algum motivo não encontrar o host, usa localhost como fallback
-  return host ? `http://${host}:8080` : 'http://localhost:8080';
+  if (host) {
+    return `http://${host}:8080`;
+  }
+  // No emulador Android, 10.0.2.2 acessa o localhost da máquina host
+  return Platform.OS === 'android' ? 'http://10.0.2.2:8080' : 'http://localhost:8080';
 };
 
 export const api = axios.create({
@@ -27,15 +30,16 @@ export const api = axios.create({
 
 // Interceptor para injetar o JWT nas requisições
 api.interceptors.request.use(async (config) => {
-  // rotas que nao precisa enviar rotas
-  const rotasPublicas = ['/users', '/login'];
-  const ehRotaPublica = rotasPublicas.some(rota => config.url?.includes(rota));
+  // Apenas cadastro de novo usuário (POST /users) e login não precisam de JWT
+  const ehCadastro = config.method?.toLowerCase() === 'post' && (config.url === '/users' || config.url === '/users/');
+  const ehLogin = config.url?.includes('/login');
+  const ehRotaPublica = ehCadastro || ehLogin;
 
   if (!ehRotaPublica) {
     const token = await SecureStore.getItemAsync('token');
     if (token && config.headers) {
-    config.headers.Authorization = `Bearer ${token}`;
-  }
+      config.headers.Authorization = `Bearer ${token}`;
+    }
   }
   
   return config;
