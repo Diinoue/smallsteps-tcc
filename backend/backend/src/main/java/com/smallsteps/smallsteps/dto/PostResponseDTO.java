@@ -82,7 +82,7 @@ public class PostResponseDTO {
             this.author = new PostAuthorDTO(
                 post.getUsuario().getId(),
                 post.getUsuario().getNome(),
-                null,
+                post.getUsuario().getFoto(),
                 streakDays
             );
         }

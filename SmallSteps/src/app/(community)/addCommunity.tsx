@@ -50,7 +50,7 @@ export default function AddCommunity() {
   };
 
   const handleFindCommunity = () => {
-    Alert.alert('Buscar Comunidade', 'Funcionalidade para explorar e buscar comunidades.');
+    router.push('/(community)/findCommunity' as any);
   };
 
   const handleCreateCommunity = () => {

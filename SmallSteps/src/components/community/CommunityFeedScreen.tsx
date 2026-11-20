@@ -4,6 +4,7 @@ import {
   Alert,
   FlatList,
   KeyboardAvoidingView,
+  Modal,
   Platform,
   RefreshControl,
   StatusBar,
@@ -11,6 +12,7 @@ import {
   Text,
   TextInput,
   TouchableOpacity,
+  TouchableWithoutFeedback,
   View,
 } from 'react-native';
 import { Image } from 'expo-image';
@@ -25,26 +27,34 @@ import { communityService, uploadMedia } from '@/src/services/communityService';
 import { PostCard } from './PostCard';
 import { MediaViewer } from './MediaViewer';
 
+export type RoleType = 'DONO' | 'ADMIN' | 'MEMBRO';
+
 export interface CommunityFeedScreenProps {
   communityId?: number | string;
   communityName?: string;
+  userRole?: 'DONO' | 'ADMINISTRADOR' | 'MEMBRO' | 'ADMIN' | string;
   onBackPress?: () => void;
   onSearchPress?: () => void;
   onLocationPress?: () => void;
   onEventsPress?: () => void;
   onMembersPress?: () => void;
   onSettingsPress?: () => void;
+  onEditCommunityPress?: () => void;
+  onLeaveCommunity?: () => void;
 }
 
 export function CommunityFeedScreen({
   communityId = 'default',
   communityName = 'Grupo #1 musica',
+  userRole = 'MEMBRO',
   onBackPress,
   onSearchPress,
   onLocationPress,
   onEventsPress,
   onMembersPress,
   onSettingsPress,
+  onEditCommunityPress,
+  onLeaveCommunity,
 }: CommunityFeedScreenProps) {
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
@@ -67,6 +77,102 @@ export function CommunityFeedScreen({
   const [selectedMimeType, setSelectedMimeType] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [viewerPost, setViewerPost] = useState<Post | null>(null);
+  const [isSettingsModalVisible, setIsSettingsModalVisible] = useState(false);
+  const [selectedPostForOptions, setSelectedPostForOptions] = useState<Post | null>(null);
+  const [isLeaving, setIsLeaving] = useState(false);
+  const [activeRole, setActiveRole] = useState<string>(userRole || 'MEMBRO');
+
+  useEffect(() => {
+    setActiveRole(userRole || 'MEMBRO');
+  }, [userRole]);
+
+  useEffect(() => {
+    async function fetchUserRole() {
+      if (!communityId || communityId === 'default') return;
+      const role = await communityService.getUserRole(communityId, 1);
+      if (role) {
+        setActiveRole(role);
+      }
+    }
+    fetchUserRole();
+  }, [communityId]);
+
+  const normalizedRole: RoleType = (() => {
+    if (!activeRole) return 'MEMBRO';
+    const upper = activeRole.trim().toUpperCase();
+    if (upper === 'DONO' || upper === 'OWNER') return 'DONO';
+    if (upper === 'ADMINISTRADOR' || upper === 'ADMIN') return 'ADMIN';
+    return 'MEMBRO';
+  })();
+
+  const getRoleLabel = (role: RoleType): string => {
+    switch (role) {
+      case 'DONO':
+        return 'Dono';
+      case 'ADMIN':
+        return 'Administrador';
+      case 'MEMBRO':
+        return 'Membro';
+    }
+  };
+
+  const handleOpenSettings = () => {
+    if (onSettingsPress) {
+      onSettingsPress();
+    } else {
+      setIsSettingsModalVisible(true);
+    }
+  };
+
+  const handleEditCommunity = () => {
+    setIsSettingsModalVisible(false);
+    if (onEditCommunityPress) {
+      onEditCommunityPress();
+    } else {
+      Alert.alert(
+        'Editar Comunidade',
+        'A página de edição da comunidade será implementada em breve.'
+      );
+    }
+  };
+
+  const handleLeaveCommunity = () => {
+    setIsSettingsModalVisible(false);
+    Alert.alert(
+      'Sair da Comunidade',
+      `Tem certeza que deseja sair da comunidade "${communityName}"?`,
+      [
+        { text: 'Cancelar', style: 'cancel' },
+        {
+          text: 'Sair',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              setIsLeaving(true);
+              await communityService.leaveCommunity(communityId);
+              Alert.alert('Sucesso', 'Você saiu da comunidade com sucesso.', [
+                {
+                  text: 'OK',
+                  onPress: () => {
+                    if (onLeaveCommunity) {
+                      onLeaveCommunity();
+                    } else if (onBackPress) {
+                      onBackPress();
+                    }
+                  },
+                },
+              ]);
+            } catch (error) {
+              console.error('Erro ao sair da comunidade:', error);
+              Alert.alert('Erro', 'Não foi possível sair da comunidade. Tente novamente.');
+            } finally {
+              setIsLeaving(false);
+            }
+          },
+        },
+      ]
+    );
+  };
 
   const loadPosts = useCallback(async (showLoading = true) => {
     if (showLoading) setIsLoading(true);
@@ -157,11 +263,32 @@ export function CommunityFeedScreen({
     }
   };
 
+  const confirmDeletePost = (post: Post) => {
+    Alert.alert(
+      'Excluir Publicação',
+      'Tem certeza de que deseja excluir esta publicação? Esta ação não pode ser desfeita.',
+      [
+        { text: 'Cancelar', style: 'cancel' },
+        {
+          text: 'Excluir',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await communityService.deletePost(communityId, post.id);
+              setPosts((prev) => prev.filter((p) => p.id !== post.id));
+              Alert.alert('Sucesso', 'Publicação excluída com sucesso.');
+            } catch (error) {
+              console.error('Erro ao excluir post:', error);
+              Alert.alert('Erro', 'Não foi possível excluir a publicação. Tente novamente.');
+            }
+          },
+        },
+      ]
+    );
+  };
+
   const handlePostOptions = (post: Post) => {
-    Alert.alert('Opções do Post', `Ações para o post de ${post.author.name}`, [
-      { text: 'Denunciar', style: 'destructive' },
-      { text: 'Fechar', style: 'cancel' },
-    ]);
+    setSelectedPostForOptions(post);
   };
 
   const handleComments = (post: Post) => {
@@ -229,7 +356,7 @@ export function CommunityFeedScreen({
             </TouchableOpacity>
 
             <TouchableOpacity
-              onPress={onSettingsPress}
+              onPress={handleOpenSettings}
               hitSlop={{ top: 8, bottom: 8, left: 6, right: 6 }}
               style={styles.actionIcon}
             >
@@ -255,10 +382,31 @@ export function CommunityFeedScreen({
                 onMediaPress={handleMediaPress}
               />
             )}
-            contentContainerStyle={styles.feedContent}
+            contentContainerStyle={[
+              styles.feedContent,
+              posts.length === 0 && styles.emptyFeedContent,
+            ]}
             showsVerticalScrollIndicator={false}
             keyboardShouldPersistTaps="handled"
             keyboardDismissMode="on-drag"
+            ListEmptyComponent={
+              <View style={styles.emptyContainer}>
+                <View
+                  style={[
+                    styles.emptyIconCircle,
+                    { backgroundColor: isDark ? '#1F2937' : '#F0FDF4' },
+                  ]}
+                >
+                  <MaterialIcons name="chat-bubble-outline" size={38} color={primaryColor} />
+                </View>
+                <Text style={[styles.emptyTitle, { color: textColor }]}>
+                  Nenhuma publicação ainda
+                </Text>
+                <Text style={[styles.emptySubtitle, { color: textMuted }]}>
+                  Seja o primeiro a compartilhar algo com a comunidade! Digite uma mensagem abaixo para iniciar a conversa.
+                </Text>
+              </View>
+            }
             refreshControl={
               <RefreshControl
                 refreshing={isRefreshing}
@@ -368,6 +516,261 @@ export function CommunityFeedScreen({
             onClose={() => setViewerPost(null)}
           />
         )}
+
+        {/* Modal de Configurações da Comunidade por Cargo */}
+        <Modal
+          visible={isSettingsModalVisible}
+          transparent={true}
+          animationType="fade"
+          onRequestClose={() => setIsSettingsModalVisible(false)}
+        >
+          <TouchableWithoutFeedback onPress={() => setIsSettingsModalVisible(false)}>
+            <View style={styles.settingsModalOverlay}>
+              <TouchableWithoutFeedback>
+                <View
+                  style={[
+                    styles.settingsModalContent,
+                    {
+                      backgroundColor: isDark ? '#1F2937' : '#FFFFFF',
+                      borderColor,
+                    },
+                  ]}
+                >
+                  {/* Handle bar */}
+                  <View style={styles.settingsHandleBar} />
+
+                  {/* Header com título */}
+                  <View style={styles.settingsHeader}>
+                    <Text style={[styles.settingsTitle, { color: textColor }]}>
+                      Configurações da Comunidade
+                    </Text>
+                  </View>
+
+                  <Text
+                    style={[styles.settingsCommunityName, { color: textMuted }]}
+                    numberOfLines={1}
+                  >
+                    {communityName}
+                  </Text>
+
+                  <View style={[styles.settingsDivider, { backgroundColor: borderColor }]} />
+
+                  {/* Opções de Ação */}
+                  <View style={styles.settingsActionsList}>
+                    {/* Ação 1: Editar Comunidade (apenas para DONO e ADMIN) */}
+                    {(normalizedRole === 'DONO' || normalizedRole === 'ADMIN') && (
+                      <TouchableOpacity
+                        style={[
+                          styles.settingsActionItem,
+                          { backgroundColor: isDark ? '#263238' : '#F9FAFB', borderColor },
+                        ]}
+                        onPress={handleEditCommunity}
+                        activeOpacity={0.7}
+                      >
+                        <View
+                          style={[
+                            styles.settingsActionIconBox,
+                            { backgroundColor: isDark ? '#143822' : '#E8F8EE' },
+                          ]}
+                        >
+                          <MaterialIcons name="edit" size={22} color={primaryColor} />
+                        </View>
+                        <View style={styles.settingsActionTextBox}>
+                          <Text style={[styles.settingsActionTitle, { color: textColor }]}>
+                            Editar Comunidade
+                          </Text>
+                          <Text style={[styles.settingsActionSubTitle, { color: textMuted }]}>
+                            Alterar nome, fotos, descrição e configurações
+                          </Text>
+                        </View>
+                        <MaterialIcons name="chevron-right" size={24} color={textMuted} />
+                      </TouchableOpacity>
+                    )}
+
+                    {/* Ação 2: Sair da Comunidade (apenas para ADMIN e MEMBRO, NÃO para DONO) */}
+                    {(normalizedRole === 'ADMIN' || normalizedRole === 'MEMBRO') && (
+                      <TouchableOpacity
+                        style={[
+                          styles.settingsActionItem,
+                          {
+                            backgroundColor: isDark ? '#321C1C' : '#FEF2F2',
+                            borderColor: isDark ? '#7F1D1D' : '#FEE2E2',
+                          },
+                        ]}
+                        onPress={handleLeaveCommunity}
+                        activeOpacity={0.7}
+                        disabled={isLeaving}
+                      >
+                        <View
+                          style={[
+                            styles.settingsActionIconBox,
+                            { backgroundColor: isDark ? '#4C1D1D' : '#FEE2E2' },
+                          ]}
+                        >
+                          <MaterialIcons name="exit-to-app" size={22} color="#EF4444" />
+                        </View>
+                        <View style={styles.settingsActionTextBox}>
+                          <Text style={[styles.settingsActionTitle, { color: '#EF4444' }]}>
+                            Sair da Comunidade
+                          </Text>
+                          <Text
+                            style={[
+                              styles.settingsActionSubTitle,
+                              { color: isDark ? '#FCA5A5' : '#991B1B' },
+                            ]}
+                          >
+                            Deixar de participar deste grupo
+                          </Text>
+                        </View>
+                        <MaterialIcons name="chevron-right" size={24} color="#EF4444" />
+                      </TouchableOpacity>
+                    )}
+                  </View>
+
+                  {/* Botão Cancelar */}
+                  <TouchableOpacity
+                    style={[
+                      styles.settingsCancelButton,
+                      { borderColor, backgroundColor: isDark ? '#374151' : '#F3F4F6' },
+                    ]}
+                    onPress={() => setIsSettingsModalVisible(false)}
+                    activeOpacity={0.7}
+                  >
+                    <Text style={[styles.settingsCancelButtonText, { color: textColor }]}>
+                      Cancelar
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+              </TouchableWithoutFeedback>
+            </View>
+          </TouchableWithoutFeedback>
+        </Modal>
+
+        {/* Modal de Opções do Post (Custom Styled Bottom Sheet) */}
+        <Modal
+          visible={!!selectedPostForOptions}
+          transparent={true}
+          animationType="fade"
+          onRequestClose={() => setSelectedPostForOptions(null)}
+        >
+          <TouchableWithoutFeedback onPress={() => setSelectedPostForOptions(null)}>
+            <View style={styles.settingsModalOverlay}>
+              <TouchableWithoutFeedback>
+                <View
+                  style={[
+                    styles.settingsModalContent,
+                    {
+                      backgroundColor: isDark ? '#1F2937' : '#FFFFFF',
+                      borderColor,
+                    },
+                  ]}
+                >
+                  {/* Handle bar */}
+                  <View style={styles.settingsHandleBar} />
+
+                  {/* Header */}
+                  <View style={styles.settingsHeader}>
+                    <Text style={[styles.settingsTitle, { color: textColor }]}>
+                      Opções da Publicação
+                    </Text>
+                  </View>
+
+                  {selectedPostForOptions && (
+                    <Text
+                      style={[styles.settingsCommunityName, { color: textMuted }]}
+                      numberOfLines={1}
+                    >
+                      {String(selectedPostForOptions.author?.id) === '1' ||
+                      selectedPostForOptions.author?.id === 1 ||
+                      selectedPostForOptions.author?.id === 'me'
+                        ? 'Sua publicação'
+                        : `Publicado por ${selectedPostForOptions.author?.name || 'Membro'}`}
+                    </Text>
+                  )}
+
+                  <View style={[styles.settingsDivider, { backgroundColor: borderColor }]} />
+
+                  {/* Lista de Ações */}
+                  <View style={styles.settingsActionsList}>
+                    {selectedPostForOptions &&
+                    (String(selectedPostForOptions.author?.id) === '1' ||
+                      selectedPostForOptions.author?.id === 1 ||
+                      selectedPostForOptions.author?.id === 'me' ||
+                      normalizedRole === 'DONO' ||
+                      normalizedRole === 'ADMIN') ? (
+                      <TouchableOpacity
+                        style={[
+                          styles.settingsActionItem,
+                          {
+                            backgroundColor: isDark ? '#321C1C' : '#FEF2F2',
+                            borderColor: isDark ? '#7F1D1D' : '#FEE2E2',
+                          },
+                        ]}
+                        onPress={() => {
+                          const postToDelete = selectedPostForOptions;
+                          setSelectedPostForOptions(null);
+                          if (postToDelete) {
+                            confirmDeletePost(postToDelete);
+                          }
+                        }}
+                        activeOpacity={0.7}
+                      >
+                        <View
+                          style={[
+                            styles.settingsActionIconBox,
+                            { backgroundColor: isDark ? '#4C1D1D' : '#FEE2E2' },
+                          ]}
+                        >
+                          <MaterialIcons name="delete-outline" size={22} color="#EF4444" />
+                        </View>
+                        <View style={styles.settingsActionTextBox}>
+                          <Text style={[styles.settingsActionTitle, { color: '#EF4444' }]}>
+                            Excluir Publicação
+                          </Text>
+                          <Text
+                            style={[
+                              styles.settingsActionSubTitle,
+                              { color: isDark ? '#FCA5A5' : '#991B1B' },
+                            ]}
+                          >
+                            Esta ação removerá a publicação permanentemente
+                          </Text>
+                        </View>
+                        <MaterialIcons name="chevron-right" size={24} color="#EF4444" />
+                      </TouchableOpacity>
+                    ) : (
+                      <View
+                        style={[
+                          styles.noActionsBox,
+                          { backgroundColor: isDark ? '#263238' : '#F3F4F6' },
+                        ]}
+                      >
+                        <MaterialIcons name="info-outline" size={20} color={textMuted} />
+                        <Text style={[styles.noActionsText, { color: textMuted }]}>
+                          Você não tem permissão para gerenciar esta publicação.
+                        </Text>
+                      </View>
+                    )}
+                  </View>
+
+                  {/* Botão Cancelar */}
+                  <TouchableOpacity
+                    style={[
+                      styles.settingsCancelButton,
+                      { borderColor, backgroundColor: isDark ? '#374151' : '#F3F4F6' },
+                    ]}
+                    onPress={() => setSelectedPostForOptions(null)}
+                    activeOpacity={0.7}
+                  >
+                    <Text style={[styles.settingsCancelButtonText, { color: textColor }]}>
+                      Cancelar
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+              </TouchableWithoutFeedback>
+            </View>
+          </TouchableWithoutFeedback>
+        </Modal>
       </KeyboardAvoidingView>
     </SafeAreaView>
   );
@@ -421,6 +824,37 @@ const styles = StyleSheet.create({
   },
   feedContent: {
     paddingBottom: 24,
+  },
+  emptyFeedContent: {
+    flexGrow: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 32,
+  },
+  emptyContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 40,
+    maxWidth: 320,
+  },
+  emptyIconCircle: {
+    width: 76,
+    height: 76,
+    borderRadius: 38,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 16,
+  },
+  emptyTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    textAlign: 'center',
+    marginBottom: 8,
+  },
+  emptySubtitle: {
+    fontSize: 14,
+    lineHeight: 20,
+    textAlign: 'center',
   },
   bottomBarContainer: {
     flexDirection: 'row',
@@ -500,5 +934,124 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0,0,0,0.6)',
     justifyContent: 'center',
     alignItems: 'center',
+  },
+
+  // Modal de Configurações
+  settingsModalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.55)',
+    justifyContent: 'flex-end',
+  },
+  settingsModalContent: {
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    borderTopWidth: 1,
+    paddingHorizontal: 20,
+    paddingTop: 12,
+    paddingBottom: 28,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: -4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 10,
+    elevation: 10,
+  },
+  settingsHandleBar: {
+    width: 44,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: '#9CA3AF',
+    alignSelf: 'center',
+    marginBottom: 14,
+  },
+  settingsHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  settingsTitle: {
+    fontSize: 18,
+    fontWeight: '800',
+  },
+  roleBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 12,
+    gap: 4,
+  },
+  roleBadgeDono: {
+    backgroundColor: '#FEF3C7',
+  },
+  roleBadgeAdmin: {
+    backgroundColor: '#EFF6FF',
+  },
+  roleBadgeMembro: {
+    backgroundColor: '#F3F4F6',
+  },
+  roleBadgeText: {
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  settingsCommunityName: {
+    fontSize: 13,
+    marginTop: 2,
+    marginBottom: 12,
+  },
+  settingsDivider: {
+    height: 1,
+    marginBottom: 16,
+  },
+  settingsActionsList: {
+    gap: 12,
+    marginBottom: 16,
+  },
+  settingsActionItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderRadius: 14,
+    padding: 12,
+  },
+  settingsActionIconBox: {
+    width: 42,
+    height: 42,
+    borderRadius: 21,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 12,
+  },
+  settingsActionTextBox: {
+    flex: 1,
+  },
+  settingsActionTitle: {
+    fontSize: 15,
+    fontWeight: '700',
+  },
+  settingsActionSubTitle: {
+    fontSize: 12,
+    marginTop: 2,
+  },
+  settingsCancelButton: {
+    borderWidth: 1,
+    borderRadius: 24,
+    height: 48,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  settingsCancelButtonText: {
+    fontSize: 15,
+    fontWeight: '700',
+  },
+  noActionsBox: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 16,
+    borderRadius: 14,
+    gap: 10,
+  },
+  noActionsText: {
+    fontSize: 13,
+    flex: 1,
   },
 });

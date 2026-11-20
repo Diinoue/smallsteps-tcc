@@ -29,6 +29,9 @@ public class Comunidade {
     @Column(name = "foto")
     private String foto;
 
+    @Column(name = "descricao")
+    private String descricao;
+
     public Comunidade() {}
 
     public Comunidade(int id, String nome, boolean privado, LocalDateTime dtCriacao, String foto) {
@@ -37,6 +40,15 @@ public class Comunidade {
         this.privado = privado;
         this.dtCriacao = dtCriacao;
         this.foto = foto;
+    }
+
+    public Comunidade(int id, String nome, boolean privado, LocalDateTime dtCriacao, String foto, String descricao) {
+        this.id = id;
+        this.nome = nome;
+        this.privado = privado;
+        this.dtCriacao = dtCriacao;
+        this.foto = foto;
+        this.descricao = descricao;
     }
 
     public int getId() {
@@ -77,5 +89,13 @@ public class Comunidade {
 
     public void setFoto(String foto) {
         this.foto = foto;
+    }
+
+    public String getDescricao() {
+        return descricao;
+    }
+
+    public void setDescricao(String descricao) {
+        this.descricao = descricao;
     }
 }

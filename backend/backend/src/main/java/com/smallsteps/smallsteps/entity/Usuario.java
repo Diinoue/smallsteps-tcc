@@ -31,6 +31,9 @@ public class Usuario {
     @Column(name = "senha")
     private String senha;
 
+    @Column(name = "foto")
+    private String foto;
+
     @Column(name = "descricao")
     private String descricao;
 
@@ -132,5 +135,13 @@ public class Usuario {
 
     public void setSenha(String senha) {
         this.senha = senha;
+    }
+
+    public String getFoto() {
+        return foto;
+    }
+
+    public void setFoto(String foto) {
+        this.foto = foto;
     }
 }

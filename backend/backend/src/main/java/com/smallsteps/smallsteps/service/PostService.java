@@ -4,8 +4,10 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
 
 import com.smallsteps.smallsteps.dto.CriarPostRequestDTO;
 import com.smallsteps.smallsteps.dto.PostResponseDTO;
@@ -77,5 +79,17 @@ public class PostService {
 
         Post salvo = postRepository.save(post);
         return new PostResponseDTO(salvo, usuario.getStreakNum(), 0);
+    }
+
+    @Transactional
+    public void deletePost(int communityId, int postId) {
+        Post post = postRepository.findById(postId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Post não encontrado"));
+
+        if (post.getComunidade().getId() != communityId) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Post não pertence a esta comunidade");
+        }
+
+        postRepository.delete(post);
     }
 }

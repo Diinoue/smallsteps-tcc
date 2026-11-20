@@ -7,27 +7,35 @@
 -- ---------------------------------------------------------------------
 -- USUARIO
 -- ---------------------------------------------------------------------
-INSERT INTO usuario (id, streak_num, intervalo_atividade, ultima_atividade, ultimo_prazo, descricao, email, nome, senha) VALUES
-(1,  12, INTERVAL '1 day', '2026-10-21 08:15:00', '2026-10-25 23:59:00', 'Apaixonada por corrida e café.',          'ana.souza@email.com',        'Ana Souza',          '$2a$12$7xckK2W3HgDhvFgtc4oVmOb58rxYc0836PAdPdGouGl9Di.IRVgoO'),
-(2,   5, INTERVAL '3 day', '2026-10-21 19:40:00', '2026-10-24 23:59:00', 'Organizo treinos nos fins de semana.',    'bruno.lima@email.com',       'Bruno Lima',         '$2a$12$QdtyIQlnExPEsKDg6ULdBeamK.FT2f0eVLAEYOrZF51v57ae/oYqa'),
-(3,  30, INTERVAL '7 day', '2026-10-22 07:05:00', '2026-10-30 23:59:00', 'Leio um livro por semana.',               'carla.mendes@email.com',     'Carla Mendes',       '$2a$12$2AMCNug677FPfXL4ulDMAuwBVbm09ChCMCmYMaOTZ6Go.Nr9NGeEe'),
-(4,   0, INTERVAL '7 days','2026-10-18 21:00:00', NULL,                  'Desenvolvedor backend em transição.',    'diego.ferreira@email.com',   'Diego Ferreira',      '$2a$12$c4G5ML6AsZH09mQw./OcF.a1KpuLW0lo1RqneLrwXw8dwMycleXky'),
-(5,   8, INTERVAL '7 day', '2026-10-21 06:30:00', '2026-10-28 23:59:00', 'Meditação todas as manhãs.',              'elisa.rocha@email.com',      'Elisa Rocha',        '$2a$12$aYQeMEt4yff//GTwo5Takukc1vuBdPLNKewosKMcTyWVDOzqG1c4.'),
-(6,   3, INTERVAL '28 day', '2026-10-20 18:20:00', '2026-10-23 23:59:00', NULL,                                      'felipe.alves@email.com',     'Felipe Alves',       '$2a$12$0Ik06mWY2.UB3gHaZtRD.uv0IqQe8hUbZrAC0GmhpJQUYJ8.dLFXa'),
-(7,  21, INTERVAL '28 day', '2026-10-22 09:10:00', '2026-11-02 23:59:00', 'Cultivo temperos na varanda.',            'gabriela.costa@email.com',   'Gabriela Costa',     '$2a$12$caxCqdW9mIvzCKJ9cNUhge6JByvyXBu7EMip6aWz8zbgl2T8fTHsO'),
-(8,   1, INTERVAL '28 days','2026-10-19 14:00:00', NULL,                  'Estudando para certificações.',          'henrique.duarte@email.com',  'Henrique Duarte',     '$2a$12$ga/inMVIpAxEJOGi/BRADuxglv7cI3MrpVM50Tqjy1YxTFNJDf8i2'),
-(9,  15, INTERVAL '12 day', '2026-10-21 22:45:00', '2026-10-27 23:59:00', 'Gosto de tecnologia e jardinagem.',       'isabela.martins@email.com',  'Isabela Martins',    '$2a$12$a6Xo4xPEhQpIzvAk.ZOUmeGFMdUtuY.fxthPNu.0WJB/l.vGbFfem'),
-(10,  7, INTERVAL '14 day', '2026-10-22 05:50:00', '2026-10-26 23:59:00', 'Instrutor de yoga.',                      'joao.pereira@email.com',     'João Pereira',       '$2a$12$Ko1Na7Ai.NjvuPOI4xXWQ.LfhZj9DbVv45YKzobrfoJmX.FtuCctS');
+INSERT INTO usuario (id, streak_num, intervalo_atividade, ultima_atividade, ultimo_prazo, descricao, email, nome, senha, foto) VALUES
+(1,  12, INTERVAL '1 day', '2026-10-21 08:15:00', '2026-10-25 23:59:00', 'Apaixonada por corrida e café.',          'ana.souza@email.com',        'Ana Souza',          '$2a$12$7xckK2W3HgDhvFgtc4oVmOb58rxYc0836PAdPdGouGl9Di.IRVgoO', 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150&auto=format&fit=crop&q=80'),
+(2,   5, INTERVAL '3 day', '2026-10-21 19:40:00', '2026-10-24 23:59:00', 'Organizo treinos nos fins de semana.',    'bruno.lima@email.com',       'Bruno Lima',         '$2a$12$QdtyIQlnExPEsKDg6ULdBeamK.FT2f0eVLAEYOrZF51v57ae/oYqa', 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80'),
+(3,  30, INTERVAL '7 day', '2026-10-22 07:05:00', '2026-10-30 23:59:00', 'Leio um livro por semana.',               'carla.mendes@email.com',     'Carla Mendes',       '$2a$12$2AMCNug677FPfXL4ulDMAuwBVbm09ChCMCmYMaOTZ6Go.Nr9NGeEe', 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=150&auto=format&fit=crop&q=80'),
+(4,   0, INTERVAL '7 days','2026-10-18 21:00:00', NULL,                  'Desenvolvedor backend em transição.',    'diego.ferreira@email.com',   'Diego Ferreira',      '$2a$12$c4G5ML6AsZH09mQw./OcF.a1KpuLW0lo1RqneLrwXw8dwMycleXky', 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&auto=format&fit=crop&q=80'),
+(5,   8, INTERVAL '7 day', '2026-10-21 06:30:00', '2026-10-28 23:59:00', 'Meditação todas as manhãs.',              'elisa.rocha@email.com',      'Elisa Rocha',        '$2a$12$aYQeMEt4yff//GTwo5Takukc1vuBdPLNKewosKMcTyWVDOzqG1c4.', 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=150&auto=format&fit=crop&q=80'),
+(6,   3, INTERVAL '28 day', '2026-10-20 18:20:00', '2026-10-23 23:59:00', NULL,                                      'felipe.alves@email.com',     'Felipe Alves',       '$2a$12$0Ik06mWY2.UB3gHaZtRD.uv0IqQe8hUbZrAC0GmhpJQUYJ8.dLFXa', 'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=150&auto=format&fit=crop&q=80'),
+(7,  21, INTERVAL '28 day', '2026-10-22 09:10:00', '2026-11-02 23:59:00', 'Cultivo temperos na varanda.',            'gabriela.costa@email.com',   'Gabriela Costa',     '$2a$12$caxCqdW9mIvzCKJ9cNUhge6JByvyXBu7EMip6aWz8zbgl2T8fTHsO', 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80'),
+(8,   1, INTERVAL '28 days','2026-10-19 14:00:00', NULL,                  'Estudando para certificações.',          'henrique.duarte@email.com',  'Henrique Duarte',     '$2a$12$ga/inMVIpAxEJOGi/BRADuxglv7cI3MrpVM50Tqjy1YxTFNJDf8i2', 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=150&auto=format&fit=crop&q=80'),
+(9,  15, INTERVAL '12 day', '2026-10-21 22:45:00', '2026-10-27 23:59:00', 'Gosto de tecnologia e jardinagem.',       'isabela.martins@email.com',  'Isabela Martins',    '$2a$12$a6Xo4xPEhQpIzvAk.ZOUmeGFMdUtuY.fxthPNu.0WJB/l.vGbFfem', 'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=150&auto=format&fit=crop&q=80'),
+(10,  7, INTERVAL '14 day', '2026-10-22 05:50:00', '2026-10-26 23:59:00', 'Instrutor de yoga.',                      'joao.pereira@email.com',     'João Pereira',       '$2a$12$Ko1Na7Ai.NjvuPOI4xXWQ.LfhZj9DbVv45YKzobrfoJmX.FtuCctS', 'https://images.unsplash.com/photo-1522075469751-3a6694fb2f61?w=150&auto=format&fit=crop&q=80');
 
 -- ---------------------------------------------------------------------
 -- COMUNIDADE
 -- ---------------------------------------------------------------------
 INSERT INTO comunidade (id, privado, dt_criacao, foto, nome) VALUES
-(1, false, '2026-01-10 10:00:00', 'corredores.jpg',  'Corredores de Fim de Semana'),
-(2, true,  '2026-02-15 14:30:00', 'livros.jpg',      'Clube do Livro'),
-(3, false, '2026-03-05 09:00:00', NULL,              'Devs em Estudo'),
-(4, false, '2026-04-20 16:45:00', 'horta.jpg',       'Hortas Urbanas'),
-(5, true,  '2026-05-01 07:00:00', 'meditacao.jpg',   'Meditação Diária');
+(1, false, '2026-01-10 10:00:00', 'https://images.unsplash.com/photo-1452626038306-9aae5e071dd3?w=150&auto=format&fit=crop&q=80',  'Corredores de Fim de Semana'),
+(2, true,  '2026-02-15 14:30:00', 'https://images.unsplash.com/photo-1512820790803-83ca734da794?w=150&auto=format&fit=crop&q=80',      'Clube do Livro'),
+(3, false, '2026-03-05 09:00:00', 'https://images.unsplash.com/photo-1517694712202-14dd9538aa97?w=150&auto=format&fit=crop&q=80',      'Devs em Estudo'),
+(4, false, '2026-04-20 16:45:00', 'https://images.unsplash.com/photo-1585320806297-9794b3e4eeae?w=150&auto=format&fit=crop&q=80',       'Hortas Urbanas'),
+(5, true,  '2026-05-01 07:00:00', 'https://images.unsplash.com/photo-1506126613408-eca07ce68773?w=150&auto=format&fit=crop&q=80',   'Meditação Diária'),
+(6, false, '2026-05-10 11:00:00', 'https://images.unsplash.com/photo-1520045892732-304bc3ac5d8e?w=150&auto=format&fit=crop&q=80',      'Sk8 Tarumã'),
+(7, false, '2026-05-15 15:30:00', NULL,                                                                                                    'Corredores do Tingui'),
+(8, false, '2026-05-20 09:00:00', 'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=150&auto=format&fit=crop&q=80',      'Desbravadores CWB'),
+(9, false, '2026-05-25 14:00:00', NULL,                                                                                                    'Roller Wizards'),
+(10, false, '2026-06-01 10:00:00', NULL,                                                                                                   'Hydroentusiastas'),
+(11, false, '2026-06-05 16:00:00', 'https://images.unsplash.com/photo-1579783900882-c0d3dad7b119?w=150&auto=format&fit=crop&q=80',      'StreetArt Grafite CWB'),
+(12, false, '2026-06-10 18:00:00', NULL,                                                                                                   'BookWorm'),
+(13, false, '2026-06-12 19:30:00', NULL,                                                                                                   'Badminton Bigorrilho');
 
 -- ---------------------------------------------------------------------
 -- TAG
@@ -40,7 +48,17 @@ INSERT INTO tag (id, descricao) VALUES
 (5, 'Meditação'),
 (6, 'Sustentabilidade'),
 (7, 'Produtividade'),
-(8, 'Música');
+(8, 'Música'),
+(9, 'Skate'),
+(10, 'Corrida'),
+(11, 'Casual'),
+(12, 'Escalada'),
+(13, 'Trilha'),
+(14, 'Patins'),
+(15, 'Piscina'),
+(16, 'Grafite'),
+(17, 'Arte'),
+(18, 'Badminton');
 
 -- ---------------------------------------------------------------------
 -- TAG_USUARIO (id_tag, id_usuario)
@@ -65,7 +83,15 @@ INSERT INTO tag_comunidade (id_comunidade, id_tag) VALUES
 (2, 2),
 (3, 3), (3, 7),
 (4, 6),
-(5, 5), (5, 1);
+(5, 5), (5, 1),
+(6, 9),
+(7, 10), (7, 11),
+(8, 12), (8, 13),
+(9, 14),
+(10, 15),
+(11, 16), (11, 17),
+(12, 2),
+(13, 18), (13, 4);
 
 -- ---------------------------------------------------------------------
 -- PARTICIPAM (id_comunidade, id_usuario, pontos, dt_inicio, cargo)

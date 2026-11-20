@@ -26,61 +26,41 @@ export interface CriarCommunityRequest {
   privado: boolean;
   foto?: string | null;
   tags?: string[];
+  idUsuario?: number;
+}
+
+export interface PublicCommunityItem {
+  id: number;
+  nome: string;
+  privado: boolean;
+  foto?: string | null;
+  descricao?: string;
+  tags: string[];
+  jaParticipa?: boolean;
 }
 
 const DEFAULT_COMMUNITIES: CommunityItem[] = [];
 
-let MOCK_COMMUNITY_POSTS: Record<string | number, Post[]> = {
-  default: [
-    {
-      id: 'p1',
-      communityId: 1,
-      author: {
-        id: 'u1',
-        name: 'Lagarto Voador',
-        streakDays: 315,
-        avatarUrl: null,
-      },
-      content: 'Praticando... Sugestões para melhorar?',
-      createdAt: '14/6/26',
-      mediaType: 'video',
-      mediaUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4',
-      thumbnailUrl: null,
-      aspectRatio: 16 / 9,
-      commentsCount: 4,
-    },
-    {
-      id: 'p2',
-      communityId: 1,
-      author: {
-        id: 'u2',
-        name: 'Cachorro Cansado',
-        streakDays: 98,
-        avatarUrl: null,
-      },
-      content: 'Quase lá, hoje consegui completar todas as metas sem falhas!',
-      createdAt: '14/6/26',
-      mediaType: 'text',
-      commentsCount: 1,
-    },
-    {
-      id: 'p3',
-      communityId: 1,
-      author: {
-        id: 'u3',
-        name: 'Rato Pacifista',
-        streakDays: 15,
-        avatarUrl: null,
-      },
-      content: 'Novo setup pronto para as gravações da semana 🎵',
-      createdAt: '13/6/26',
-      mediaType: 'image',
-      mediaUrl: 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=800&auto=format&fit=crop&q=80',
-      aspectRatio: 16 / 9,
-      commentsCount: 0,
-    },
-  ],
-};
+let MOCK_COMMUNITY_POSTS: Record<string | number, Post[]> = {};
+
+/**
+ * Converte qualquer caminho de imagem (URL completa, caminho relativo /uploads/..., ou nome de arquivo)
+ * em uma URL absoluta acessível pelo frontend.
+ */
+export function formatImageUrl(foto?: string | null): string | null {
+  if (!foto) return null;
+  const trimmed = foto.trim();
+  if (!trimmed) return null;
+  if (trimmed.startsWith('http://') || trimmed.startsWith('https://')) {
+    return trimmed;
+  }
+  const baseUrl = api.defaults.baseURL || '';
+  if (trimmed.startsWith('/')) {
+    return `${baseUrl}${trimmed}`;
+  }
+  // Se for apenas o nome do arquivo, direciona para /uploads/
+  return `${baseUrl}/uploads/${trimmed}`;
+}
 
 /**
  * Faz upload de uma mídia (imagem ou vídeo) para o backend.
@@ -110,10 +90,12 @@ export async function uploadMedia(fileUri: string, mimeType: string): Promise<st
 }
 
 export const communityService = {
-  async getCommunities(): Promise<CommunityItem[]> {
+  async getCommunities(userId: number = 1): Promise<CommunityItem[]> {
     try {
-      // 1. Busca participações
-      const participamRes = await api.get<ParticipamResponse[]>('/participam');
+      // 1. Busca participações do usuário logado
+      const participamRes = await api.get<ParticipamResponse[]>('/participam', {
+        params: { idUsuario: userId },
+      });
       const participacoes = participamRes.data;
 
       // 2. Busca lista de comunidades
@@ -121,11 +103,16 @@ export const communityService = {
       const comunidades = comRes.data;
 
       if (Array.isArray(participacoes) && participacoes.length > 0 && Array.isArray(comunidades)) {
+        // Garante filtro apenas para o usuário atual
+        const userParticipacoes = participacoes.filter(
+          (p) => !p.idUsuario || p.idUsuario === userId
+        );
         const comMap = new Map(comunidades.map((c) => [c.id, c]));
         const result: CommunityItem[] = [];
         const seenIds = new Set<number>();
+        const baseUrl = api.defaults.baseURL || '';
 
-        for (const p of participacoes) {
+        for (const p of userParticipacoes) {
           if (p.idComunidade && !seenIds.has(p.idComunidade)) {
             seenIds.add(p.idComunidade);
             const c = comMap.get(p.idComunidade);
@@ -134,7 +121,7 @@ export const communityService = {
                 id: c.id,
                 nome: c.nome,
                 privado: c.privado,
-                foto: c.foto,
+                foto: formatImageUrl(c.foto),
                 cargo: p.cargo,
                 pontos: p.pontos,
               });
@@ -153,7 +140,7 @@ export const communityService = {
           id: c.id,
           nome: c.nome,
           privado: c.privado,
-          foto: c.foto,
+          foto: formatImageUrl(c.foto),
         }));
       }
 
@@ -167,7 +154,7 @@ export const communityService = {
   async getCommunityPosts(communityId: number | string = 'default'): Promise<Post[]> {
     try {
       const response = await api.get<any[]>(`/community/${communityId}/posts`);
-      if (Array.isArray(response.data) && response.data.length > 0) {
+      if (Array.isArray(response.data)) {
         const baseUrl = api.defaults.baseURL || '';
         return response.data.map((p) => {
           let mediaUrl = p.mediaUrl;
@@ -180,13 +167,18 @@ export const communityService = {
             thumbnailUrl = `${baseUrl}${thumbnailUrl}`;
           }
 
+          let avatarUrl = p.author?.avatarUrl || null;
+          if (avatarUrl && avatarUrl.startsWith('/')) {
+            avatarUrl = `${baseUrl}${avatarUrl}`;
+          }
+
           return {
             id: p.id,
             communityId: p.communityId,
             author: {
               id: p.author?.id || 0,
               name: p.author?.name || 'Membro',
-              avatarUrl: p.author?.avatarUrl || null,
+              avatarUrl,
               streakDays: p.author?.streakDays || 0,
             },
             content: p.content || '',
@@ -200,10 +192,10 @@ export const communityService = {
         });
       }
     } catch (error) {
-      console.warn('API /community/:id/posts indisponível, usando dados mockados:', error);
+      console.warn('API /community/:id/posts indisponível:', error);
     }
 
-    const posts = MOCK_COMMUNITY_POSTS[communityId] || MOCK_COMMUNITY_POSTS['default'] || [];
+    const posts = MOCK_COMMUNITY_POSTS[communityId] || [];
     return [...posts];
   },
 
@@ -268,14 +260,74 @@ export const communityService = {
     };
 
     if (!MOCK_COMMUNITY_POSTS[communityId]) {
-      MOCK_COMMUNITY_POSTS[communityId] = [...(MOCK_COMMUNITY_POSTS['default'] || [])];
+      MOCK_COMMUNITY_POSTS[communityId] = [];
     }
     MOCK_COMMUNITY_POSTS[communityId] = [newPost, ...MOCK_COMMUNITY_POSTS[communityId]];
     return newPost;
+  },
+
+  async leaveCommunity(communityId: number | string, userId: number = 1): Promise<void> {
+    await api.delete(`/participam/${userId}/${communityId}`);
+  },
+
+  async getUserRole(communityId: number | string, userId: number = 1): Promise<string | null> {
+    try {
+      const response = await api.get<ParticipamResponse>(`/participam/${userId}/${communityId}`);
+      return response.data?.cargo || null;
+    } catch {
+      return null;
+    }
+  },
+
+  async deletePost(communityId: number | string, postId: number | string): Promise<void> {
+    await api.delete(`/community/${communityId}/posts/${postId}`);
+  },
+
+  async getPublicCommunities(searchTerm?: string, userId: number = 1): Promise<PublicCommunityItem[]> {
+    try {
+      const params: Record<string, any> = { idUsuario: userId };
+      if (searchTerm && searchTerm.trim().length > 0) {
+        params.nome = searchTerm.trim();
+      }
+      const response = await api.get<PublicCommunityItem[]>('/community/public', { params });
+      return (response.data || []).map((c) => ({
+        ...c,
+        foto: formatImageUrl(c.foto),
+        tags: c.tags || [],
+      }));
+    } catch (error) {
+      console.error('Erro ao buscar comunidades públicas:', error);
+      return [];
+    }
+  },
+
+  async joinCommunity(communityId: number | string, userId: number = 1): Promise<void> {
+    await api.post('/participam', {
+      idUsuario: Number(userId),
+      idComunidade: Number(communityId),
+      cargo: 'MEMBRO',
+      pontos: 0,
+    });
   },
 };
 
 export async function criarComunidade(dados: CriarCommunityRequest): Promise<any> {
   const { data } = await api.post("/community", dados);
   return data;
+}
+
+export async function sairDaComunidade(communityId: number | string, userId: number = 1): Promise<void> {
+  await api.delete(`/participam/${userId}/${communityId}`);
+}
+
+export async function deletarPost(communityId: number | string, postId: number | string): Promise<void> {
+  await api.delete(`/community/${communityId}/posts/${postId}`);
+}
+
+export async function getPublicCommunities(searchTerm?: string, userId: number = 1): Promise<PublicCommunityItem[]> {
+  return communityService.getPublicCommunities(searchTerm, userId);
+}
+
+export async function entrarNaComunidade(communityId: number | string, userId: number = 1): Promise<void> {
+  return communityService.joinCommunity(communityId, userId);
 }

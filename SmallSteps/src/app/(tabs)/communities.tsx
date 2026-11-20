@@ -41,6 +41,7 @@ export default function CommunitiesScreen() {
   const [currentView, setCurrentView] = useState<'feed' | 'events'>('feed');
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [failedImages, setFailedImages] = useState<Record<number, boolean>>({});
   const isFetchingRef = useRef(false);
 
   const insets = useSafeAreaInsets();
@@ -132,35 +133,43 @@ export default function CommunitiesScreen() {
     setSelectedCommunity(community);
   };
 
-  const renderCommunityItem = ({ item }: { item: CommunityItem }) => (
-    <TouchableOpacity
-      style={[styles.itemContainer, { borderBottomColor: borderColor }]}
-      onPress={() => handleSelectCommunity(item)}
-      activeOpacity={0.7}
-    >
-      {/* Avatar circular */}
-      <View style={styles.avatarWrapper}>
-        {item.foto ? (
-          <Image source={{ uri: item.foto }} style={styles.avatarImage} />
-        ) : (
-          <View style={styles.avatarPlaceholder}>
-            <View style={styles.avatarPatternOverlay} />
-            <MaterialIcons name="groups" size={24} color="#7EA8DE" />
-          </View>
-        )}
-      </View>
+  const renderCommunityItem = ({ item }: { item: CommunityItem }) => {
+    const hasPhoto = !!item.foto && !failedImages[item.id];
 
-      {/* Nome da comunidade */}
-      <Text style={[styles.itemTitle, { color: textColor }]} numberOfLines={1}>
-        {item.nome}
-      </Text>
+    return (
+      <TouchableOpacity
+        style={[styles.itemContainer, { borderBottomColor: borderColor }]}
+        onPress={() => handleSelectCommunity(item)}
+        activeOpacity={0.7}
+      >
+        {/* Avatar circular */}
+        <View style={styles.avatarWrapper}>
+          {hasPhoto ? (
+            <Image
+              source={{ uri: item.foto! }}
+              style={styles.avatarImage}
+              onError={() => setFailedImages((prev) => ({ ...prev, [item.id]: true }))}
+            />
+          ) : (
+            <View style={styles.avatarPlaceholder}>
+              <View style={styles.avatarPatternOverlay} />
+              <MaterialIcons name="groups" size={24} color="#7EA8DE" />
+            </View>
+          )}
+        </View>
 
-      {/* Botão de seta verde circular */}
-      <View style={styles.arrowCircle}>
-        <MaterialIcons name="arrow-forward" size={18} color={ACCENT_GREEN} />
-      </View>
-    </TouchableOpacity>
-  );
+        {/* Nome da comunidade */}
+        <Text style={[styles.itemTitle, { color: textColor }]} numberOfLines={1}>
+          {item.nome}
+        </Text>
+
+        {/* Botão de seta verde circular */}
+        <View style={styles.arrowCircle}>
+          <MaterialIcons name="arrow-forward" size={18} color={ACCENT_GREEN} />
+        </View>
+      </TouchableOpacity>
+    );
+  };
 
 // TEMPORÁRIO: exibe o JWT salvo no SecureStore
   const handlePrintJwt = async () => {
@@ -190,11 +199,16 @@ export default function CommunitiesScreen() {
       <CommunityFeedScreen
         communityId={selectedCommunity.id}
         communityName={selectedCommunity.nome}
+        userRole={selectedCommunity.cargo}
         onBackPress={() => {
           setSelectedCommunity(null);
           setCurrentView('feed');
         }}
         onEventsPress={() => setCurrentView('events')}
+        onLeaveCommunity={() => {
+          setSelectedCommunity(null);
+          loadCommunities(true);
+        }}
       />
     );
   }
