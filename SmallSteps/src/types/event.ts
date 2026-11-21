@@ -28,3 +28,16 @@ export interface CreateEventInput {
   idUsuario?: number;
   foto?: string | null;
 }
+
+export interface UpdateEventInput {
+  titulo?: string;
+  descricao?: string;
+  local?: string;
+  diaInicio?: string;
+  diaFim?: string;
+  horarioInicio?: string;
+  horarioFim?: string;
+  idUsuario?: number;
+  idComunidade?: number;
+  foto?: string | null;
+}

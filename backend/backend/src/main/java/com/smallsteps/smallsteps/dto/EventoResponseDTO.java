@@ -20,6 +20,7 @@ public class EventoResponseDTO {
     private int idComunidade;
     private String nomeComunidade;
     private String foto;
+    private int commentsCount;
 
     public EventoResponseDTO() {}
 
@@ -179,5 +180,13 @@ public class EventoResponseDTO {
 
     public void setFoto(String foto) {
         this.foto = foto;
+    }
+
+    public int getCommentsCount() {
+        return commentsCount;
+    }
+
+    public void setCommentsCount(int commentsCount) {
+        this.commentsCount = commentsCount;
     }
 }

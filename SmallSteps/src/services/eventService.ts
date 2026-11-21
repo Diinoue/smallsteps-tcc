@@ -1,5 +1,5 @@
 import { api } from './api';
-import { CommunityEvent, CreateEventInput } from '../types/event';
+import { CommunityEvent, CreateEventInput, UpdateEventInput } from '../types/event';
 
 const MOCK_EVENTS: Record<number | string, CommunityEvent[]> = {
   default: [
@@ -167,11 +167,111 @@ export const eventService = {
     return newEvent;
   },
 
+  async updateEvent(eventId: number, input: UpdateEventInput): Promise<CommunityEvent> {
+    try {
+      const response = await api.put(`/events/${eventId}`, {
+        titulo: input.titulo,
+        descricao: input.descricao,
+        local: input.local,
+        diaInicio: input.diaInicio,
+        diaFim: input.diaFim || input.diaInicio,
+        horarioInicio: input.horarioInicio,
+        horarioFim: input.horarioFim,
+        idUsuario: input.idUsuario,
+        idComunidade: input.idComunidade,
+        foto: input.foto,
+      });
+
+      const e = response.data;
+      if (e && e.id) {
+        const baseUrl = api.defaults.baseURL || '';
+        let fotoUrl = e.foto || null;
+        if (fotoUrl && fotoUrl.startsWith('/')) {
+          fotoUrl = `${baseUrl}${fotoUrl}`;
+        }
+
+        return {
+          id: e.id,
+          idComunidade: e.idComunidade || input.idComunidade || 1,
+          idUsuario: e.idUsuario || 0,
+          nomeUsuario: e.nomeUsuario || 'Você',
+          titulo: e.titulo || input.titulo || '',
+          local: e.local || input.local || '',
+          descricao: e.descricao || input.descricao || '',
+          diaInicio: e.diaInicio || input.diaInicio || '',
+          diaFim: e.diaFim || input.diaFim || input.diaInicio || '',
+          horarioInicio: e.horarioInicio || input.horarioInicio || '',
+          horarioFim: e.horarioFim || input.horarioFim || '',
+          formattedDate: e.formattedDate || formatEventDate(input.diaInicio, input.diaFim, input.horarioInicio, input.horarioFim),
+          bannerUrl: fotoUrl,
+          foto: fotoUrl,
+          commentsCount: e.commentsCount || 0,
+        };
+      }
+    } catch (error) {
+      console.warn('Erro ao atualizar evento na API, atualizando localmente:', error);
+    }
+
+    let updatedEvent: CommunityEvent | null = null;
+    for (const key of Object.keys(MOCK_EVENTS)) {
+      const list = MOCK_EVENTS[key];
+      const idx = list.findIndex((ev) => ev.id === eventId);
+      if (idx !== -1) {
+        const prev = list[idx];
+        updatedEvent = {
+          ...prev,
+          titulo: input.titulo ?? prev.titulo,
+          local: input.local ?? prev.local,
+          descricao: input.descricao ?? prev.descricao,
+          diaInicio: input.diaInicio ?? prev.diaInicio,
+          diaFim: input.diaFim ?? prev.diaFim,
+          horarioInicio: input.horarioInicio ?? prev.horarioInicio,
+          horarioFim: input.horarioFim ?? prev.horarioFim,
+          formattedDate: formatEventDate(
+            input.diaInicio ?? prev.diaInicio,
+            input.diaFim ?? prev.diaFim,
+            input.horarioInicio ?? prev.horarioInicio,
+            input.horarioFim ?? prev.horarioFim
+          ),
+          bannerUrl: input.foto !== undefined ? input.foto : prev.bannerUrl,
+          foto: input.foto !== undefined ? input.foto : prev.foto,
+        };
+        list[idx] = updatedEvent;
+      }
+    }
+
+    if (!updatedEvent) {
+      updatedEvent = {
+        id: eventId,
+        idComunidade: input.idComunidade || 1,
+        idUsuario: 1,
+        nomeUsuario: 'Você',
+        titulo: input.titulo || '',
+        local: input.local || '',
+        descricao: input.descricao || '',
+        diaInicio: input.diaInicio || '',
+        diaFim: input.diaFim || input.diaInicio || '',
+        horarioInicio: input.horarioInicio || '',
+        horarioFim: input.horarioFim || '',
+        formattedDate: formatEventDate(input.diaInicio, input.diaFim, input.horarioInicio, input.horarioFim),
+        bannerUrl: input.foto || null,
+        foto: input.foto || null,
+        commentsCount: 0,
+      };
+    }
+
+    return updatedEvent;
+  },
+
   async deleteEvent(eventId: number): Promise<void> {
     try {
       await api.delete(`/events/${eventId}`);
     } catch (error) {
       console.warn('Erro ao deletar evento na API:', error);
+    }
+
+    for (const key of Object.keys(MOCK_EVENTS)) {
+      MOCK_EVENTS[key] = MOCK_EVENTS[key].filter((ev) => ev.id !== eventId);
     }
   },
 };

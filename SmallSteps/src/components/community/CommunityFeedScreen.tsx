@@ -26,6 +26,7 @@ import { Post, MediaType } from '@/src/types/community';
 import { communityService, uploadMedia } from '@/src/services/communityService';
 import { PostCard } from './PostCard';
 import { MediaViewer } from './MediaViewer';
+import { PostCommentsScreen } from './PostCommentsScreen';
 
 export type RoleType = 'DONO' | 'ADMIN' | 'MEMBRO';
 
@@ -41,6 +42,7 @@ export interface CommunityFeedScreenProps {
   onSettingsPress?: () => void;
   onEditCommunityPress?: () => void;
   onLeaveCommunity?: () => void;
+  onCommentsPress?: (post: Post) => void;
 }
 
 export function CommunityFeedScreen({
@@ -55,6 +57,7 @@ export function CommunityFeedScreen({
   onSettingsPress,
   onEditCommunityPress,
   onLeaveCommunity,
+  onCommentsPress,
 }: CommunityFeedScreenProps) {
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
@@ -79,6 +82,7 @@ export function CommunityFeedScreen({
   const [viewerPost, setViewerPost] = useState<Post | null>(null);
   const [isSettingsModalVisible, setIsSettingsModalVisible] = useState(false);
   const [selectedPostForOptions, setSelectedPostForOptions] = useState<Post | null>(null);
+  const [selectedPostForComments, setSelectedPostForComments] = useState<Post | null>(null);
   const [isLeaving, setIsLeaving] = useState(false);
   const [activeRole, setActiveRole] = useState<string>(userRole || 'MEMBRO');
 
@@ -292,7 +296,11 @@ export function CommunityFeedScreen({
   };
 
   const handleComments = (post: Post) => {
-    Alert.alert('Comentários', `Visualizando comentários do post #${post.id}`);
+    if (onCommentsPress) {
+      onCommentsPress(post);
+    } else {
+      setSelectedPostForComments(post);
+    }
   };
 
   const handleMediaPress = (post: Post) => {
@@ -300,6 +308,36 @@ export function CommunityFeedScreen({
       setViewerPost(post);
     }
   };
+
+  if (selectedPostForComments) {
+    const isFeedAdminOrDono = normalizedRole === 'DONO' || normalizedRole === 'ADMIN';
+
+    return (
+      <PostCommentsScreen
+        communityId={communityId}
+        communityName={communityName}
+        userRole={activeRole}
+        isAdmin={isFeedAdminOrDono}
+        post={selectedPostForComments}
+        onBackPress={() => setSelectedPostForComments(null)}
+        onEventsPress={onEventsPress}
+        onMembersPress={onMembersPress}
+        onSettingsPress={onSettingsPress}
+        onCommentCountChange={(newCount) => {
+          setPosts((prev) =>
+            prev.map((p) =>
+              p.id === selectedPostForComments.id
+                ? { ...p, commentsCount: newCount }
+                : p
+            )
+          );
+          setSelectedPostForComments((prev) =>
+            prev ? { ...prev, commentsCount: newCount } : null
+          );
+        }}
+      />
+    );
+  }
 
   return (
     <SafeAreaView style={[styles.safeArea, { backgroundColor }]} edges={['top', 'left', 'right', 'bottom']}>

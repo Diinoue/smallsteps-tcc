@@ -22,6 +22,8 @@ import { loginService } from '@/src/services/loginService';
 import { Button } from '@/src/components/ui/Button';
 import { CommunityFeedScreen } from '@/src/components/community/CommunityFeedScreen';
 import { CommunityEventsScreen } from '@/src/components/community/CommunityEventsScreen';
+import { PostCommentsScreen } from '@/src/components/community/PostCommentsScreen';
+import { Post } from '@/src/types/community';
 
 const ACCENT_GREEN = '#34C759';
 
@@ -38,7 +40,8 @@ export default function CommunitiesScreen() {
 
   const [communities, setCommunities] = useState<CommunityItem[]>([]);
   const [selectedCommunity, setSelectedCommunity] = useState<CommunityItem | null>(null);
-  const [currentView, setCurrentView] = useState<'feed' | 'events'>('feed');
+  const [currentView, setCurrentView] = useState<'feed' | 'events' | 'comments'>('feed');
+  const [selectedPostForComments, setSelectedPostForComments] = useState<Post | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [failedImages, setFailedImages] = useState<Record<number, boolean>>({});
@@ -189,8 +192,31 @@ export default function CommunitiesScreen() {
         <CommunityEventsScreen
           communityId={selectedCommunity.id}
           communityName={selectedCommunity.nome}
-          isAdmin={selectedCommunity.cargo === 'DONO' || selectedCommunity.cargo === 'ADMINISTRADOR' || !selectedCommunity.cargo}
+          userRole={selectedCommunity.cargo}
+          isAdmin={selectedCommunity.cargo === 'DONO' || selectedCommunity.cargo === 'ADMINISTRADOR' || selectedCommunity.cargo === 'ADMIN' || !selectedCommunity.cargo}
           onBackPress={() => setCurrentView('feed')}
+        />
+      );
+    }
+
+    if (currentView === 'comments' && selectedPostForComments) {
+      const isCommunityAdminOrDono =
+        selectedCommunity.cargo === 'DONO' ||
+        selectedCommunity.cargo === 'ADMINISTRADOR' ||
+        selectedCommunity.cargo === 'ADMIN';
+
+      return (
+        <PostCommentsScreen
+          communityId={selectedCommunity.id}
+          communityName={selectedCommunity.nome}
+          userRole={selectedCommunity.cargo}
+          isAdmin={isCommunityAdminOrDono}
+          post={selectedPostForComments}
+          onBackPress={() => {
+            setSelectedPostForComments(null);
+            setCurrentView('feed');
+          }}
+          onEventsPress={() => setCurrentView('events')}
         />
       );
     }
@@ -205,6 +231,10 @@ export default function CommunitiesScreen() {
           setCurrentView('feed');
         }}
         onEventsPress={() => setCurrentView('events')}
+        onCommentsPress={(post) => {
+          setSelectedPostForComments(post);
+          setCurrentView('comments');
+        }}
         onLeaveCommunity={() => {
           setSelectedCommunity(null);
           loadCommunities(true);
