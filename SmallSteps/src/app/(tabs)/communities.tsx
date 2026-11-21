@@ -24,6 +24,7 @@ import { CommunityFeedScreen } from '@/src/components/community/CommunityFeedScr
 import { CommunityEventsScreen } from '@/src/components/community/CommunityEventsScreen';
 import { CommunityMembersScreen } from '@/src/components/community/CommunityMembersScreen';
 import { CommunityAddMembersScreen } from '@/src/components/community/CommunityAddMembersScreen';
+import { CommunityEditScreen } from '@/src/components/community/CommunityEditScreen';
 import { PostCommentsScreen } from '@/src/components/community/PostCommentsScreen';
 import { Post } from '@/src/types/community';
 
@@ -42,7 +43,7 @@ export default function CommunitiesScreen() {
 
   const [communities, setCommunities] = useState<CommunityItem[]>([]);
   const [selectedCommunity, setSelectedCommunity] = useState<CommunityItem | null>(null);
-  const [currentView, setCurrentView] = useState<'feed' | 'events' | 'members' | 'addMembers' | 'comments'>('feed');
+  const [currentView, setCurrentView] = useState<'feed' | 'events' | 'members' | 'addMembers' | 'comments' | 'edit'>('feed');
   const [selectedPostForComments, setSelectedPostForComments] = useState<Post | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -83,7 +84,7 @@ export default function CommunitiesScreen() {
           setCurrentView('members');
           return true;
         }
-        if (currentView === 'events' || currentView === 'members') {
+        if (currentView === 'events' || currentView === 'members' || currentView === 'edit') {
           setCurrentView('feed');
           return true;
         }
@@ -262,6 +263,26 @@ export default function CommunitiesScreen() {
       );
     }
 
+    if (currentView === 'edit') {
+      return (
+        <CommunityEditScreen
+          communityId={selectedCommunity.id}
+          initialCommunity={selectedCommunity}
+          onBackPress={() => setCurrentView('feed')}
+          onSaved={(updated) => {
+            setSelectedCommunity((prev) => (prev ? { ...prev, ...updated } : prev));
+            setCurrentView('feed');
+            loadCommunities(true);
+          }}
+          onDeleted={() => {
+            setSelectedCommunity(null);
+            setCurrentView('feed');
+            loadCommunities(true);
+          }}
+        />
+      );
+    }
+
     return (
       <CommunityFeedScreen
         communityId={selectedCommunity.id}
@@ -273,6 +294,7 @@ export default function CommunitiesScreen() {
         }}
         onEventsPress={() => setCurrentView('events')}
         onMembersPress={() => setCurrentView('members')}
+        onEditCommunityPress={() => setCurrentView('edit')}
         onCommentsPress={(post) => {
           setSelectedPostForComments(post);
           setCurrentView('comments');

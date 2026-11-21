@@ -1,5 +1,7 @@
 package com.smallsteps.smallsteps.controller;
 
+import java.util.List;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
@@ -16,6 +18,12 @@ public class GoalController {
 
     public GoalController(GoalService goalService) {
         this.goalService = goalService;
+    }
+
+    // GET /goals/usuario/{idUsuario} — listar todas as metas do usuário (não concluídas primeiro)
+    @GetMapping("/usuario/{idUsuario}")
+    public List<GoalDTOResponse> getByUsuario(@PathVariable int idUsuario) {
+        return goalService.findAllByUsuario(idUsuario);
     }
 
     // GET /goals/{id} — buscar meta por ID

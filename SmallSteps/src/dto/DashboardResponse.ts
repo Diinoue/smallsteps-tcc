@@ -15,6 +15,7 @@ export interface SubGoalDTOResponse {
 
 export interface GoalDTOResponse {
   id: number;
+  idUsuario?: number;
   title: string;
   milestone?: string | null;
   concluido: boolean;

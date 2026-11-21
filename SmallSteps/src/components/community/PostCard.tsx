@@ -4,8 +4,10 @@ import {
   View,
   Text,
   TouchableOpacity,
+  Pressable,
 } from 'react-native';
 import { Image } from 'expo-image';
+import { useRouter } from 'expo-router';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { useThemeColor } from '@/hooks/use-theme-color';
 import { useColorScheme } from '@/hooks/use-color-scheme';
@@ -17,6 +19,7 @@ export interface PostCardProps {
   onOptionsPress?: (post: Post) => void;
   onCommentsPress?: (post: Post) => void;
   onMediaPress?: (post: Post) => void;
+  onAuthorPress?: (post: Post) => void;
 }
 
 export function PostCard({
@@ -24,7 +27,9 @@ export function PostCard({
   onOptionsPress,
   onCommentsPress,
   onMediaPress,
+  onAuthorPress,
 }: PostCardProps) {
+  const router = useRouter();
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
 
@@ -33,39 +38,68 @@ export function PostCard({
   const activeStreakColor = useThemeColor({}, 'streakActive');
   const borderColor = isDark ? '#2D3748' : '#EEEEEE';
 
+  const handleAuthorPress = () => {
+    if (onAuthorPress) {
+      onAuthorPress(post);
+      return;
+    }
+    if (post.author?.id && post.author.id !== 'me') {
+      router.push(`/profile/${post.author.id}` as any);
+    }
+  };
+
   return (
-    <View style={[styles.container, { borderBottomColor: borderColor }]}>
+    <Pressable
+      onPress={() => onCommentsPress?.(post)}
+      style={({ pressed }) => [
+        styles.container,
+        { borderBottomColor: borderColor },
+        pressed && { opacity: 0.92 },
+      ]}
+    >
       {/* Header do Post: Avatar, Nome, Streak e 3 pontinhos */}
       <View style={styles.headerRow}>
-        <View style={styles.authorInfo}>
-          {post.author.avatarUrl ? (
-            <Image
-              source={{ uri: post.author.avatarUrl }}
-              style={styles.avatar}
-              contentFit="cover"
-            />
-          ) : (
-            <View
-              style={[
-                styles.avatarPlaceholder,
-                { backgroundColor: isDark ? '#4A5568' : '#718096' },
-              ]}
-            />
-          )}
+        <View style={styles.authorRowLeft}>
+          <TouchableOpacity
+            onPress={(e) => {
+              e.stopPropagation?.();
+              handleAuthorPress();
+            }}
+            activeOpacity={0.7}
+            style={styles.authorInfo}
+          >
+            {post.author.avatarUrl ? (
+              <Image
+                source={{ uri: post.author.avatarUrl }}
+                style={styles.avatar}
+                contentFit="cover"
+              />
+            ) : (
+              <View
+                style={[
+                  styles.avatarPlaceholder,
+                  { backgroundColor: isDark ? '#4A5568' : '#718096' },
+                ]}
+              />
+            )}
 
-          <View style={styles.authorTextContainer}>
-            <Text style={[styles.authorName, { color: textColor }]}>
-              {post.author.name}
-              {'  '}
-              <Text style={[styles.streakText, { color: activeStreakColor }]}>
-                {post.author.streakDays} days
+            <View style={styles.authorTextContainer}>
+              <Text style={[styles.authorName, { color: textColor }]} numberOfLines={1}>
+                {post.author.name}
+                {'  '}
+                <Text style={[styles.streakText, { color: activeStreakColor }]}>
+                  {post.author.streakDays} days
+                </Text>
               </Text>
-            </Text>
-          </View>
+            </View>
+          </TouchableOpacity>
         </View>
 
         <TouchableOpacity
-          onPress={() => onOptionsPress?.(post)}
+          onPress={(e) => {
+            e.stopPropagation?.();
+            onOptionsPress?.(post);
+          }}
           hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
           style={styles.optionsButton}
         >
@@ -95,7 +129,10 @@ export function PostCard({
         </Text>
 
         <TouchableOpacity
-          onPress={() => onCommentsPress?.(post)}
+          onPress={(e) => {
+            e.stopPropagation?.();
+            onCommentsPress?.(post);
+          }}
           hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
           style={styles.commentButton}
         >
@@ -111,7 +148,7 @@ export function PostCard({
           )}
         </TouchableOpacity>
       </View>
-    </View>
+    </Pressable>
   );
 }
 
@@ -127,10 +164,16 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     marginBottom: 4,
   },
+  authorRowLeft: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginRight: 8,
+  },
   authorInfo: {
     flexDirection: 'row',
     alignItems: 'center',
-    flex: 1,
+    flexShrink: 1,
   },
   avatar: {
     width: 44,
@@ -144,7 +187,7 @@ const styles = StyleSheet.create({
   },
   authorTextContainer: {
     marginLeft: 12,
-    flex: 1,
+    flexShrink: 1,
   },
   authorName: {
     fontSize: 16,

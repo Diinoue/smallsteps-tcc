@@ -59,6 +59,13 @@ public class CommunityController {
         return communityService.findById(id);
     }
 
+    @GetMapping("/{id}/details")
+    public ComunidadeDTO getDetailsById(
+            @PathVariable int id,
+            @RequestParam(required = false) Integer idUsuario) {
+        return communityService.findDetailsById(id, idUsuario);
+    }
+
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public Comunidade create(@RequestBody ComunidadeDTO dto) {

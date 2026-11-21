@@ -10,6 +10,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
+import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { useThemeColor } from '@/hooks/use-theme-color';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { IconSymbol } from '@/src/components/ui/icon-symbol';
@@ -70,6 +71,8 @@ export default function GoalDetailScreen() {
     : [];
 
   const hasMilestone = !!goal?.milestone?.trim();
+  const CURRENT_USER_ID = 1;
+  const isAuthor = goal != null && goal.idUsuario === CURRENT_USER_ID;
 
   return (
     <SafeAreaView style={[styles.safeArea, { backgroundColor }]}>
@@ -88,7 +91,18 @@ export default function GoalDetailScreen() {
           <IconSymbol name="chevron.right" size={24} color={textColor} style={styles.backIcon} />
         </TouchableOpacity>
         <Text style={[styles.topBarTitle, { color: textColor }]}>Detalhes da Meta</Text>
-        <View style={styles.topBarPlaceholder} />
+        {isAuthor && goal ? (
+          <TouchableOpacity
+            onPress={() => router.push(`/goal/edit/${goal.id}`)}
+            style={styles.editButton}
+            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+            activeOpacity={0.7}
+          >
+            <MaterialIcons name="edit" size={22} color={textColor} />
+          </TouchableOpacity>
+        ) : (
+          <View style={styles.topBarPlaceholder} />
+        )}
       </View>
 
       {isLoading ? (
@@ -253,6 +267,7 @@ const styles = StyleSheet.create({
   backButton: { width: 36, height: 36, justifyContent: 'center', alignItems: 'flex-start' },
   backIcon: { transform: [{ rotate: '180deg' }] },
   topBarTitle: { fontSize: 18, fontWeight: '700', textAlign: 'center' },
+  editButton: { width: 36, height: 36, justifyContent: 'center', alignItems: 'flex-end' },
   topBarPlaceholder: { width: 36 },
 
   centered: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 20 },

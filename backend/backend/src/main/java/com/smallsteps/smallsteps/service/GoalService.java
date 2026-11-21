@@ -2,6 +2,7 @@ package com.smallsteps.smallsteps.service;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -34,6 +35,18 @@ public class GoalService {
         this.goalRepository = goalRepository;
         this.subMetaRepository = subMetaRepository;
         this.userRepository = userRepository;
+    }
+
+    // ── Buscar todas as metas de um usuário (não concluídas primeiro, concluídas depois) ──
+    @Transactional(readOnly = true)
+    public List<GoalDTOResponse> findAllByUsuario(int idUsuario) {
+        List<Meta> metas = goalRepository.findByUsuarioId(idUsuario);
+        return metas.stream()
+                .sorted(Comparator
+                        .comparing(Meta::isConcluido)
+                        .thenComparing(Comparator.comparingInt(Meta::getId).reversed()))
+                .map(this::toDto)
+                .collect(Collectors.toList());
     }
 
     // ── Buscar uma meta pelo ID ───────────────────────────────────────────────
@@ -168,6 +181,7 @@ public class GoalService {
     private GoalDTOResponse toDto(Meta meta) {
         GoalDTOResponse dto = new GoalDTOResponse();
         dto.id = meta.getId();
+        dto.idUsuario = meta.getUsuario() != null ? meta.getUsuario().getId() : null;
         dto.title = meta.getTitulo();
         dto.milestone = meta.getMilestone();
         dto.concluido = meta.isConcluido();

@@ -9,4 +9,5 @@ import com.smallsteps.smallsteps.entity.TagComunidadeId;
 
 public interface TagComunidadeRepository extends JpaRepository<TagComunidade, TagComunidadeId> {
     List<TagComunidade> findByIdComunidade(int idComunidade);
+    void deleteByIdComunidade(int idComunidade);
 }

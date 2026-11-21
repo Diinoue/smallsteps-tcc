@@ -22,6 +22,8 @@ import com.smallsteps.smallsteps.repository.UserRepository;
 @Service
 public class ParticipamService {
 
+    public static final int MAX_MEMBERS_PER_COMMUNITY = 50;
+
     private final ParticipamRepository participamRepository;
     private final UserRepository userRepository;
 
@@ -96,6 +98,13 @@ public class ParticipamService {
         ParticipamId id = new ParticipamId(dto.getIdUsuario(), dto.getIdComunidade());
         if (participamRepository.existsById(id)) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "Usuário já participa desta comunidade");
+        }
+
+        long totalMembros = participamRepository.countByIdComunidade(dto.getIdComunidade());
+        if (totalMembros >= MAX_MEMBERS_PER_COMMUNITY) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "A comunidade atingiu o limite máximo de " + MAX_MEMBERS_PER_COMMUNITY + " membros");
         }
 
         Participam participam = new Participam();

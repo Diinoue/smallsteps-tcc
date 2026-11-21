@@ -81,6 +81,13 @@ public class SolicitamService {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "Usuário já participa desta comunidade");
         }
 
+        long totalMembros = participamRepository.countByIdComunidade(dto.idComunidade);
+        if (totalMembros >= ParticipamService.MAX_MEMBERS_PER_COMMUNITY) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "A comunidade atingiu o limite máximo de " + ParticipamService.MAX_MEMBERS_PER_COMMUNITY + " membros");
+        }
+
         SolicitamId solicitamId = new SolicitamId(dto.idUsuario, dto.idComunidade);
         if (solicitamRepository.existsById(solicitamId)) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "Solicitação já enviada");
@@ -101,12 +108,20 @@ public class SolicitamService {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Solicitação não encontrada");
         }
 
-        solicitamRepository.deleteById(solicitamId);
-
         ParticipamId participamId = new ParticipamId(idUsuario, idComunidade);
         if (participamRepository.existsById(participamId)) {
+            solicitamRepository.deleteById(solicitamId);
             return participamRepository.findById(participamId).orElseThrow();
         }
+
+        long totalMembros = participamRepository.countByIdComunidade(idComunidade);
+        if (totalMembros >= ParticipamService.MAX_MEMBERS_PER_COMMUNITY) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "A comunidade atingiu o limite máximo de " + ParticipamService.MAX_MEMBERS_PER_COMMUNITY + " membros");
+        }
+
+        solicitamRepository.deleteById(solicitamId);
 
         Participam participam = new Participam();
         participam.setIdUsuario(idUsuario);

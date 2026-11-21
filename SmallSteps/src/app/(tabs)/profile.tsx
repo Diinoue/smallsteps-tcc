@@ -84,6 +84,17 @@ export default function ProfileScreen() {
     router.push(`/goal/view/${goalId}`);
   };
 
+  const handleViewAllGoals = () => {
+    setMenuVisible(false);
+    const targetId = params.id ? Number(params.id) : profile.id || 1;
+    router.push({
+      pathname: '/profile/goals',
+      params: isOwnProfile
+        ? {}
+        : { userId: String(targetId), userName: profile.name || '' },
+    } as any);
+  };
+
   const hasAvatar = Boolean(profile.avatarUrl) && !avatarError;
 
   return (
@@ -159,6 +170,19 @@ export default function ProfileScreen() {
                   <MaterialIcons name="edit" size={19} color={textColor} />
                   <Text style={[styles.dropdownItemText, { color: textColor }]}>
                     Editar perfil
+                  </Text>
+                </TouchableOpacity>
+
+                <View style={[styles.dropdownDivider, { backgroundColor: borderColor }]} />
+
+                <TouchableOpacity
+                  activeOpacity={0.7}
+                  onPress={handleViewAllGoals}
+                  style={styles.dropdownItem}
+                >
+                  <MaterialIcons name="flag" size={19} color={textColor} />
+                  <Text style={[styles.dropdownItemText, { color: textColor }]}>
+                    Todas as metas
                   </Text>
                 </TouchableOpacity>
 
@@ -371,22 +395,39 @@ export default function ProfileScreen() {
           {/* 4. Metas Atuais */}
           {isOwnProfile || profile.publicCurrentGoals ? (
             <View style={styles.sectionBlock}>
-              <View style={styles.sectionHeaderRow}>
-                <Text style={[styles.sectionTitle, { color: textColor }]}>
-                  Current Goals
-                </Text>
-                {profile.currentGoals && profile.currentGoals.length > 0 ? (
-                  <View
-                    style={[
-                      styles.countBadge,
-                      { backgroundColor: isDark ? '#143322' : '#ECFDF5' },
-                    ]}
-                  >
-                    <Text style={[styles.countBadgeText, { color: activeColor }]}>
-                      {profile.currentGoals.length}
-                    </Text>
-                  </View>
-                ) : null}
+              <View style={styles.sectionHeaderBetween}>
+                <View style={styles.sectionHeaderRow}>
+                  <Text style={[styles.sectionTitle, { color: textColor }]}>
+                    Current Goals
+                  </Text>
+                  {profile.currentGoals && profile.currentGoals.length > 0 ? (
+                    <View
+                      style={[
+                        styles.countBadge,
+                        { backgroundColor: isDark ? '#143322' : '#ECFDF5' },
+                      ]}
+                    >
+                      <Text style={[styles.countBadgeText, { color: activeColor }]}>
+                        {profile.currentGoals.length}
+                      </Text>
+                    </View>
+                  ) : null}
+                </View>
+
+                <TouchableOpacity
+                  activeOpacity={0.75}
+                  onPress={handleViewAllGoals}
+                  style={[
+                    styles.seeAllButton,
+                    {
+                      backgroundColor: isDark ? '#143322' : '#ECFDF5',
+                      borderColor: activeColor + '40',
+                    },
+                  ]}
+                >
+                  <Text style={[styles.seeAllText, { color: activeColor }]}>Ver todas</Text>
+                  <MaterialIcons name="arrow-forward" size={14} color={activeColor} />
+                </TouchableOpacity>
               </View>
 
               {profile.currentGoals && profile.currentGoals.length > 0 ? (
@@ -647,6 +688,25 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 10,
     marginBottom: 8,
+  },
+  sectionHeaderBetween: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 8,
+  },
+  seeAllButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingHorizontal: 12,
+    paddingVertical: 5,
+    borderRadius: 14,
+    borderWidth: 1,
+  },
+  seeAllText: {
+    fontSize: 12,
+    fontWeight: '700',
   },
   sectionTitle: {
     fontSize: 20,

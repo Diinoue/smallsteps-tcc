@@ -105,10 +105,6 @@ export function CommunityMembersScreen({
   const canManagePrivateRequests =
     isPrivate && (activeRole === 'DONO' || activeRole === 'ADMINISTRADOR');
 
-  const handleLeaderboardPress = () => {
-    Alert.alert('Leaderboards', 'A tela de Leaderboards estará disponível em breve!');
-  };
-
   const handleViewProfile = (member: CommunityMemberItem) => {
     setSelectedMember(null);
     router.push(`/profile/${member.idUsuario}` as any);
@@ -375,15 +371,6 @@ export function CommunityMembersScreen({
               <MaterialIcons name="person-add-alt-1" size={25} color={textColor} />
             </TouchableOpacity>
           ) : null}
-
-          <TouchableOpacity
-            onPress={handleLeaderboardPress}
-            style={styles.headerIconButton}
-            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-            activeOpacity={0.7}
-          >
-            <MaterialIcons name="bar-chart" size={28} color={textColor} />
-          </TouchableOpacity>
         </View>
       </View>
 

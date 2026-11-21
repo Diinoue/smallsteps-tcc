@@ -94,9 +94,11 @@ export function CommunityAddMembersScreen({
       setProcessingUserId(item.idUsuario);
       await communityService.acceptJoinRequest(communityId, item.idUsuario);
       setRequests((prev) => prev.filter((r) => r.idUsuario !== item.idUsuario));
-    } catch (error) {
+    } catch (error: any) {
       console.error('Erro ao aceitar solicitação:', error);
-      Alert.alert('Erro', 'Não foi possível aceitar a solicitação.');
+      const msg =
+        error?.response?.data?.message || 'Não foi possível aceitar a solicitação.';
+      Alert.alert('Erro', msg);
     } finally {
       setProcessingUserId(null);
     }

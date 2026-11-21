@@ -56,6 +56,7 @@ export default function RootLayout() {
           <Stack.Screen name="(community)/findCommunity" options={{ headerShown: false }} />
           <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'Modal' }} />
           <Stack.Screen name="profile/edit" options={{ headerShown: false }} />
+          <Stack.Screen name="profile/goals" options={{ headerShown: false }} />
           <Stack.Screen name="profile/[id]" options={{ headerShown: false }} />
         </Stack>
         <StatusBar style="auto" />

@@ -8,6 +8,9 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -41,6 +44,9 @@ public class CommunityService {
     private final UserRepository userRepository;
     private final TagRepository tagRepository;
     private final TagComunidadeRepository tagComunidadeRepository;
+
+    @PersistenceContext
+    private EntityManager entityManager;
 
     public CommunityService(
             CommunityRepository communityRepository,
@@ -93,6 +99,12 @@ public class CommunityService {
     public Comunidade findById(int id) {
         return communityRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Comunidade não encontrada"));
+    }
+
+    @Transactional(readOnly = true)
+    public ComunidadeDTO findDetailsById(int id, Integer idUsuario) {
+        Comunidade comunidade = findById(id);
+        return toComunidadeDTO(comunidade, idUsuario);
     }
 
     @Transactional
@@ -149,18 +161,37 @@ public class CommunityService {
     public Comunidade update(int id, ComunidadeDTO dto) {
         Comunidade comunidade = findById(id);
 
-        if (dto.getNome() != null) {
-            comunidade.setNome(dto.getNome());
+        if (dto.getNome() != null && !dto.getNome().trim().isEmpty()) {
+            comunidade.setNome(dto.getNome().trim());
         }
         comunidade.setPrivado(dto.isPrivado());
         if (dto.getFoto() != null) {
-            comunidade.setFoto(dto.getFoto());
+            comunidade.setFoto(dto.getFoto().trim().isEmpty() ? null : dto.getFoto().trim());
         }
         if (dto.getDescricao() != null) {
-            comunidade.setDescricao(dto.getDescricao());
+            comunidade.setDescricao(dto.getDescricao().trim().isEmpty() ? null : dto.getDescricao().trim());
         }
 
-        return communityRepository.save(comunidade);
+        Comunidade salva = communityRepository.save(comunidade);
+
+        // Atualiza tags se fornecidas no payload
+        if (dto.getTags() != null) {
+            tagComunidadeRepository.deleteByIdComunidade(id);
+            for (String tagStr : dto.getTags()) {
+                if (tagStr != null && !tagStr.trim().isEmpty()) {
+                    String limpa = tagStr.trim().replaceAll("^#", "");
+                    if (!limpa.isEmpty()) {
+                        Tag tag = tagRepository.findByDescricaoIgnoreCase(limpa)
+                                .orElseGet(() -> tagRepository.save(new Tag(0, limpa)));
+
+                        TagComunidade tagCom = new TagComunidade(tag.getId(), salva.getId());
+                        tagComunidadeRepository.save(tagCom);
+                    }
+                }
+            }
+        }
+
+        return salva;
     }
 
     @Transactional
@@ -168,6 +199,32 @@ public class CommunityService {
         if (!communityRepository.existsById(id)) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Comunidade não encontrada");
         }
+
+        // Remove registros filhos antes de deletar a comunidade para evitar violação de FK
+        entityManager.createNativeQuery(
+                "DELETE FROM comentario WHERE id_post IN (SELECT id FROM post WHERE id_comunidade = :id)")
+                .setParameter("id", id)
+                .executeUpdate();
+        entityManager.createNativeQuery(
+                "DELETE FROM comentario WHERE id_evento IN (SELECT id FROM evento WHERE id_comunidade = :id)")
+                .setParameter("id", id)
+                .executeUpdate();
+        entityManager.createNativeQuery("DELETE FROM post WHERE id_comunidade = :id")
+                .setParameter("id", id)
+                .executeUpdate();
+        entityManager.createNativeQuery("DELETE FROM evento WHERE id_comunidade = :id")
+                .setParameter("id", id)
+                .executeUpdate();
+        entityManager.createNativeQuery("DELETE FROM tag_comunidade WHERE id_comunidade = :id")
+                .setParameter("id", id)
+                .executeUpdate();
+        entityManager.createNativeQuery("DELETE FROM solicitam WHERE id_comunidade = :id")
+                .setParameter("id", id)
+                .executeUpdate();
+        entityManager.createNativeQuery("DELETE FROM participam WHERE id_comunidade = :id")
+                .setParameter("id", id)
+                .executeUpdate();
+
         communityRepository.deleteById(id);
     }
 

@@ -32,6 +32,14 @@ export interface UpdateGoalRequest {
 
 export const goalService = {
   /**
+   * Buscar todas as metas de um usuário (não concluídas primeiro, concluídas depois).
+   */
+  async getGoalsByUser(userId: number): Promise<GoalDTOResponse[]> {
+    const { data } = await api.get<GoalDTOResponse[]>(`/goals/usuario/${userId}`);
+    return data || [];
+  },
+
+  /**
    * Buscar meta por ID no backend.
    * Retorna GoalDTOResponse ou null se não encontrada.
    */

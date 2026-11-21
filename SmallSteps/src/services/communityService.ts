@@ -410,6 +410,47 @@ export const communityService = {
   async rejectJoinRequest(communityId: number | string, targetUserId: number): Promise<void> {
     await api.delete(`/solicitam/${communityId}/${targetUserId}`);
   },
+
+  async getCommunityDetails(
+    communityId: number | string,
+    userId: number = 1
+  ): Promise<PublicCommunityItem> {
+    const response = await api.get<PublicCommunityItem>(`/community/${communityId}/details`, {
+      params: { idUsuario: userId },
+    });
+    const c = response.data;
+    return {
+      ...c,
+      foto: formatImageUrl(c.foto),
+      tags: c.tags || [],
+    };
+  },
+
+  async updateCommunity(
+    communityId: number | string,
+    dados: {
+      nome: string;
+      descricao?: string;
+      privado: boolean;
+      foto?: string | null;
+      tags?: string[];
+    }
+  ): Promise<CommunityItem> {
+    const response = await api.put<any>(`/community/${communityId}`, dados);
+    const c = response.data;
+    return {
+      id: c.id,
+      nome: c.nome,
+      privado: c.privado,
+      foto: formatImageUrl(c.foto),
+      descricao: c.descricao,
+      codigoConvite: c.codigoConvite,
+    };
+  },
+
+  async deleteCommunity(communityId: number | string): Promise<void> {
+    await api.delete(`/community/${communityId}`);
+  },
 };
 
 export async function criarComunidade(dados: CriarCommunityRequest): Promise<any> {

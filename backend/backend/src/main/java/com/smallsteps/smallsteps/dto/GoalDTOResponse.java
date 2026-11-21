@@ -6,6 +6,7 @@ import java.util.List;
 
 public class GoalDTOResponse {
     public int id;
+    public Integer idUsuario;
     public String title;
     public String milestone;
     public boolean concluido;

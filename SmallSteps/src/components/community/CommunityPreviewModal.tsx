@@ -16,6 +16,7 @@ import {
 } from 'react-native';
 
 const ACCENT_GREEN = '#34C759';
+const MAX_COMMUNITY_MEMBERS = 50;
 
 export interface CommunityPreviewModalProps {
   visible: boolean;
@@ -63,10 +64,11 @@ export function CommunityPreviewModal({
 
   const isPrivate = Boolean(community.privado);
   const memberCount = community.quantidadeMembros ?? 0;
+  const isFull = memberCount >= MAX_COMMUNITY_MEMBERS;
   const hasPhoto = Boolean(community.foto) && !imageError;
 
   const handlePrimaryAction = async () => {
-    if (localJoined || localRequested || isSubmitting) return;
+    if (localJoined || localRequested || isFull || isSubmitting) return;
 
     try {
       setIsSubmitting(true);
@@ -85,6 +87,7 @@ export function CommunityPreviewModal({
       }
     } catch (error: any) {
       const status = error?.response?.status;
+      const backendMsg = error?.response?.data?.message;
       if (status === 409) {
         if (isPrivate) {
           setLocalRequested(true);
@@ -93,14 +96,15 @@ export function CommunityPreviewModal({
         }
         Alert.alert(
           'Aviso',
-          error?.response?.data?.message || 'Você já possui vínculo ou solicitação pendente nesta comunidade.'
+          backendMsg || 'Você já possui vínculo ou solicitação pendente nesta comunidade.'
         );
       } else {
         Alert.alert(
           'Erro',
-          isPrivate
-            ? 'Não foi possível enviar a solicitação. Tente novamente.'
-            : 'Não foi possível entrar na comunidade. Tente novamente.'
+          backendMsg ||
+            (isPrivate
+              ? 'Não foi possível enviar a solicitação. Tente novamente.'
+              : 'Não foi possível entrar na comunidade. Tente novamente.')
         );
       }
     } finally {
@@ -173,7 +177,7 @@ export function CommunityPreviewModal({
                     <View style={styles.membersCountBadge}>
                       <MaterialIcons name="people-outline" size={15} color={textMuted} />
                       <Text style={[styles.membersCountText, { color: textMuted }]}>
-                        {memberCount} {memberCount === 1 ? 'membro' : 'membros'}
+                        {memberCount}/{MAX_COMMUNITY_MEMBERS} membros
                       </Text>
                     </View>
                   </View>
@@ -200,7 +204,7 @@ export function CommunityPreviewModal({
                 </View>
               ) : null}
 
-              {/* Banner de status caso já participe ou tenha solicitação pendente */}
+              {/* Banner de status caso já participe, tenha solicitação pendente ou esteja lotada */}
               {localJoined ? (
                 <View
                   style={[
@@ -225,6 +229,18 @@ export function CommunityPreviewModal({
                     Solicitação pendente de aprovação
                   </Text>
                 </View>
+              ) : isFull ? (
+                <View
+                  style={[
+                    styles.statusBanner,
+                    { backgroundColor: isDark ? '#3B1E1E' : '#FEF2F2' },
+                  ]}
+                >
+                  <MaterialIcons name="group-off" size={18} color="#EF4444" />
+                  <Text style={[styles.statusBannerText, { color: '#EF4444' }]}>
+                    Comunidade lotada (limite de {MAX_COMMUNITY_MEMBERS} membros)
+                  </Text>
+                </View>
               ) : null}
 
               {/* Ações */}
@@ -243,11 +259,11 @@ export function CommunityPreviewModal({
                 <TouchableOpacity
                   style={[
                     styles.primaryButton,
-                    (localJoined || localRequested) && styles.primaryButtonDisabled,
+                    (localJoined || localRequested || isFull) && styles.primaryButtonDisabled,
                   ]}
                   onPress={handlePrimaryAction}
                   activeOpacity={0.8}
-                  disabled={localJoined || localRequested || isSubmitting}
+                  disabled={localJoined || localRequested || isFull || isSubmitting}
                 >
                   {isSubmitting ? (
                     <ActivityIndicator size="small" color="#FFFFFF" />
@@ -257,6 +273,8 @@ export function CommunityPreviewModal({
                         ? 'Já participa'
                         : localRequested
                         ? 'Pendente'
+                        : isFull
+                        ? 'Lotada'
                         : isPrivate
                         ? 'Solicitar'
                         : 'Entrar'}
