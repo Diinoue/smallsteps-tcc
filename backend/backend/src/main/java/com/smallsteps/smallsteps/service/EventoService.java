@@ -15,6 +15,7 @@ import com.smallsteps.smallsteps.dto.EventoResponseDTO;
 import com.smallsteps.smallsteps.entity.Comunidade;
 import com.smallsteps.smallsteps.entity.Evento;
 import com.smallsteps.smallsteps.entity.Usuario;
+import com.smallsteps.smallsteps.repository.ComentarioRepository;
 import com.smallsteps.smallsteps.repository.CommunityRepository;
 import com.smallsteps.smallsteps.repository.EventoRepository;
 import com.smallsteps.smallsteps.repository.UserRepository;
@@ -25,27 +26,36 @@ public class EventoService {
     private final EventoRepository eventoRepository;
     private final CommunityRepository communityRepository;
     private final UserRepository userRepository;
+    private final ComentarioRepository comentarioRepository;
 
     public EventoService(
             EventoRepository eventoRepository,
             CommunityRepository communityRepository,
-            UserRepository userRepository) {
+            UserRepository userRepository,
+            ComentarioRepository comentarioRepository) {
         this.eventoRepository = eventoRepository;
         this.communityRepository = communityRepository;
         this.userRepository = userRepository;
+        this.comentarioRepository = comentarioRepository;
+    }
+
+    private EventoResponseDTO toDTO(Evento e) {
+        EventoResponseDTO dto = new EventoResponseDTO(e);
+        dto.setCommentsCount(comentarioRepository.countByEventoId(e.getId()));
+        return dto;
     }
 
     @Transactional(readOnly = true)
     public List<EventoResponseDTO> findAll() {
         return eventoRepository.findAll().stream()
-                .map(EventoResponseDTO::new)
+                .map(this::toDTO)
                 .collect(Collectors.toList());
     }
 
     @Transactional(readOnly = true)
     public List<EventoResponseDTO> findByComunidade(int comunidadeId) {
         return eventoRepository.findByComunidadeIdOrderByDiaInicioAsc(comunidadeId).stream()
-                .map(EventoResponseDTO::new)
+                .map(this::toDTO)
                 .collect(Collectors.toList());
     }
 
@@ -53,7 +63,7 @@ public class EventoService {
     public EventoResponseDTO findById(int id) {
         Evento evento = eventoRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Evento não encontrado com id: " + id));
-        return new EventoResponseDTO(evento);
+        return toDTO(evento);
     }
 
     @Transactional

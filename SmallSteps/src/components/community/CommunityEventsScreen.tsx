@@ -2,6 +2,8 @@ import React, { useCallback, useEffect, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
+  BackHandler,
+  Dimensions,
   FlatList,
   Modal,
   Platform,
@@ -12,8 +14,10 @@ import {
   Text,
   TextInput,
   TouchableOpacity,
+  TouchableWithoutFeedback,
   View,
   KeyboardAvoidingView,
+  GestureResponderEvent,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Image } from 'expo-image';
@@ -21,14 +25,16 @@ import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import * as ImagePicker from 'expo-image-picker';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { useThemeColor } from '@/hooks/use-theme-color';
-import { CommunityEvent, CreateEventInput } from '@/src/types/event';
+import { CommunityEvent } from '@/src/types/event';
 import { eventService } from '@/src/services/eventService';
 import { uploadMedia } from '@/src/services/communityService';
 import { EventCard } from './EventCard';
+import { EventCommentsScreen } from './EventCommentsScreen';
 
 export interface CommunityEventsScreenProps {
   communityId?: number | string;
   communityName?: string;
+  userRole?: string;
   isAdmin?: boolean;
   onBackPress?: () => void;
 }
@@ -36,6 +42,7 @@ export interface CommunityEventsScreenProps {
 export function CommunityEventsScreen({
   communityId = 'default',
   communityName = 'Grupo #1 musica',
+  userRole,
   isAdmin = true, // Por padrão habilitado para que os administradores possam adicionar
   onBackPress,
 }: CommunityEventsScreenProps) {
@@ -53,8 +60,9 @@ export function CommunityEventsScreen({
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
 
-  // Estados do Modal de Criação de Evento
-  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  // Estados do Modal de Criação / Edição de Evento
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingEvent, setEditingEvent] = useState<CommunityEvent | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [title, setTitle] = useState('');
   const [location, setLocation] = useState('');
@@ -65,6 +73,25 @@ export function CommunityEventsScreen({
   const [endTime, setEndTime] = useState('');
   const [selectedImageUri, setSelectedImageUri] = useState<string | null>(null);
   const [selectedMimeType, setSelectedMimeType] = useState<string | null>(null);
+
+  // Estados do Dropdown de Opções do Evento (3 pontos estilo Perfil)
+  const [menuVisible, setMenuVisible] = useState(false);
+  const [menuPosition, setMenuPosition] = useState<{ top: number; right: number }>({ top: 54, right: 20 });
+  const [selectedEvent, setSelectedEvent] = useState<CommunityEvent | null>(null);
+
+  // Visualização de Comentários do Evento
+  const [selectedEventForComments, setSelectedEventForComments] = useState<CommunityEvent | null>(null);
+
+  // Hardware Back Handler para fechar comentários do evento
+  useEffect(() => {
+    if (!selectedEventForComments) return;
+    const backAction = () => {
+      setSelectedEventForComments(null);
+      return true;
+    };
+    const backHandler = BackHandler.addEventListener('hardwareBackPress', backAction);
+    return () => backHandler.remove();
+  }, [selectedEventForComments]);
 
   const loadEvents = useCallback(async (showLoading = true) => {
     if (showLoading) setIsLoading(true);
@@ -113,8 +140,15 @@ export function CommunityEventsScreen({
     setSelectedMimeType(null);
   };
 
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
+    setEditingEvent(null);
+    handleRemoveImage();
+  };
+
   const handleOpenCreateModal = () => {
     // Sugere datas e horários padrão
+    setEditingEvent(null);
     const today = new Date();
     const formattedToday = today.toISOString().split('T')[0];
     setStartDate(formattedToday);
@@ -125,7 +159,21 @@ export function CommunityEventsScreen({
     setLocation('');
     setDescription('');
     handleRemoveImage();
-    setIsCreateModalOpen(true);
+    setIsModalOpen(true);
+  };
+
+  const handleOpenEditModal = (event: CommunityEvent) => {
+    setEditingEvent(event);
+    setTitle(event.titulo || '');
+    setLocation(event.local || '');
+    setDescription(event.descricao || '');
+    setStartDate(event.diaInicio || '');
+    setEndDate(event.diaFim || event.diaInicio || '');
+    setStartTime(event.horarioInicio ? event.horarioInicio.slice(0, 5) : '13:00');
+    setEndTime(event.horarioFim ? event.horarioFim.slice(0, 5) : '19:00');
+    setSelectedImageUri(event.foto || event.bannerUrl || null);
+    setSelectedMimeType(null);
+    setIsModalOpen(true);
   };
 
   const handleSaveEvent = async () => {
@@ -146,61 +194,131 @@ export function CommunityEventsScreen({
           Alert.alert('Erro no Upload', 'Não foi possível enviar a imagem. Tente novamente.');
           return;
         }
+      } else if (selectedImageUri) {
+        fotoUrl = selectedImageUri;
       }
 
-      const newEvent = await eventService.createEvent(communityId, {
-        titulo: title.trim(),
-        local: location.trim(),
-        descricao: description.trim(),
-        diaInicio: startDate || new Date().toISOString().split('T')[0],
-        diaFim: endDate || startDate,
-        horarioInicio: startTime || '13:00',
-        horarioFim: endTime || '19:00',
-        foto: fotoUrl,
-      });
+      if (editingEvent) {
+        // Atualizar Evento Existente
+        const updatedEvent = await eventService.updateEvent(editingEvent.id, {
+          titulo: title.trim(),
+          local: location.trim(),
+          descricao: description.trim(),
+          diaInicio: startDate || editingEvent.diaInicio || new Date().toISOString().split('T')[0],
+          diaFim: endDate || startDate || editingEvent.diaFim,
+          horarioInicio: startTime || '13:00',
+          horarioFim: endTime || '19:00',
+          idComunidade: Number(communityId) || editingEvent.idComunidade,
+          foto: fotoUrl,
+        });
 
-      setEvents((prev) => [newEvent, ...prev]);
-      setIsCreateModalOpen(false);
-      handleRemoveImage();
-      Alert.alert('Sucesso', 'Evento publicado na comunidade!');
+        setEvents((prev) =>
+          prev.map((e) => (e.id === editingEvent.id ? { ...e, ...updatedEvent } : e))
+        );
+        handleCloseModal();
+        Alert.alert('Sucesso', 'Evento atualizado na comunidade!');
+      } else {
+        // Criar Novo Evento
+        const newEvent = await eventService.createEvent(communityId, {
+          titulo: title.trim(),
+          local: location.trim(),
+          descricao: description.trim(),
+          diaInicio: startDate || new Date().toISOString().split('T')[0],
+          diaFim: endDate || startDate,
+          horarioInicio: startTime || '13:00',
+          horarioFim: endTime || '19:00',
+          foto: fotoUrl,
+        });
+
+        setEvents((prev) => [newEvent, ...prev]);
+        handleCloseModal();
+        Alert.alert('Sucesso', 'Evento publicado na comunidade!');
+      }
     } catch (error) {
-      console.error('Erro ao criar evento:', error);
-      Alert.alert('Erro', 'Não foi possível cadastrar o evento.');
+      console.error('Erro ao salvar evento:', error);
+      Alert.alert(
+        'Erro',
+        editingEvent ? 'Não foi possível atualizar o evento.' : 'Não foi possível cadastrar o evento.'
+      );
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  const handleEventOptions = (event: CommunityEvent) => {
-    Alert.alert('Opções do Evento', event.titulo, [
-      {
-        text: 'Excluir Evento',
-        style: 'destructive',
-        onPress: () => {
-          Alert.alert(
-            'Confirmar Exclusão',
-            'Deseja realmente remover este evento?',
-            [
-              { text: 'Cancelar', style: 'cancel' },
-              {
-                text: 'Remover',
-                style: 'destructive',
-                onPress: async () => {
-                  await eventService.deleteEvent(event.id);
-                  setEvents((prev) => prev.filter((e) => e.id !== event.id));
-                },
-              },
-            ]
-          );
+  const handleEventOptions = (event: CommunityEvent, gestureEvent?: GestureResponderEvent) => {
+    const pageY = gestureEvent?.nativeEvent?.pageY;
+    if (pageY !== undefined) {
+      const windowHeight = Dimensions.get('window').height;
+      const top = Math.max(60, Math.min(pageY - 10, windowHeight - 160));
+      setMenuPosition({ top, right: 20 });
+    } else {
+      setMenuPosition({ top: 120, right: 20 });
+    }
+    setSelectedEvent(event);
+    setMenuVisible(true);
+  };
+
+  const handleEditEventPress = () => {
+    setMenuVisible(false);
+    if (selectedEvent) {
+      handleOpenEditModal(selectedEvent);
+    }
+  };
+
+  const handleDeleteEventPress = () => {
+    setMenuVisible(false);
+    if (!selectedEvent) return;
+    const eventToDelete = selectedEvent;
+
+    Alert.alert(
+      'Confirmar Exclusão',
+      `Deseja realmente remover o evento "${eventToDelete.titulo}"?`,
+      [
+        { text: 'Cancelar', style: 'cancel' },
+        {
+          text: 'Excluir',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await eventService.deleteEvent(eventToDelete.id);
+              setEvents((prev) => prev.filter((e) => e.id !== eventToDelete.id));
+              Alert.alert('Sucesso', 'Evento removido com sucesso!');
+            } catch (error) {
+              console.error('Erro ao excluir evento:', error);
+              Alert.alert('Erro', 'Não foi possível remover o evento.');
+            }
+          },
         },
-      },
-      { text: 'Fechar', style: 'cancel' },
-    ]);
+      ]
+    );
   };
 
   const handleComments = (event: CommunityEvent) => {
-    Alert.alert('Comentários', `Visualizando comentários do evento "${event.titulo}".`);
+    setSelectedEventForComments(event);
   };
+
+  if (selectedEventForComments) {
+    return (
+      <EventCommentsScreen
+        communityId={communityId}
+        communityName={communityName}
+        userRole={userRole}
+        isAdmin={isAdmin}
+        event={selectedEventForComments}
+        onBackPress={() => setSelectedEventForComments(null)}
+        onCommentCountChange={(newCount) => {
+          setEvents((prev) =>
+            prev.map((e) =>
+              e.id === selectedEventForComments.id ? { ...e, commentsCount: newCount } : e
+            )
+          );
+          setSelectedEventForComments((prev) =>
+            prev ? { ...prev, commentsCount: newCount } : null
+          );
+        }}
+      />
+    );
+  }
 
   return (
     <SafeAreaView style={[styles.safeArea, { backgroundColor }]} edges={['top', 'left', 'right', 'bottom']}>
@@ -251,8 +369,9 @@ export function CommunityEventsScreen({
           renderItem={({ item }) => (
             <EventCard
               event={item}
-              onOptionsPress={handleEventOptions}
+              onOptionsPress={isAdmin ? handleEventOptions : undefined}
               onCommentsPress={handleComments}
+              onPress={handleComments}
             />
           )}
           contentContainerStyle={styles.listContent}
@@ -279,12 +398,65 @@ export function CommunityEventsScreen({
         />
       )}
 
-      {/* Modal de Criação de Evento */}
+      {/* 3-dots Dropdown Modal (estilo Perfil) */}
       <Modal
-        visible={isCreateModalOpen}
+        visible={menuVisible}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setMenuVisible(false)}
+      >
+        <TouchableWithoutFeedback onPress={() => setMenuVisible(false)}>
+          <View style={styles.dropdownModalOverlay}>
+            <TouchableWithoutFeedback>
+              <View
+                style={[
+                  styles.dropdownCard,
+                  {
+                    top: menuPosition.top,
+                    right: menuPosition.right,
+                    backgroundColor: isDark ? '#1F2937' : '#FFFFFF',
+                    borderColor: isDark ? '#374151' : '#E5E7EB',
+                  },
+                ]}
+              >
+                <TouchableOpacity
+                  activeOpacity={0.7}
+                  onPress={handleEditEventPress}
+                  style={styles.dropdownItem}
+                >
+                  <Text style={[styles.dropdownItemText, { color: textColor }]}>
+                    Editar Evento
+                  </Text>
+                </TouchableOpacity>
+
+                <View
+                  style={[
+                    styles.dropdownDivider,
+                    { backgroundColor: isDark ? '#374151' : '#F3F4F6' },
+                  ]}
+                />
+
+                <TouchableOpacity
+                  activeOpacity={0.7}
+                  onPress={handleDeleteEventPress}
+                  style={styles.dropdownItem}
+                >
+                  <Text style={[styles.dropdownItemText, { color: '#EF4444' }]}>
+                    Excluir Evento
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            </TouchableWithoutFeedback>
+          </View>
+        </TouchableWithoutFeedback>
+      </Modal>
+
+      {/* Modal de Criação / Edição de Evento */}
+      <Modal
+        visible={isModalOpen}
         animationType="slide"
         transparent
-        onRequestClose={() => setIsCreateModalOpen(false)}
+        onRequestClose={handleCloseModal}
       >
         <KeyboardAvoidingView
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
@@ -293,9 +465,11 @@ export function CommunityEventsScreen({
           <View style={[styles.modalContent, { backgroundColor }]}>
             {/* Modal Header */}
             <View style={[styles.modalHeader, { borderBottomColor: borderColor }]}>
-              <Text style={[styles.modalTitle, { color: textColor }]}>Criar Novo Evento</Text>
+              <Text style={[styles.modalTitle, { color: textColor }]}>
+                {editingEvent ? 'Editar Evento' : 'Criar Novo Evento'}
+              </Text>
               <TouchableOpacity
-                onPress={() => setIsCreateModalOpen(false)}
+                onPress={handleCloseModal}
                 hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
               >
                 <MaterialIcons name="close" size={24} color={textColor} />
@@ -419,7 +593,7 @@ export function CommunityEventsScreen({
                 </TouchableOpacity>
               )}
 
-              {/* Botão de Criação */}
+              {/* Botão de Envio */}
               <TouchableOpacity
                 style={[styles.submitButton, { backgroundColor: primaryColor }]}
                 onPress={handleSaveEvent}
@@ -429,7 +603,9 @@ export function CommunityEventsScreen({
                 {isSubmitting ? (
                   <ActivityIndicator color="#FFFFFF" size="small" />
                 ) : (
-                  <Text style={styles.submitButtonText}>Publicar Evento</Text>
+                  <Text style={styles.submitButtonText}>
+                    {editingEvent ? 'Salvar Alterações' : 'Publicar Evento'}
+                  </Text>
                 )}
               </TouchableOpacity>
             </ScrollView>
@@ -503,6 +679,37 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     lineHeight: 20,
   },
+  // 3-dots Dropdown Modal
+  dropdownModalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.15)',
+  },
+  dropdownCard: {
+    position: 'absolute',
+    width: 160,
+    borderRadius: 14,
+    borderWidth: 1,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 10,
+    elevation: 8,
+    overflow: 'hidden',
+  },
+  dropdownItem: {
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    alignItems: 'center',
+  },
+  dropdownItemText: {
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  dropdownDivider: {
+    height: 1,
+    width: '100%',
+  },
+  // Modal de Criação / Edição
   modalOverlay: {
     flex: 1,
     backgroundColor: 'rgba(0,0,0,0.5)',
@@ -607,3 +814,4 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
 });
+

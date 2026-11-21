@@ -24,3 +24,22 @@ export interface CreatePostInput {
   mediaType?: MediaType;
   mediaUrl?: string | null;
 }
+
+export interface CommentAuthor {
+  id: string | number;
+  name: string;
+  avatarUrl?: string | null;
+}
+
+export interface PostComment {
+  id: string | number;
+  postId: string | number;
+  author: CommentAuthor;
+  content: string;
+  createdAt: string;
+}
+
+export interface CreateCommentInput {
+  conteudo: string;
+  idUsuario?: number;
+}

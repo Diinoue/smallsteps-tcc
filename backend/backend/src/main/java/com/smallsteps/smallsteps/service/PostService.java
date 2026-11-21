@@ -15,6 +15,7 @@ import com.smallsteps.smallsteps.entity.Comunidade;
 import com.smallsteps.smallsteps.entity.Post;
 import com.smallsteps.smallsteps.entity.Usuario;
 import com.smallsteps.smallsteps.repository.CommunityRepository;
+import com.smallsteps.smallsteps.repository.ComentarioRepository;
 import com.smallsteps.smallsteps.repository.PostRepository;
 import com.smallsteps.smallsteps.repository.UserRepository;
 
@@ -24,14 +25,17 @@ public class PostService {
     private final PostRepository postRepository;
     private final CommunityRepository communityRepository;
     private final UserRepository userRepository;
+    private final ComentarioRepository comentarioRepository;
 
     public PostService(
             PostRepository postRepository,
             CommunityRepository communityRepository,
-            UserRepository userRepository) {
+            UserRepository userRepository,
+            ComentarioRepository comentarioRepository) {
         this.postRepository = postRepository;
         this.communityRepository = communityRepository;
         this.userRepository = userRepository;
+        this.comentarioRepository = comentarioRepository;
     }
 
     @Transactional(readOnly = true)
@@ -40,7 +44,7 @@ public class PostService {
         return posts.stream()
                 .map(p -> {
                     int streak = p.getUsuario() != null ? p.getUsuario().getStreakNum() : 0;
-                    int commentsCount = 0; // Pode ser integrado com ComentarioRepository posteriormente
+                    int commentsCount = comentarioRepository.countByPostId(p.getId());
                     return new PostResponseDTO(p, streak, commentsCount);
                 })
                 .collect(Collectors.toList());

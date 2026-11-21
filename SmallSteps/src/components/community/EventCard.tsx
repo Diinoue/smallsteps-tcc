@@ -1,5 +1,6 @@
 import React from 'react';
 import {
+  GestureResponderEvent,
   StyleSheet,
   View,
   Text,
@@ -13,7 +14,7 @@ import { CommunityEvent } from '@/src/types/event';
 
 export interface EventCardProps {
   event: CommunityEvent;
-  onOptionsPress?: (event: CommunityEvent) => void;
+  onOptionsPress?: (event: CommunityEvent, gestureEvent?: GestureResponderEvent) => void;
   onCommentsPress?: (event: CommunityEvent) => void;
   onPress?: (event: CommunityEvent) => void;
 }
@@ -75,13 +76,15 @@ export function EventCard({
           ) : null}
         </View>
 
-        <TouchableOpacity
-          onPress={() => onOptionsPress?.(event)}
-          hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
-          style={styles.optionsButton}
-        >
-          <Text style={[styles.optionsText, { color: textColor }]}>•••</Text>
-        </TouchableOpacity>
+        {onOptionsPress ? (
+          <TouchableOpacity
+            onPress={(e) => onOptionsPress(event, e)}
+            hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+            style={styles.optionsButton}
+          >
+            <Text style={[styles.optionsText, { color: textColor }]}>•••</Text>
+          </TouchableOpacity>
+        ) : null}
       </View>
 
       {/* 2. Banner / Imagem do Evento */}
