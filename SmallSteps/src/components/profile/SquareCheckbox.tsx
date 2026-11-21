@@ -1,6 +1,7 @@
 import React from 'react';
 import { TouchableOpacity, View, Text, StyleSheet } from 'react-native';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
+import { useThemeColor } from '@/hooks/use-theme-color';
 
 interface SquareCheckboxProps {
   checked: boolean;
@@ -19,8 +20,12 @@ export function SquareCheckbox({
   labelStyle,
   disabled = false,
   size = 22,
-  color = '#34c759',
+  color,
 }: SquareCheckboxProps) {
+  const textColor = useThemeColor({}, 'text');
+  const borderColor = useThemeColor({}, 'border');
+  const activeColor = color || useThemeColor({}, 'streakActive');
+
   return (
     <TouchableOpacity
       activeOpacity={0.7}
@@ -34,17 +39,17 @@ export function SquareCheckbox({
           {
             width: size,
             height: size,
-            borderColor: color,
-            backgroundColor: checked ? color : 'transparent',
+            borderColor: checked ? activeColor : borderColor,
+            backgroundColor: checked ? activeColor : 'transparent',
           },
         ]}
       >
         {checked && (
-          <MaterialIcons name="check" size={size - 4} color="#FFFFFF" />
+          <MaterialIcons name="check" size={size - 5} color="#FFFFFF" />
         )}
       </View>
       {label ? (
-        <Text style={[styles.label, labelStyle]}>
+        <Text style={[styles.label, { color: textColor }, labelStyle]} numberOfLines={2}>
           {label}
         </Text>
       ) : null}
@@ -56,18 +61,18 @@ const styles = StyleSheet.create({
   container: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginVertical: 6,
+    paddingVertical: 8,
   },
   checkbox: {
     borderWidth: 2,
-    borderRadius: 4,
+    borderRadius: 6,
     justifyContent: 'center',
     alignItems: 'center',
   },
   label: {
-    marginLeft: 10,
+    flex: 1,
+    marginLeft: 12,
     fontSize: 15,
     fontWeight: '600',
-    color: '#111827',
   },
 });

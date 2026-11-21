@@ -10,7 +10,6 @@ public class PostResponseDTO {
     private String createdAt;
     private String mediaType;
     private String mediaUrl;
-    private String thumbnailUrl;
     private int commentsCount;
     private PostAuthorDTO author;
 
@@ -75,7 +74,6 @@ public class PostResponseDTO {
 
         this.mediaType = post.getTipoMidia() != null ? post.getTipoMidia().toLowerCase() : "text";
         this.mediaUrl = post.getUrlMidia();
-        this.thumbnailUrl = post.getUrlThumbnail();
         this.commentsCount = commentsCount;
 
         if (post.getUsuario() != null) {
@@ -134,14 +132,6 @@ public class PostResponseDTO {
 
     public void setMediaUrl(String mediaUrl) {
         this.mediaUrl = mediaUrl;
-    }
-
-    public String getThumbnailUrl() {
-        return thumbnailUrl;
-    }
-
-    public void setThumbnailUrl(String thumbnailUrl) {
-        this.thumbnailUrl = thumbnailUrl;
     }
 
     public int getCommentsCount() {

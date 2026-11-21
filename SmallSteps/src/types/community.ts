@@ -15,7 +15,6 @@ export interface Post {
   createdAt: string;
   mediaType: MediaType;
   mediaUrl?: string | null;
-  thumbnailUrl?: string | null;
   aspectRatio?: number;
   commentsCount: number;
 }
@@ -24,5 +23,4 @@ export interface CreatePostInput {
   content: string;
   mediaType?: MediaType;
   mediaUrl?: string | null;
-  thumbnailUrl?: string | null;
 }

@@ -1,8 +1,11 @@
 package com.smallsteps.smallsteps.service;
 
+import java.security.SecureRandom;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Objects;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import org.springframework.http.HttpStatus;
@@ -14,12 +17,14 @@ import com.smallsteps.smallsteps.dto.ComunidadeDTO;
 import com.smallsteps.smallsteps.entity.Comunidade;
 import com.smallsteps.smallsteps.entity.Participam;
 import com.smallsteps.smallsteps.entity.ParticipamId;
+import com.smallsteps.smallsteps.entity.SolicitamId;
 import com.smallsteps.smallsteps.entity.Tag;
 import com.smallsteps.smallsteps.entity.TagComunidade;
 import com.smallsteps.smallsteps.entity.Usuario;
 import com.smallsteps.smallsteps.enums.Cargo;
 import com.smallsteps.smallsteps.repository.CommunityRepository;
 import com.smallsteps.smallsteps.repository.ParticipamRepository;
+import com.smallsteps.smallsteps.repository.SolicitamRepository;
 import com.smallsteps.smallsteps.repository.TagComunidadeRepository;
 import com.smallsteps.smallsteps.repository.TagRepository;
 import com.smallsteps.smallsteps.repository.UserRepository;
@@ -27,8 +32,12 @@ import com.smallsteps.smallsteps.repository.UserRepository;
 @Service
 public class CommunityService {
 
+    private static final SecureRandom RANDOM = new SecureRandom();
+    private static final Pattern INVITE_CODE_PATTERN = Pattern.compile("#?[0-9a-fA-F]{6}");
+
     private final CommunityRepository communityRepository;
     private final ParticipamRepository participamRepository;
+    private final SolicitamRepository solicitamRepository;
     private final UserRepository userRepository;
     private final TagRepository tagRepository;
     private final TagComunidadeRepository tagComunidadeRepository;
@@ -36,14 +45,43 @@ public class CommunityService {
     public CommunityService(
             CommunityRepository communityRepository,
             ParticipamRepository participamRepository,
+            SolicitamRepository solicitamRepository,
             UserRepository userRepository,
             TagRepository tagRepository,
             TagComunidadeRepository tagComunidadeRepository) {
         this.communityRepository = communityRepository;
         this.participamRepository = participamRepository;
+        this.solicitamRepository = solicitamRepository;
         this.userRepository = userRepository;
         this.tagRepository = tagRepository;
         this.tagComunidadeRepository = tagComunidadeRepository;
+    }
+
+    private String generateUniqueInviteCode() {
+        for (int attempt = 0; attempt < 50; attempt++) {
+            int value = RANDOM.nextInt(0x1000000);
+            String code = String.format("#%06x", value);
+            if (!communityRepository.existsByCodigoConviteIgnoreCase(code)) {
+                return code;
+            }
+        }
+        throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Não foi possível gerar código único de convite");
+    }
+
+    private String normalizeInviteCode(String rawInput) {
+        if (rawInput == null || rawInput.trim().isEmpty()) {
+            return "";
+        }
+        String trimmed = rawInput.trim();
+        Matcher matcher = INVITE_CODE_PATTERN.matcher(trimmed);
+        String found = null;
+        while (matcher.find()) {
+            found = matcher.group();
+        }
+        if (found != null) {
+            return found.startsWith("#") ? found.toLowerCase() : "#" + found.toLowerCase();
+        }
+        return trimmed.startsWith("#") ? trimmed.toLowerCase() : "#" + trimmed.toLowerCase();
     }
 
     @Transactional(readOnly = true)
@@ -65,6 +103,7 @@ public class CommunityService {
         comunidade.setFoto(dto.getFoto());
         comunidade.setDescricao(dto.getDescricao());
         comunidade.setDtCriacao(dto.getDtCriacao() != null ? dto.getDtCriacao() : LocalDateTime.now());
+        comunidade.setCodigoConvite(generateUniqueInviteCode());
 
         Comunidade salva = communityRepository.save(comunidade);
 
@@ -132,6 +171,36 @@ public class CommunityService {
         communityRepository.deleteById(id);
     }
 
+    private ComunidadeDTO toComunidadeDTO(Comunidade c, Integer idUsuario) {
+        ComunidadeDTO dto = new ComunidadeDTO();
+        dto.setId(c.getId());
+        dto.setNome(c.getNome());
+        dto.setPrivado(c.isPrivado());
+        dto.setFoto(c.getFoto());
+        dto.setDescricao(c.getDescricao());
+        dto.setDtCriacao(c.getDtCriacao());
+        dto.setCodigoConvite(c.getCodigoConvite());
+        dto.setQuantidadeMembros((int) participamRepository.countByIdComunidade(c.getId()));
+
+        List<TagComunidade> tagComunidades = tagComunidadeRepository.findByIdComunidade(c.getId());
+        List<String> tags = tagComunidades.stream()
+                .map(tc -> tagRepository.findById(tc.getIdTag()).map(Tag::getDescricao).orElse(null))
+                .filter(Objects::nonNull)
+                .collect(Collectors.toList());
+        dto.setTags(tags);
+
+        boolean jaParticipa = false;
+        boolean jaSolicitou = false;
+        if (idUsuario != null && idUsuario > 0) {
+            jaParticipa = participamRepository.existsById(new ParticipamId(idUsuario, c.getId()));
+            jaSolicitou = solicitamRepository.existsById(new SolicitamId(idUsuario, c.getId()));
+        }
+        dto.setJaParticipa(jaParticipa);
+        dto.setJaSolicitou(jaSolicitou);
+
+        return dto;
+    }
+
     @Transactional(readOnly = true)
     public List<ComunidadeDTO> findPublicCommunities(String nome, Integer idUsuario) {
         List<Comunidade> comunidades;
@@ -149,25 +218,32 @@ public class CommunityService {
                     }
                     return true;
                 })
-                .map(c -> {
-                    ComunidadeDTO dto = new ComunidadeDTO();
-                    dto.setId(c.getId());
-                    dto.setNome(c.getNome());
-                    dto.setPrivado(c.isPrivado());
-                    dto.setFoto(c.getFoto());
-                    dto.setDescricao(c.getDescricao());
-                    dto.setDtCriacao(c.getDtCriacao());
+                .map(c -> toComunidadeDTO(c, idUsuario))
+                .collect(Collectors.toList());
+    }
 
-                    // Carrega tags associadas à comunidade
-                    List<TagComunidade> tagComunidades = tagComunidadeRepository.findByIdComunidade(c.getId());
-                    List<String> tags = tagComunidades.stream()
-                            .map(tc -> tagRepository.findById(tc.getIdTag()).map(Tag::getDescricao).orElse(null))
-                            .filter(Objects::nonNull)
-                            .collect(Collectors.toList());
-                    dto.setTags(tags);
-                    dto.setJaParticipa(false);
+    @Transactional(readOnly = true)
+    public ComunidadeDTO findByInviteCode(String rawCode, Integer idUsuario) {
+        String normalized = normalizeInviteCode(rawCode);
+        if (normalized.isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Código de convite inválido");
+        }
 
-                    return dto;
-                }).collect(Collectors.toList());
+        Comunidade comunidade = communityRepository.findByCodigoConviteIgnoreCase(normalized)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Comunidade não encontrada para o código informado"));
+
+        return toComunidadeDTO(comunidade, idUsuario);
+    }
+
+    @Transactional
+    public Comunidade rerollInviteCode(int id) {
+        Comunidade comunidade = findById(id);
+        String current = comunidade.getCodigoConvite();
+        String newCode = generateUniqueInviteCode();
+        while (newCode.equalsIgnoreCase(current)) {
+            newCode = generateUniqueInviteCode();
+        }
+        comunidade.setCodigoConvite(newCode);
+        return communityRepository.save(comunidade);
     }
 }

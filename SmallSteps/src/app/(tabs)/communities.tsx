@@ -22,6 +22,8 @@ import { loginService } from '@/src/services/loginService';
 import { Button } from '@/src/components/ui/Button';
 import { CommunityFeedScreen } from '@/src/components/community/CommunityFeedScreen';
 import { CommunityEventsScreen } from '@/src/components/community/CommunityEventsScreen';
+import { CommunityMembersScreen } from '@/src/components/community/CommunityMembersScreen';
+import { CommunityAddMembersScreen } from '@/src/components/community/CommunityAddMembersScreen';
 
 const ACCENT_GREEN = '#34C759';
 
@@ -38,7 +40,7 @@ export default function CommunitiesScreen() {
 
   const [communities, setCommunities] = useState<CommunityItem[]>([]);
   const [selectedCommunity, setSelectedCommunity] = useState<CommunityItem | null>(null);
-  const [currentView, setCurrentView] = useState<'feed' | 'events'>('feed');
+  const [currentView, setCurrentView] = useState<'feed' | 'events' | 'members' | 'addMembers'>('feed');
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [failedImages, setFailedImages] = useState<Record<number, boolean>>({});
@@ -74,7 +76,11 @@ export default function CommunitiesScreen() {
   useFocusEffect(
     useCallback(() => {
       const onBackPress = () => {
-        if (currentView === 'events') {
+        if (currentView === 'addMembers') {
+          setCurrentView('members');
+          return true;
+        }
+        if (currentView === 'events' || currentView === 'members') {
           setCurrentView('feed');
           return true;
         }
@@ -182,15 +188,50 @@ export default function CommunitiesScreen() {
     Alert.alert('JWT removido', 'O token foi apagado do armazenamento seguro.');
   };
 
-  // Se uma comunidade for selecionada, exibe a tela de feed ou de eventos da comunidade
+  // Se uma comunidade for selecionada, exibe a tela de feed, eventos, membros ou adicionar membros
   if (selectedCommunity) {
+    const isAdminOrOwner =
+      selectedCommunity.cargo === 'DONO' || selectedCommunity.cargo === 'ADMINISTRADOR';
+    const isPrivateCommunity = Boolean(selectedCommunity.privado);
+
     if (currentView === 'events') {
       return (
         <CommunityEventsScreen
           communityId={selectedCommunity.id}
           communityName={selectedCommunity.nome}
-          isAdmin={selectedCommunity.cargo === 'DONO' || selectedCommunity.cargo === 'ADMINISTRADOR' || !selectedCommunity.cargo}
+          isAdmin={isAdminOrOwner || !selectedCommunity.cargo}
           onBackPress={() => setCurrentView('feed')}
+        />
+      );
+    }
+
+    if (currentView === 'addMembers' && isPrivateCommunity && isAdminOrOwner) {
+      return (
+        <CommunityAddMembersScreen
+          communityId={selectedCommunity.id}
+          communityName={selectedCommunity.nome}
+          initialInviteCode={selectedCommunity.codigoConvite}
+          onBackPress={() => setCurrentView('members')}
+          onInviteCodeUpdated={(newCode) =>
+            setSelectedCommunity((prev) => (prev ? { ...prev, codigoConvite: newCode } : prev))
+          }
+        />
+      );
+    }
+
+    if (currentView === 'members') {
+      return (
+        <CommunityMembersScreen
+          communityId={selectedCommunity.id}
+          communityName={selectedCommunity.nome}
+          isPrivate={isPrivateCommunity}
+          userRole={selectedCommunity.cargo}
+          onBackPress={() => setCurrentView('feed')}
+          onAddMembersPress={
+            isPrivateCommunity && isAdminOrOwner
+              ? () => setCurrentView('addMembers')
+              : undefined
+          }
         />
       );
     }
@@ -205,6 +246,7 @@ export default function CommunitiesScreen() {
           setCurrentView('feed');
         }}
         onEventsPress={() => setCurrentView('events')}
+        onMembersPress={() => setCurrentView('members')}
         onLeaveCommunity={() => {
           setSelectedCommunity(null);
           loadCommunities(true);

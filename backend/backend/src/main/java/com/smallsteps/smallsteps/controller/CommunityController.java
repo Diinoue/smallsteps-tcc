@@ -42,6 +42,18 @@ public class CommunityController {
         return communityService.findPublicCommunities(nome, idUsuario);
     }
 
+    @GetMapping("/by-code")
+    public ComunidadeDTO getByCode(
+            @RequestParam String codigo,
+            @RequestParam(required = false) Integer idUsuario) {
+        return communityService.findByInviteCode(codigo, idUsuario);
+    }
+
+    @PostMapping("/{id}/reroll-code")
+    public Comunidade rerollCode(@PathVariable int id) {
+        return communityService.rerollInviteCode(id);
+    }
+
     @GetMapping("/{id}")
     public Comunidade getById(@PathVariable int id) {
         return communityService.findById(id);

@@ -1,6 +1,8 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
+import { useColorScheme } from '@/hooks/use-color-scheme';
+import { useThemeColor } from '@/hooks/use-theme-color';
 import { ProfileAchievement } from '@/src/context/ProfileContext';
 
 interface AchievementCardProps {
@@ -14,40 +16,82 @@ export function AchievementCard({
   layoutVariant = 'left',
   onViewPress,
 }: AchievementCardProps) {
+  const colorScheme = useColorScheme();
+  const isDark = colorScheme === 'dark';
+
+  const surfaceColor = useThemeColor({}, 'surface');
+  const surfaceVariant = useThemeColor({}, 'surfaceVariant');
+  const textColor = useThemeColor({}, 'text');
+  const textSecondary = useThemeColor({}, 'textSecondary');
+  const textMuted = useThemeColor({}, 'textMuted');
+  const borderColor = useThemeColor({}, 'border');
+  const activeColor = useThemeColor({}, 'streakActive');
+
   const isLeft = layoutVariant === 'left';
 
   const renderMedia = () => (
-    <View style={styles.thumbnailContainer}>
+    <View
+      style={[
+        styles.thumbnailContainer,
+        { backgroundColor: surfaceVariant, borderColor },
+      ]}
+    >
       {achievement.mediaType === 'video' ? (
-        <View style={styles.playIconContainer}>
-          <MaterialIcons name="play-arrow" size={44} color="#6B7280" />
+        <View
+          style={[
+            styles.playIconContainer,
+            { backgroundColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)' },
+          ]}
+        >
+          <MaterialIcons name="play-arrow" size={34} color={activeColor} />
         </View>
       ) : (
-        <MaterialIcons name="image" size={54} color="#D1D5DB" />
+        <MaterialIcons name="emoji-events" size={38} color={activeColor} />
       )}
     </View>
   );
 
   const renderContent = () => (
     <View style={[styles.infoContainer, isLeft ? styles.infoLeft : styles.infoRight]}>
-      <Text style={styles.title} numberOfLines={2}>
-        {achievement.title.endsWith(':') ? achievement.title : `${achievement.title}:`}
+      <Text style={[styles.title, { color: textColor }]} numberOfLines={2}>
+        {achievement.title}
       </Text>
-      <Text style={styles.journeyText}>{achievement.journeyDuration}</Text>
-      <Text style={styles.subGoalsText}>{achievement.subGoalsCount} Sub-Goals</Text>
-      
+
+      <View style={styles.metaRow}>
+        <MaterialIcons name="schedule" size={14} color={textMuted} />
+        <Text style={[styles.journeyText, { color: textSecondary }]} numberOfLines={1}>
+          {achievement.journeyDuration}
+        </Text>
+      </View>
+
+      <View style={styles.metaRow}>
+        <MaterialIcons name="check-circle-outline" size={14} color={activeColor} />
+        <Text style={[styles.subGoalsText, { color: textSecondary }]}>
+          {achievement.subGoalsCount} Sub-Goals
+        </Text>
+      </View>
+
       <TouchableOpacity
         activeOpacity={0.75}
         onPress={() => onViewPress?.(achievement.id)}
-        style={styles.viewButton}
+        style={[
+          styles.viewButton,
+          { backgroundColor: isDark ? '#143322' : '#ECFDF5', borderColor: activeColor + '40' },
+        ]}
       >
-        <Text style={styles.viewButtonText}>view</Text>
+        <Text style={[styles.viewButtonText, { color: activeColor }]}>Ver detalhes</Text>
+        <MaterialIcons name="arrow-forward" size={14} color={activeColor} />
       </TouchableOpacity>
     </View>
   );
 
   return (
-    <View style={styles.card}>
+    <View
+      style={[
+        styles.card,
+        { backgroundColor: surfaceColor, borderColor },
+      ]}
+    >
       {isLeft ? (
         <>
           {renderMedia()}
@@ -67,20 +111,23 @@ const styles = StyleSheet.create({
   card: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginVertical: 12,
-    paddingHorizontal: 8,
+    marginVertical: 8,
+    padding: 14,
+    borderRadius: 18,
+    borderWidth: 1,
   },
   thumbnailContainer: {
-    width: 125,
-    height: 110,
-    backgroundColor: '#E5E7EB',
-    borderRadius: 8,
+    width: 96,
+    height: 96,
+    borderRadius: 14,
+    borderWidth: 1,
     justifyContent: 'center',
     alignItems: 'center',
   },
   playIconContainer: {
-    width: 50,
-    height: 50,
+    width: 48,
+    height: 48,
+    borderRadius: 24,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -89,39 +136,45 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   infoLeft: {
-    paddingLeft: 18,
+    paddingLeft: 14,
   },
   infoRight: {
-    paddingRight: 18,
+    paddingRight: 14,
   },
   title: {
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: '800',
-    color: '#111827',
-    marginBottom: 2,
+    marginBottom: 6,
+    lineHeight: 21,
+  },
+  metaRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    marginBottom: 3,
   },
   journeyText: {
-    fontSize: 14,
-    color: '#374151',
+    fontSize: 13,
     fontWeight: '500',
-    marginBottom: 2,
+    flex: 1,
   },
   subGoalsText: {
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: '700',
-    color: '#1F2937',
-    marginBottom: 8,
   },
   viewButton: {
-    backgroundColor: '#EEF2FF',
-    paddingHorizontal: 22,
-    paddingVertical: 5,
-    borderRadius: 18,
+    marginTop: 8,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingHorizontal: 14,
+    paddingVertical: 6,
+    borderRadius: 16,
+    borderWidth: 1,
     alignSelf: 'flex-start',
   },
   viewButtonText: {
-    color: '#374151',
-    fontSize: 13,
-    fontWeight: '600',
+    fontSize: 12,
+    fontWeight: '700',
   },
 });

@@ -1,6 +1,8 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
+import { useColorScheme } from '@/hooks/use-color-scheme';
+import { useThemeColor } from '@/hooks/use-theme-color';
 import { ProfileCurrentGoal } from '@/src/context/ProfileContext';
 
 interface CurrentGoalCardProps {
@@ -9,23 +11,47 @@ interface CurrentGoalCardProps {
 }
 
 export function CurrentGoalCard({ goal, onViewPress }: CurrentGoalCardProps) {
-  const allNodesCompleted = goal.nodes.every((n) => n.completed);
+  const colorScheme = useColorScheme();
+  const isDark = colorScheme === 'dark';
+
+  const surfaceColor = useThemeColor({}, 'surface');
+  const textColor = useThemeColor({}, 'text');
+  const textSecondary = useThemeColor({}, 'textSecondary');
+  const textMuted = useThemeColor({}, 'textMuted');
+  const borderColor = useThemeColor({}, 'border');
+  const activeColor = useThemeColor({}, 'streakActive');
+
+  const allNodesCompleted = goal.nodes.length > 0 && goal.nodes.every((n) => n.completed);
+  const completedCount = goal.nodes.filter((n) => n.completed).length;
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.goalTitle}>{goal.title}</Text>
+    <View style={[styles.container, { backgroundColor: surfaceColor, borderColor }]}>
+      <View style={styles.headerRow}>
+        <Text style={[styles.goalTitle, { color: textColor }]} numberOfLines={2}>
+          {goal.title}
+        </Text>
+        <View
+          style={[
+            styles.progressPill,
+            { backgroundColor: isDark ? '#143322' : '#ECFDF5' },
+          ]}
+        >
+          <Text style={[styles.progressText, { color: activeColor }]}>
+            {completedCount}/{goal.nodes.length}
+          </Text>
+        </View>
+      </View>
 
       {/* Horizontal timeline container */}
       <View style={styles.timelineWrapper}>
-        {/* Nodes and milestone */}
         <View style={styles.nodesRow}>
-          {goal.nodes.map((node, index) => {
+          {goal.nodes.map((node) => {
             const isCompleted = node.completed;
-            const pinColor = isCompleted ? '#34c759' : '#6B7280';
+            const pinColor = isCompleted ? activeColor : textMuted;
 
             return (
               <View key={node.id} style={styles.nodeItem}>
-                <Text style={styles.nodeLabel} numberOfLines={1}>
+                <Text style={[styles.nodeLabel, { color: textSecondary }]} numberOfLines={1}>
                   {node.label}
                 </Text>
                 <View style={styles.pinWrapper}>
@@ -41,33 +67,26 @@ export function CurrentGoalCard({ goal, onViewPress }: CurrentGoalCardProps) {
             <MaterialIcons
               name="star"
               size={22}
-              color={allNodesCompleted ? '#34c759' : '#6B7280'}
+              color={allNodesCompleted ? activeColor : textMuted}
             />
           </View>
         </View>
 
         {/* Continuous horizontal bar underneath the pins */}
         <View style={styles.lineContainer}>
-          {goal.nodes.map((node, index) => {
-            const nextNode = goal.nodes[index + 1];
-            // Segment is green if this node is completed
-            const segmentCompleted = node.completed && (nextNode ? nextNode.completed : allNodesCompleted);
-
-            return (
-              <View
-                key={`line-${node.id}`}
-                style={[
-                  styles.lineSegment,
-                  { backgroundColor: node.completed ? '#34c759' : '#9CA3AF' },
-                ]}
-              />
-            );
-          })}
-          {/* Segment connecting to star */}
+          {goal.nodes.map((node) => (
+            <View
+              key={`line-${node.id}`}
+              style={[
+                styles.lineSegment,
+                { backgroundColor: node.completed ? activeColor : borderColor },
+              ]}
+            />
+          ))}
           <View
             style={[
               styles.lineSegment,
-              { backgroundColor: allNodesCompleted ? '#34c759' : '#6B7280' },
+              { backgroundColor: allNodesCompleted ? activeColor : borderColor },
             ]}
           />
         </View>
@@ -78,9 +97,13 @@ export function CurrentGoalCard({ goal, onViewPress }: CurrentGoalCardProps) {
         <TouchableOpacity
           activeOpacity={0.75}
           onPress={() => onViewPress?.(goal.id)}
-          style={styles.viewButton}
+          style={[
+            styles.viewButton,
+            { backgroundColor: isDark ? '#143322' : '#ECFDF5', borderColor: activeColor + '40' },
+          ]}
         >
-          <Text style={styles.viewButtonText}>view</Text>
+          <Text style={[styles.viewButtonText, { color: activeColor }]}>Ver meta</Text>
+          <MaterialIcons name="arrow-forward" size={14} color={activeColor} />
         </TouchableOpacity>
       </View>
     </View>
@@ -89,14 +112,32 @@ export function CurrentGoalCard({ goal, onViewPress }: CurrentGoalCardProps) {
 
 const styles = StyleSheet.create({
   container: {
-    marginVertical: 14,
-    paddingHorizontal: 4,
+    marginVertical: 8,
+    padding: 16,
+    borderRadius: 18,
+    borderWidth: 1,
+  },
+  headerRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    justifyContent: 'space-between',
+    gap: 10,
+    marginBottom: 12,
   },
   goalTitle: {
-    fontSize: 17,
-    fontWeight: '700',
-    color: '#374151',
-    marginBottom: 10,
+    flex: 1,
+    fontSize: 16,
+    fontWeight: '800',
+    lineHeight: 22,
+  },
+  progressPill: {
+    paddingHorizontal: 10,
+    paddingVertical: 3,
+    borderRadius: 12,
+  },
+  progressText: {
+    fontSize: 12,
+    fontWeight: '800',
   },
   timelineWrapper: {
     position: 'relative',
@@ -115,7 +156,6 @@ const styles = StyleSheet.create({
   },
   nodeLabel: {
     fontSize: 11,
-    color: '#374151',
     fontWeight: '500',
     marginBottom: 2,
     textAlign: 'center',
@@ -139,7 +179,9 @@ const styles = StyleSheet.create({
     left: 12,
     right: 12,
     height: 3,
+    borderRadius: 2,
     flexDirection: 'row',
+    overflow: 'hidden',
     zIndex: 1,
   },
   lineSegment: {
@@ -148,17 +190,19 @@ const styles = StyleSheet.create({
   },
   footerRow: {
     alignItems: 'flex-end',
-    marginTop: 8,
+    marginTop: 12,
   },
   viewButton: {
-    backgroundColor: '#EEF2FF',
-    paddingHorizontal: 22,
-    paddingVertical: 5,
-    borderRadius: 18,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingHorizontal: 14,
+    paddingVertical: 6,
+    borderRadius: 16,
+    borderWidth: 1,
   },
   viewButtonText: {
-    color: '#374151',
-    fontSize: 13,
-    fontWeight: '600',
+    fontSize: 12,
+    fontWeight: '700',
   },
 });

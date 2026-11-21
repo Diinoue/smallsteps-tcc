@@ -13,6 +13,9 @@ public class ComunidadeDTO {
     public Integer idUsuario;
     public List<String> tags;
     public boolean jaParticipa;
+    public boolean jaSolicitou;
+    public String codigoConvite;
+    public int quantidadeMembros;
 
     public ComunidadeDTO() {}
 
@@ -103,5 +106,29 @@ public class ComunidadeDTO {
 
     public void setJaParticipa(boolean jaParticipa) {
         this.jaParticipa = jaParticipa;
+    }
+
+    public boolean isJaSolicitou() {
+        return jaSolicitou;
+    }
+
+    public void setJaSolicitou(boolean jaSolicitou) {
+        this.jaSolicitou = jaSolicitou;
+    }
+
+    public String getCodigoConvite() {
+        return codigoConvite;
+    }
+
+    public void setCodigoConvite(String codigoConvite) {
+        this.codigoConvite = codigoConvite;
+    }
+
+    public int getQuantidadeMembros() {
+        return quantidadeMembros;
+    }
+
+    public void setQuantidadeMembros(int quantidadeMembros) {
+        this.quantidadeMembros = quantidadeMembros;
     }
 }

@@ -4,7 +4,6 @@ public class CriarPostRequestDTO {
     private String descricao;
     private String tipoMidia;
     private String urlMidia;
-    private String urlThumbnail;
     private Integer idUsuario;
 
     public CriarPostRequestDTO() {}
@@ -31,14 +30,6 @@ public class CriarPostRequestDTO {
 
     public void setUrlMidia(String urlMidia) {
         this.urlMidia = urlMidia;
-    }
-
-    public String getUrlThumbnail() {
-        return urlThumbnail;
-    }
-
-    public void setUrlThumbnail(String urlThumbnail) {
-        this.urlThumbnail = urlThumbnail;
     }
 
     public Integer getIdUsuario() {

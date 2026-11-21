@@ -32,9 +32,6 @@ public class Post {
     @Column(name = "url_midia", nullable = true, length = 500)
     private String urlMidia;
 
-    @Column(name = "url_thumbnail", nullable = true, length = 500)
-    private String urlThumbnail;
-
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "id_usuario", nullable = false)
     private Usuario usuario;
@@ -91,14 +88,6 @@ public class Post {
 
     public void setUrlMidia(String urlMidia) {
         this.urlMidia = urlMidia;
-    }
-
-    public String getUrlThumbnail() {
-        return urlThumbnail;
-    }
-
-    public void setUrlThumbnail(String urlThumbnail) {
-        this.urlThumbnail = urlThumbnail;
     }
 
     public Usuario getUsuario() {

@@ -74,7 +74,6 @@ public class PostService {
         post.setDescricao(dto.getDescricao());
         post.setTipoMidia(dto.getTipoMidia() != null ? dto.getTipoMidia().toUpperCase() : "TEXT");
         post.setUrlMidia(dto.getUrlMidia());
-        post.setUrlThumbnail(dto.getUrlThumbnail());
         post.setDtCriacao(LocalDateTime.now());
 
         Post salvo = postRepository.save(post);

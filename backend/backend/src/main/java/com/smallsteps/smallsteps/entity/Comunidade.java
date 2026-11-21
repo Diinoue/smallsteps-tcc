@@ -32,6 +32,9 @@ public class Comunidade {
     @Column(name = "descricao")
     private String descricao;
 
+    @Column(name = "codigo_convite", unique = true, nullable = false, length = 16)
+    private String codigoConvite;
+
     public Comunidade() {}
 
     public Comunidade(int id, String nome, boolean privado, LocalDateTime dtCriacao, String foto) {
@@ -97,5 +100,13 @@ public class Comunidade {
 
     public void setDescricao(String descricao) {
         this.descricao = descricao;
+    }
+
+    public String getCodigoConvite() {
+        return codigoConvite;
+    }
+
+    public void setCodigoConvite(String codigoConvite) {
+        this.codigoConvite = codigoConvite;
     }
 }

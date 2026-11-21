@@ -13,7 +13,6 @@ import { MediaType } from '@/src/types/community';
 export interface PostMediaCardProps {
   mediaType: MediaType;
   mediaUrl?: string | null;
-  thumbnailUrl?: string | null;
   aspectRatio?: number;
   onPress?: () => void;
   style?: ViewStyle;
@@ -22,7 +21,6 @@ export interface PostMediaCardProps {
 export function PostMediaCard({
   mediaType,
   mediaUrl,
-  thumbnailUrl,
   aspectRatio = 16 / 9,
   onPress,
   style,
@@ -30,7 +28,7 @@ export function PostMediaCard({
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
 
-  if (mediaType === 'text' || (!mediaUrl && !thumbnailUrl && mediaType !== 'video')) {
+  if (mediaType === 'text' || (!mediaUrl && mediaType !== 'video')) {
     return null;
   }
 
@@ -48,15 +46,6 @@ export function PostMediaCard({
           style,
         ]}
       >
-        {thumbnailUrl ? (
-          <Image
-            source={{ uri: thumbnailUrl }}
-            style={styles.mediaImage}
-            contentFit="cover"
-            transition={200}
-          />
-        ) : null}
-
         {/* Overlay central com o botão de Play do protótipo */}
         <View style={[styles.playOverlay, { backgroundColor: playButtonBg }]}>
           <MaterialIcons name="play-arrow" size={48} color="#FFFFFF" />

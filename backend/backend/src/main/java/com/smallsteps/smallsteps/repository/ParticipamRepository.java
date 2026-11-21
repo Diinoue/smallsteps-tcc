@@ -10,4 +10,5 @@ import com.smallsteps.smallsteps.entity.ParticipamId;
 public interface ParticipamRepository extends JpaRepository<Participam, ParticipamId> {
     List<Participam> findByIdUsuario(int idUsuario);
     List<Participam> findByIdComunidade(int idComunidade);
+    long countByIdComunidade(int idComunidade);
 }

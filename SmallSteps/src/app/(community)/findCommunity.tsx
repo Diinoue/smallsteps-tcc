@@ -1,6 +1,7 @@
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { useThemeColor } from '@/hooks/use-theme-color';
-import { entrarNaComunidade, getPublicCommunities, PublicCommunityItem } from '@/src/services/communityService';
+import { CommunityPreviewModal } from '@/src/components/community/CommunityPreviewModal';
+import { getPublicCommunities, PublicCommunityItem } from '@/src/services/communityService';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { useRouter } from 'expo-router';
 import React, { useCallback, useEffect, useState } from 'react';
@@ -41,7 +42,7 @@ export default function FindCommunity() {
   const [communities, setCommunities] = useState<PublicCommunityItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  const [joiningId, setJoiningId] = useState<number | null>(null);
+  const [selectedCommunity, setSelectedCommunity] = useState<PublicCommunityItem | null>(null);
   const [failedImages, setFailedImages] = useState<Record<number, boolean>>({});
 
   const loadCommunities = useCallback(async (search?: string, isRefresh = false) => {
@@ -78,51 +79,33 @@ export default function FindCommunity() {
     return () => clearTimeout(handler);
   }, [searchTerm, loadCommunities]);
 
-  const handleJoin = async (community: PublicCommunityItem) => {
-    Alert.alert(
-      'Entrar na comunidade',
-      `Deseja participar da comunidade "${community.nome}"?`,
-      [
-        { text: 'Cancelar', style: 'cancel' },
-        {
-          text: 'Entrar',
-          onPress: async () => {
-            try {
-              setJoiningId(community.id);
-              await entrarNaComunidade(community.id, 1);
-              // Remove a comunidade da lista imediatamente, pois o usuário já participa dela
-              setCommunities((prev) => prev.filter((c) => c.id !== community.id));
-              Alert.alert('Sucesso!', `Você agora faz parte da comunidade "${community.nome}"!`, [
-                {
-                  text: 'Continuar explorando',
-                  style: 'cancel',
-                },
-                {
-                  text: 'Ver minhas comunidades',
-                  onPress: () => router.push('/(tabs)/communities'),
-                },
-              ]);
-            } catch (error) {
-              console.error('Erro ao entrar na comunidade:', error);
-              Alert.alert('Erro', 'Não foi possível entrar na comunidade. Tente novamente mais tarde.');
-            } finally {
-              setJoiningId(null);
-            }
-          },
-        },
-      ]
-    );
+  const handleOpenModal = (community: PublicCommunityItem) => {
+    setSelectedCommunity(community);
+  };
+
+  const handleJoinedCommunity = (community: PublicCommunityItem) => {
+    setSelectedCommunity(null);
+    setCommunities((prev) => prev.filter((c) => c.id !== community.id));
+    Alert.alert('Sucesso!', `Você agora faz parte da comunidade "${community.nome}"!`, [
+      {
+        text: 'Continuar explorando',
+        style: 'cancel',
+      },
+      {
+        text: 'Ver minhas comunidades',
+        onPress: () => router.push('/(tabs)/communities'),
+      },
+    ]);
   };
 
   const renderCommunityItem = ({ item }: { item: PublicCommunityItem }) => {
-    const isJoining = joiningId === item.id;
     const hasPhoto = !!item.foto && !failedImages[item.id];
 
     return (
       <TouchableOpacity
         style={[styles.itemContainer, { borderBottomColor: borderColor }]}
         activeOpacity={0.7}
-        onPress={() => handleJoin(item)}
+        onPress={() => handleOpenModal(item)}
       >
         {/* Avatar */}
         <View style={styles.avatarWrapper}>
@@ -176,11 +159,7 @@ export default function FindCommunity() {
 
         {/* Ação */}
         <View style={styles.itemAction}>
-          {isJoining ? (
-            <ActivityIndicator size="small" color={ACCENT_GREEN} />
-          ) : (
-            <MaterialIcons name="chevron-right" size={24} color={textMuted} />
-          )}
+          <MaterialIcons name="chevron-right" size={24} color={textMuted} />
         </View>
       </TouchableOpacity>
     );
@@ -274,6 +253,14 @@ export default function FindCommunity() {
           />
         )}
       </KeyboardAvoidingView>
+
+      <CommunityPreviewModal
+        visible={!!selectedCommunity}
+        community={selectedCommunity}
+        userId={1}
+        onClose={() => setSelectedCommunity(null)}
+        onJoined={handleJoinedCommunity}
+      />
     </SafeAreaView>
   );
 }

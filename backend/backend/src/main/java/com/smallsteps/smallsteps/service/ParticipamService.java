@@ -1,26 +1,33 @@
 package com.smallsteps.smallsteps.service;
 
 import java.time.LocalDateTime;
+import java.util.Comparator;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
+import com.smallsteps.smallsteps.dto.MembroComunidadeDTO;
 import com.smallsteps.smallsteps.dto.ParticipamDTO;
 import com.smallsteps.smallsteps.entity.Participam;
 import com.smallsteps.smallsteps.entity.ParticipamId;
+import com.smallsteps.smallsteps.entity.Usuario;
 import com.smallsteps.smallsteps.enums.Cargo;
 import com.smallsteps.smallsteps.repository.ParticipamRepository;
+import com.smallsteps.smallsteps.repository.UserRepository;
 
 @Service
 public class ParticipamService {
 
     private final ParticipamRepository participamRepository;
+    private final UserRepository userRepository;
 
-    public ParticipamService(ParticipamRepository participamRepository) {
+    public ParticipamService(ParticipamRepository participamRepository, UserRepository userRepository) {
         this.participamRepository = participamRepository;
+        this.userRepository = userRepository;
     }
 
     @Transactional(readOnly = true)
@@ -38,6 +45,45 @@ public class ParticipamService {
     @Transactional(readOnly = true)
     public List<Participam> findByComunidade(int idComunidade) {
         return participamRepository.findByIdComunidade(idComunidade);
+    }
+
+    @Transactional(readOnly = true)
+    public List<MembroComunidadeDTO> findMembersByComunidade(int idComunidade) {
+        return participamRepository.findByIdComunidade(idComunidade)
+                .stream()
+                .map(p -> {
+                    Usuario usuario = userRepository.findById(p.getIdUsuario()).orElse(null);
+                    String nome = usuario != null ? usuario.getNome() : "Membro #" + p.getIdUsuario();
+                    String foto = usuario != null ? usuario.getFoto() : null;
+                    return new MembroComunidadeDTO(
+                            p.getIdUsuario(),
+                            p.getIdComunidade(),
+                            nome,
+                            foto,
+                            p.getPontos(),
+                            p.getCargo(),
+                            p.getDtInicio());
+                })
+                .sorted(Comparator
+                        .comparingInt((MembroComunidadeDTO m) -> roleOrder(m.getCargo()))
+                        .thenComparing(Comparator.comparingInt(MembroComunidadeDTO::getPontos).reversed()))
+                .collect(Collectors.toList());
+    }
+
+    private int roleOrder(Cargo cargo) {
+        if (cargo == Cargo.DONO) return 0;
+        if (cargo == Cargo.ADMINISTRADOR) return 1;
+        return 2;
+    }
+
+    @Transactional
+    public Participam updateCargo(int idUsuario, int idComunidade, Cargo novoCargo) {
+        if (novoCargo == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Cargo inválido");
+        }
+        Participam participam = findById(idUsuario, idComunidade);
+        participam.setCargo(novoCargo);
+        return participamRepository.save(participam);
     }
 
     @Transactional(readOnly = true)

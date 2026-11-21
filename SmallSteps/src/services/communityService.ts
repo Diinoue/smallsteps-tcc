@@ -7,6 +7,8 @@ export interface CommunityItem {
   nome: string;
   privado?: boolean;
   foto?: string | null;
+  descricao?: string;
+  codigoConvite?: string;
   cargo?: string;
   pontos?: number;
 }
@@ -19,6 +21,23 @@ export interface ParticipamResponse {
   dtInicio: string;
 }
 
+export interface CommunityMemberItem {
+  idUsuario: number;
+  idComunidade: number;
+  nome: string;
+  foto?: string | null;
+  pontos: number;
+  cargo: 'DONO' | 'ADMINISTRADOR' | 'MEMBRO' | string;
+  dtInicio?: string;
+}
+
+export interface JoinRequestItem {
+  idUsuario: number;
+  idComunidade: number;
+  nomeUsuario: string;
+  fotoUsuario?: string | null;
+  dtInicio?: string;
+}
 
 export interface CriarCommunityRequest {
   nome: string;
@@ -35,8 +54,11 @@ export interface PublicCommunityItem {
   privado: boolean;
   foto?: string | null;
   descricao?: string;
+  codigoConvite?: string;
+  quantidadeMembros?: number;
   tags: string[];
   jaParticipa?: boolean;
+  jaSolicitou?: boolean;
 }
 
 const DEFAULT_COMMUNITIES: CommunityItem[] = [];
@@ -122,6 +144,8 @@ export const communityService = {
                 nome: c.nome,
                 privado: c.privado,
                 foto: formatImageUrl(c.foto),
+                descricao: c.descricao,
+                codigoConvite: c.codigoConvite,
                 cargo: p.cargo,
                 pontos: p.pontos,
               });
@@ -141,6 +165,8 @@ export const communityService = {
           nome: c.nome,
           privado: c.privado,
           foto: formatImageUrl(c.foto),
+          descricao: c.descricao,
+          codigoConvite: c.codigoConvite,
         }));
       }
 
@@ -308,6 +334,81 @@ export const communityService = {
       cargo: 'MEMBRO',
       pontos: 0,
     });
+  },
+
+  async getCommunityById(communityId: number | string): Promise<CommunityItem> {
+    const response = await api.get<any>(`/community/${communityId}`);
+    const c = response.data;
+    return {
+      id: c.id,
+      nome: c.nome,
+      privado: c.privado,
+      foto: formatImageUrl(c.foto),
+      descricao: c.descricao,
+      codigoConvite: c.codigoConvite,
+    };
+  },
+
+  async getCommunityByCode(codigo: string, userId: number = 1): Promise<PublicCommunityItem> {
+    const response = await api.get<PublicCommunityItem>('/community/by-code', {
+      params: { codigo, idUsuario: userId },
+    });
+    const c = response.data;
+    return {
+      ...c,
+      foto: formatImageUrl(c.foto),
+      tags: c.tags || [],
+    };
+  },
+
+  async rerollInviteCode(communityId: number | string): Promise<string> {
+    const response = await api.post<any>(`/community/${communityId}/reroll-code`);
+    return response.data?.codigoConvite || '';
+  },
+
+  async getCommunityMembers(communityId: number | string): Promise<CommunityMemberItem[]> {
+    const response = await api.get<CommunityMemberItem[]>(
+      `/participam/comunidade/${communityId}/membros`
+    );
+    return (response.data || []).map((m) => ({
+      ...m,
+      foto: formatImageUrl(m.foto),
+    }));
+  },
+
+  async updateMemberRole(
+    communityId: number | string,
+    targetUserId: number,
+    cargo: 'ADMINISTRADOR' | 'MEMBRO' | 'DONO'
+  ): Promise<void> {
+    await api.put(`/participam/${targetUserId}/${communityId}/cargo`, { cargo });
+  },
+
+  async kickMember(communityId: number | string, targetUserId: number): Promise<void> {
+    await api.delete(`/participam/${targetUserId}/${communityId}`);
+  },
+
+  async requestJoinCommunity(communityId: number | string, userId: number = 1): Promise<void> {
+    await api.post('/solicitam', {
+      idUsuario: Number(userId),
+      idComunidade: Number(communityId),
+    });
+  },
+
+  async getJoinRequests(communityId: number | string): Promise<JoinRequestItem[]> {
+    const response = await api.get<JoinRequestItem[]>(`/solicitam/comunidade/${communityId}`);
+    return (response.data || []).map((r) => ({
+      ...r,
+      fotoUsuario: formatImageUrl(r.fotoUsuario),
+    }));
+  },
+
+  async acceptJoinRequest(communityId: number | string, targetUserId: number): Promise<void> {
+    await api.post(`/solicitam/${communityId}/${targetUserId}/aceitar`);
+  },
+
+  async rejectJoinRequest(communityId: number | string, targetUserId: number): Promise<void> {
+    await api.delete(`/solicitam/${communityId}/${targetUserId}`);
   },
 };
 

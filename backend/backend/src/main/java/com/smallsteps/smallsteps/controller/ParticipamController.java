@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.smallsteps.smallsteps.dto.MembroComunidadeDTO;
 import com.smallsteps.smallsteps.dto.ParticipamDTO;
 import com.smallsteps.smallsteps.entity.Participam;
 import com.smallsteps.smallsteps.service.ParticipamService;
@@ -43,6 +44,11 @@ public class ParticipamController {
         return participamService.findAll();
     }
 
+    @GetMapping("/comunidade/{idComunidade}/membros")
+    public List<MembroComunidadeDTO> getMembersByComunidade(@PathVariable int idComunidade) {
+        return participamService.findMembersByComunidade(idComunidade);
+    }
+
     @GetMapping("/{idUsuario}/{idComunidade}")
     public Participam getById(@PathVariable int idUsuario, @PathVariable int idComunidade) {
         return participamService.findById(idUsuario, idComunidade);
@@ -60,6 +66,14 @@ public class ParticipamController {
             @PathVariable int idComunidade,
             @RequestBody ParticipamDTO dto) {
         return participamService.update(idUsuario, idComunidade, dto);
+    }
+
+    @PutMapping("/{idUsuario}/{idComunidade}/cargo")
+    public Participam updateCargo(
+            @PathVariable int idUsuario,
+            @PathVariable int idComunidade,
+            @RequestBody ParticipamDTO dto) {
+        return participamService.updateCargo(idUsuario, idComunidade, dto.getCargo());
     }
 
     @DeleteMapping("/{idUsuario}/{idComunidade}")

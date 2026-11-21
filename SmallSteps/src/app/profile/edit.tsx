@@ -10,12 +10,20 @@ import {
   TouchableWithoutFeedback,
   Image,
   Alert,
+  KeyboardAvoidingView,
+  Platform,
+  StatusBar,
+  ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
+import { useColorScheme } from '@/hooks/use-color-scheme';
+import { useThemeColor } from '@/hooks/use-theme-color';
 import { useProfile } from '@/src/context/ProfileContext';
 import { SquareCheckbox } from '@/src/components/profile/SquareCheckbox';
+
+const ACCENT_GREEN = '#34C759';
 
 const AVATAR_PRESETS = [
   'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=300&auto=format&fit=crop&q=80',
@@ -25,17 +33,38 @@ const AVATAR_PRESETS = [
   'https://images.unsplash.com/photo-1570295999919-56ceb5ecca61?w=300&auto=format&fit=crop&q=80',
 ];
 
+const PERIOD_LABELS: Record<'day' | 'week' | 'month', string> = {
+  day: 'dia',
+  week: 'semana',
+  month: 'mês',
+};
+
 export default function EditProfileScreen() {
   const router = useRouter();
+  const colorScheme = useColorScheme();
+  const isDark = colorScheme === 'dark';
+
+  const backgroundColor = useThemeColor({}, 'background');
+  const surfaceColor = useThemeColor({}, 'surface');
+  const surfaceVariant = useThemeColor({}, 'surfaceVariant');
+  const textColor = useThemeColor({}, 'text');
+  const textSecondary = useThemeColor({}, 'textSecondary');
+  const textMuted = useThemeColor({}, 'textMuted');
+  const borderColor = useThemeColor({}, 'border');
+  const activeColor = useThemeColor({}, 'streakActive');
+
+  const inputBg = isDark ? '#111827' : '#FFFFFF';
+  const tagBg = isDark ? '#1E293B' : '#E8F2FF';
+  const tagTextColor = isDark ? '#60A5FA' : '#2563EB';
+  const modalBg = isDark ? '#1F2937' : '#FFFFFF';
+
   const {
     profile,
     availableDbTags,
     allCompletedAchievements,
     updateProfile,
-    carregarPerfil,
   } = useProfile();
 
-  // Estados locais do formulário de edição
   const [avatarUrl, setAvatarUrl] = useState(profile.avatarUrl);
   const [name, setName] = useState(profile.name);
   const [description, setDescription] = useState(profile.description);
@@ -54,7 +83,6 @@ export default function EditProfileScreen() {
     [...profile.visibleAchievementIds]
   );
 
-  // Sincroniza estados caso o perfil seja atualizado
   useEffect(() => {
     if (profile) {
       setAvatarUrl(profile.avatarUrl || '');
@@ -71,18 +99,16 @@ export default function EditProfileScreen() {
     }
   }, [profile]);
 
-  // Modais de suporte
   const [avatarModalVisible, setAvatarModalVisible] = useState(false);
   const [addTagModalVisible, setAddTagModalVisible] = useState(false);
   const [frequencyModalVisible, setFrequencyModalVisible] = useState(false);
   const [customTagInput, setCustomTagInput] = useState('');
+  const [saving, setSaving] = useState(false);
 
-  // Remover tag
   const handleRemoveTag = (tagToRemove: string) => {
     setTags((prev) => prev.filter((t) => t !== tagToRemove));
   };
 
-  // Adicionar tag
   const handleAddTag = (newTag: string) => {
     const trimmed = newTag.trim();
     if (!trimmed) return;
@@ -93,7 +119,6 @@ export default function EditProfileScreen() {
     setAddTagModalVisible(false);
   };
 
-  // Alternar seleção de conquistas visíveis (máx. 5)
   const handleToggleAchievement = (id: number) => {
     setVisibleAchievementIds((prev) => {
       if (prev.includes(id)) {
@@ -107,9 +132,6 @@ export default function EditProfileScreen() {
     });
   };
 
-  // Salvar alterações
-  const [saving, setSaving] = useState(false);
-
   const handleConfirm = async () => {
     try {
       setSaving(true);
@@ -119,232 +141,294 @@ export default function EditProfileScreen() {
         name: name.trim() || profile.name,
         description,
         tags,
-        streakFrequencyCount: isNaN(parsedFrequency) || parsedFrequency <= 0 ? 1 : parsedFrequency,
+        streakFrequencyCount:
+          isNaN(parsedFrequency) || parsedFrequency <= 0 ? 1 : parsedFrequency,
         streakFrequencyPeriod: frequencyPeriod,
         publicStreak,
         publicCurrentGoals,
         visibleAchievementIds,
       });
       router.back();
-    } catch (e) {
+    } catch {
       Alert.alert('Erro', 'Não foi possível salvar as alterações.');
     } finally {
       setSaving(false);
     }
   };
 
-  // Cancelar alterações
   const handleCancel = () => {
     router.back();
   };
 
   return (
-    <SafeAreaView edges={['top', 'left', 'right']} style={styles.safeArea}>
-      <ScrollView
-        style={styles.scrollView}
-        contentContainerStyle={styles.contentContainer}
-        showsVerticalScrollIndicator={false}
+    <SafeAreaView edges={['top', 'left', 'right', 'bottom']} style={[styles.safeArea, { backgroundColor }]}>
+      <StatusBar
+        barStyle={isDark ? 'light-content' : 'dark-content'}
+        backgroundColor={backgroundColor}
+      />
+
+      {/* Top Header Bar */}
+      <View style={[styles.header, { borderBottomColor: borderColor }]}>
+        <TouchableOpacity
+          activeOpacity={0.7}
+          onPress={handleCancel}
+          style={styles.backButton}
+          hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+        >
+          <MaterialIcons name="arrow-back" size={24} color={textColor} />
+        </TouchableOpacity>
+        <Text style={[styles.headerTitle, { color: textColor }]}>Editar Perfil</Text>
+        <View style={{ width: 32 }} />
+      </View>
+
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        style={styles.keyboardAvoid}
       >
-        {/* 1. Foto e Nome do Usuário */}
-        <View style={styles.topProfileRow}>
-          {/* Avatar com ícone de caneta */}
-          <TouchableOpacity
-            activeOpacity={0.8}
-            onPress={() => setAvatarModalVisible(true)}
-            style={styles.avatarWrapper}
-          >
-            <View style={styles.avatarContainer}>
-              {avatarUrl ? (
-                <Image source={{ uri: avatarUrl }} style={styles.avatarImage} />
-              ) : (
-                <View style={styles.avatarPlaceholder}>
-                  <MaterialIcons name="person" size={54} color="#9CA3AF" />
+        <ScrollView
+          style={styles.scrollView}
+          contentContainerStyle={styles.contentContainer}
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+        >
+          {/* 1. Card de Identidade (Avatar + Nome + Descrição) */}
+          <View style={[styles.card, { backgroundColor: surfaceColor, borderColor }]}>
+            <View style={styles.topProfileRow}>
+              <TouchableOpacity
+                activeOpacity={0.8}
+                onPress={() => setAvatarModalVisible(true)}
+                style={styles.avatarWrapper}
+              >
+                <View style={[styles.avatarContainer, { borderColor }]}>
+                  {avatarUrl ? (
+                    <Image source={{ uri: avatarUrl }} style={styles.avatarImage} />
+                  ) : (
+                    <View style={styles.avatarPlaceholder}>
+                      <MaterialIcons name="person" size={44} color="#60A5FA" />
+                    </View>
+                  )}
                 </View>
+                <View style={styles.avatarBadge}>
+                  <MaterialIcons name="edit" size={16} color="#FFFFFF" />
+                </View>
+              </TouchableOpacity>
+
+              <View style={styles.nameColumn}>
+                <Text style={[styles.fieldLabel, { color: textMuted }]}>NOME</Text>
+                <View
+                  style={[
+                    styles.inputBox,
+                    { backgroundColor: inputBg, borderColor },
+                  ]}
+                >
+                  <TextInput
+                    value={name}
+                    onChangeText={setName}
+                    placeholder="Seu nome"
+                    placeholderTextColor={textMuted}
+                    style={[styles.nameTextInput, { color: textColor }]}
+                  />
+                </View>
+              </View>
+            </View>
+
+            <View style={styles.descriptionSection}>
+              <Text style={[styles.fieldLabel, { color: textMuted }]}>DESCRIÇÃO</Text>
+              <View
+                style={[
+                  styles.descriptionBox,
+                  { backgroundColor: inputBg, borderColor },
+                ]}
+              >
+                <TextInput
+                  value={description}
+                  onChangeText={setDescription}
+                  placeholder="Fale um pouco sobre você..."
+                  placeholderTextColor={textMuted}
+                  multiline
+                  textAlignVertical="top"
+                  style={[styles.descriptionInput, { color: textColor }]}
+                />
+              </View>
+            </View>
+          </View>
+
+          {/* 2. Card de Tags */}
+          <View style={[styles.card, { backgroundColor: surfaceColor, borderColor }]}>
+            <Text style={[styles.sectionTitle, { color: textColor }]}>Tags</Text>
+            <View style={styles.tagsContainer}>
+              {tags.map((tag) => (
+                <View key={tag} style={[styles.tagPill, { backgroundColor: tagBg }]}>
+                  <Text style={[styles.tagText, { color: tagTextColor }]}>
+                    {tag.toLowerCase()}
+                  </Text>
+                  <TouchableOpacity
+                    activeOpacity={0.7}
+                    onPress={() => handleRemoveTag(tag)}
+                    style={styles.tagRemoveBtn}
+                    hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                  >
+                    <MaterialIcons name="close" size={14} color="#EF4444" />
+                  </TouchableOpacity>
+                </View>
+              ))}
+
+              <TouchableOpacity
+                activeOpacity={0.7}
+                onPress={() => setAddTagModalVisible(true)}
+                style={[
+                  styles.addTagPill,
+                  {
+                    backgroundColor: isDark ? '#143322' : '#ECFDF5',
+                    borderColor: activeColor + '50',
+                  },
+                ]}
+              >
+                <MaterialIcons name="add" size={16} color={activeColor} />
+                <Text style={[styles.addTagText, { color: activeColor }]}>Adicionar</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+
+          {/* 3. Card de Frequência da Streak */}
+          <View style={[styles.card, { backgroundColor: surfaceColor, borderColor }]}>
+            <Text style={[styles.sectionTitle, { color: textColor }]}>
+              Frequência da Streak
+            </Text>
+            <View style={styles.frequencyRow}>
+              <TextInput
+                value={frequencyCount}
+                onChangeText={setFrequencyCount}
+                keyboardType="number-pad"
+                maxLength={2}
+                style={[
+                  styles.frequencyCountInput,
+                  { backgroundColor: inputBg, borderColor, color: textColor },
+                ]}
+              />
+              <Text style={[styles.frequencyText, { color: textSecondary }]}>
+                vezes por
+              </Text>
+
+              <TouchableOpacity
+                activeOpacity={0.7}
+                onPress={() => setFrequencyModalVisible(true)}
+                style={[
+                  styles.frequencyDropdown,
+                  { backgroundColor: inputBg, borderColor },
+                ]}
+              >
+                <Text style={[styles.frequencyDropdownText, { color: textColor }]}>
+                  {PERIOD_LABELS[frequencyPeriod]}
+                </Text>
+                <MaterialIcons name="keyboard-arrow-down" size={20} color={textSecondary} />
+              </TouchableOpacity>
+            </View>
+          </View>
+
+          {/* 4. Card de Privacidade */}
+          <View style={[styles.card, { backgroundColor: surfaceColor, borderColor }]}>
+            <Text style={[styles.sectionTitle, { color: textColor }]}>Privacidade</Text>
+
+            <SquareCheckbox
+              checked={publicStreak}
+              onPress={() => setPublicStreak(!publicStreak)}
+              label="Exibir Streak publicamente"
+              size={22}
+              color={ACCENT_GREEN}
+            />
+
+            <SquareCheckbox
+              checked={publicCurrentGoals}
+              onPress={() => setPublicCurrentGoals(!publicCurrentGoals)}
+              label="Exibir metas atuais publicamente"
+              size={22}
+              color={ACCENT_GREEN}
+            />
+          </View>
+
+          {/* 5. Card de Conquistas Visíveis */}
+          <View style={[styles.card, { backgroundColor: surfaceColor, borderColor }]}>
+            <View style={styles.achievementsHeaderRow}>
+              <Text style={[styles.sectionTitle, { color: textColor, marginBottom: 0 }]}>
+                Conquistas visíveis
+              </Text>
+              <View
+                style={[
+                  styles.limitPill,
+                  { backgroundColor: isDark ? '#143322' : '#ECFDF5' },
+                ]}
+              >
+                <Text style={[styles.limitPillText, { color: activeColor }]}>
+                  {visibleAchievementIds.length}/5
+                </Text>
+              </View>
+            </View>
+
+            <View style={styles.achievementsList}>
+              {allCompletedAchievements && allCompletedAchievements.length > 0 ? (
+                allCompletedAchievements.map((item) => {
+                  const isChecked = visibleAchievementIds.includes(item.id);
+                  return (
+                    <SquareCheckbox
+                      key={item.id}
+                      checked={isChecked}
+                      onPress={() => handleToggleAchievement(item.id)}
+                      label={item.title}
+                      size={20}
+                      color={ACCENT_GREEN}
+                    />
+                  );
+                })
+              ) : (
+                <Text style={[styles.emptyNotice, { color: textMuted }]}>
+                  Nenhuma conquista finalizada ainda.
+                </Text>
               )}
             </View>
-            <View style={styles.avatarEditOverlay}>
-              <MaterialIcons name="edit" size={20} color="#111827" />
-            </View>
-          </TouchableOpacity>
-
-          {/* Nome editável */}
-          <View style={styles.nameInputContainer}>
-            <TextInput
-              value={name}
-              onChangeText={setName}
-              placeholder="Seu nome"
-              placeholderTextColor="#9CA3AF"
-              style={styles.nameTextInput}
-            />
-            <MaterialIcons
-              name="edit"
-              size={20}
-              color="#111827"
-              style={styles.nameEditIcon}
-            />
           </View>
-        </View>
 
-        <View style={styles.divider} />
-
-        {/* 2. Tags com botão X para remover e Add... + para adicionar */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Tags</Text>
-          <View style={styles.tagsContainer}>
-            {tags.map((tag) => (
-              <View key={tag} style={styles.tagPill}>
-                <Text style={styles.tagText}>{tag}</Text>
-                <TouchableOpacity
-                  activeOpacity={0.7}
-                  onPress={() => handleRemoveTag(tag)}
-                  style={styles.tagRemoveBtn}
-                  hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-                >
-                  <MaterialIcons name="close" size={14} color="#EF4444" />
-                </TouchableOpacity>
-              </View>
-            ))}
-
-            {/* Botão de Adicionar Tag */}
+          {/* 6. Botões de Ação */}
+          <View style={styles.actionsRow}>
             <TouchableOpacity
-              activeOpacity={0.7}
-              onPress={() => setAddTagModalVisible(true)}
-              style={styles.addTagPill}
+              activeOpacity={0.75}
+              onPress={handleCancel}
+              disabled={saving}
+              style={[styles.cancelButton, { backgroundColor: surfaceVariant }]}
             >
-              <Text style={styles.addTagText}>Add... +</Text>
+              <Text style={[styles.cancelButtonText, { color: textColor }]}>Cancelar</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              activeOpacity={0.8}
+              onPress={handleConfirm}
+              disabled={saving}
+              style={[styles.confirmButton, saving && styles.confirmButtonDisabled]}
+            >
+              {saving ? (
+                <ActivityIndicator size="small" color="#FFFFFF" />
+              ) : (
+                <Text style={styles.confirmButtonText}>Salvar</Text>
+              )}
             </TouchableOpacity>
           </View>
-        </View>
-
-        {/* 3. Descrição */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Descrição:</Text>
-          <View style={styles.descriptionBox}>
-            <TextInput
-              value={description}
-              onChangeText={setDescription}
-              placeholder="Fale um pouco sobre você..."
-              placeholderTextColor="#9CA3AF"
-              multiline
-              textAlignVertical="top"
-              style={styles.descriptionInput}
-            />
-          </View>
-        </View>
-
-        <View style={styles.divider} />
-
-        {/* 4. Select Frequency */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Select frequency</Text>
-          <View style={styles.frequencyRow}>
-            {/* Input de número */}
-            <TextInput
-              value={frequencyCount}
-              onChangeText={setFrequencyCount}
-              keyboardType="number-pad"
-              maxLength={2}
-              style={styles.frequencyCountInput}
-            />
-            <Text style={styles.frequencyText}>times a</Text>
-
-            {/* Dropdown de período (day / week / month) */}
-            <TouchableOpacity
-              activeOpacity={0.7}
-              onPress={() => setFrequencyModalVisible(true)}
-              style={styles.frequencyDropdown}
-            >
-              <Text style={styles.frequencyDropdownText}>{frequencyPeriod}</Text>
-              <MaterialIcons name="keyboard-arrow-down" size={20} color="#374151" />
-            </TouchableOpacity>
-          </View>
-        </View>
-
-        <View style={styles.divider} />
-
-        {/* 5. Checkboxes Públicos */}
-        <View style={styles.section}>
-          <SquareCheckbox
-            checked={publicStreak}
-            onPress={() => setPublicStreak(!publicStreak)}
-            label="Public Streak"
-            size={22}
-            color="#34c759"
-          />
-
-          <SquareCheckbox
-            checked={publicCurrentGoals}
-            onPress={() => setPublicCurrentGoals(!publicCurrentGoals)}
-            label="Public Current Goals"
-            size={22}
-            color="#34c759"
-          />
-        </View>
-
-        {/* 6. Visible Achievements (1 of 5 max) */}
-        <View style={styles.section}>
-          <Text style={styles.visibleAchievementsTitle}>
-            Visible Achievements: {visibleAchievementIds.length} of 5 (max)
-          </Text>
-
-          <View style={styles.achievementsBox}>
-            {allCompletedAchievements && allCompletedAchievements.length > 0 ? (
-              allCompletedAchievements.map((item) => {
-                const isChecked = visibleAchievementIds.includes(item.id);
-                return (
-                  <SquareCheckbox
-                    key={item.id}
-                    checked={isChecked}
-                    onPress={() => handleToggleAchievement(item.id)}
-                    label={item.title}
-                    size={20}
-                    color="#34c759"
-                    labelStyle={styles.achievementItemLabel}
-                  />
-                );
-              })
-            ) : (
-              <Text style={styles.emptyNotice}>Nenhuma conquista finalizada ainda.</Text>
-            )}
-          </View>
-        </View>
-
-        {/* 7. Botões Cancelar e Confirmar */}
-        <View style={styles.actionsRow}>
-          <TouchableOpacity
-            activeOpacity={0.8}
-            onPress={handleCancel}
-            disabled={saving}
-            style={styles.cancelButton}
-          >
-            <Text style={styles.cancelButtonText}>Cancel</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            activeOpacity={0.8}
-            onPress={handleConfirm}
-            disabled={saving}
-            style={[styles.confirmButton, saving && styles.confirmButtonDisabled]}
-          >
-            <Text style={styles.confirmButtonText}>
-              {saving ? 'Salvando...' : 'Confirm'}
-            </Text>
-          </TouchableOpacity>
-        </View>
-      </ScrollView>
+        </ScrollView>
+      </KeyboardAvoidingView>
 
       {/* Modal para Trocar Foto de Perfil */}
       <Modal
         visible={avatarModalVisible}
         transparent={true}
-        animationType="slide"
+        animationType="fade"
         onRequestClose={() => setAvatarModalVisible(false)}
       >
         <TouchableWithoutFeedback onPress={() => setAvatarModalVisible(false)}>
           <View style={styles.modalBackdrop}>
             <TouchableWithoutFeedback>
-              <View style={styles.modalContent}>
-                <Text style={styles.modalHeading}>Escolher foto de perfil</Text>
+              <View style={[styles.modalContent, { backgroundColor: modalBg, borderColor }]}>
+                <Text style={[styles.modalHeading, { color: textColor }]}>
+                  Escolher foto de perfil
+                </Text>
                 <View style={styles.avatarPresetsGrid}>
                   {AVATAR_PRESETS.map((url, idx) => (
                     <TouchableOpacity
@@ -365,9 +449,9 @@ export default function EditProfileScreen() {
                 </View>
                 <TouchableOpacity
                   onPress={() => setAvatarModalVisible(false)}
-                  style={styles.modalCloseBtn}
+                  style={[styles.modalCloseBtn, { backgroundColor: surfaceVariant }]}
                 >
-                  <Text style={styles.modalCloseText}>Fechar</Text>
+                  <Text style={[styles.modalCloseText, { color: textColor }]}>Fechar</Text>
                 </TouchableOpacity>
               </View>
             </TouchableWithoutFeedback>
@@ -375,7 +459,7 @@ export default function EditProfileScreen() {
         </TouchableWithoutFeedback>
       </Modal>
 
-      {/* Modal para Adicionar Tag (tabela tag do BD ou nova) */}
+      {/* Modal para Adicionar Tag */}
       <Modal
         visible={addTagModalVisible}
         transparent={true}
@@ -385,17 +469,21 @@ export default function EditProfileScreen() {
         <TouchableWithoutFeedback onPress={() => setAddTagModalVisible(false)}>
           <View style={styles.modalBackdrop}>
             <TouchableWithoutFeedback>
-              <View style={styles.modalContent}>
-                <Text style={styles.modalHeading}>Adicionar Tag</Text>
+              <View style={[styles.modalContent, { backgroundColor: modalBg, borderColor }]}>
+                <Text style={[styles.modalHeading, { color: textColor }]}>Adicionar Tag</Text>
 
-                {/* Input para digitação de tag customizada */}
                 <View style={styles.newTagInputRow}>
                   <TextInput
                     value={customTagInput}
                     onChangeText={setCustomTagInput}
                     placeholder="Digite uma nova tag..."
-                    placeholderTextColor="#9CA3AF"
-                    style={styles.newTagTextInput}
+                    placeholderTextColor={textMuted}
+                    style={[
+                      styles.newTagTextInput,
+                      { backgroundColor: inputBg, borderColor, color: textColor },
+                    ]}
+                    returnKeyType="done"
+                    onSubmitEditing={() => handleAddTag(customTagInput)}
                   />
                   <TouchableOpacity
                     onPress={() => handleAddTag(customTagInput)}
@@ -405,8 +493,9 @@ export default function EditProfileScreen() {
                   </TouchableOpacity>
                 </View>
 
-                {/* Tags sugeridas da tabela do banco de dados */}
-                <Text style={styles.suggestedTagsHeading}>Sugeridas do Banco:</Text>
+                <Text style={[styles.suggestedTagsHeading, { color: textSecondary }]}>
+                  Sugeridas:
+                </Text>
                 <View style={styles.suggestedTagsContainer}>
                   {availableDbTags.map((dbTag) => {
                     const alreadyAdded = tags.includes(dbTag);
@@ -417,16 +506,18 @@ export default function EditProfileScreen() {
                         onPress={() => handleAddTag(dbTag)}
                         style={[
                           styles.suggestedTagPill,
-                          alreadyAdded && styles.suggestedTagDisabled,
+                          {
+                            backgroundColor: alreadyAdded ? surfaceVariant : tagBg,
+                          },
                         ]}
                       >
                         <Text
                           style={[
                             styles.suggestedTagText,
-                            alreadyAdded && styles.suggestedTagTextDisabled,
+                            { color: alreadyAdded ? textMuted : tagTextColor },
                           ]}
                         >
-                          {dbTag} {alreadyAdded ? '✓' : '+'}
+                          {dbTag.toLowerCase()} {alreadyAdded ? '✓' : '+'}
                         </Text>
                       </TouchableOpacity>
                     );
@@ -435,9 +526,9 @@ export default function EditProfileScreen() {
 
                 <TouchableOpacity
                   onPress={() => setAddTagModalVisible(false)}
-                  style={styles.modalCloseBtn}
+                  style={[styles.modalCloseBtn, { backgroundColor: surfaceVariant }]}
                 >
-                  <Text style={styles.modalCloseText}>Fechar</Text>
+                  <Text style={[styles.modalCloseText, { color: textColor }]}>Fechar</Text>
                 </TouchableOpacity>
               </View>
             </TouchableWithoutFeedback>
@@ -455,31 +546,43 @@ export default function EditProfileScreen() {
         <TouchableWithoutFeedback onPress={() => setFrequencyModalVisible(false)}>
           <View style={styles.modalBackdrop}>
             <TouchableWithoutFeedback>
-              <View style={styles.dropdownModalContent}>
-                <Text style={styles.modalHeading}>Frequência da Streak</Text>
-                {(['day', 'week', 'month'] as const).map((period) => (
-                  <TouchableOpacity
-                    key={period}
-                    activeOpacity={0.7}
-                    onPress={() => {
-                      setFrequencyPeriod(period);
-                      setFrequencyModalVisible(false);
-                    }}
-                    style={[
-                      styles.frequencyOption,
-                      frequencyPeriod === period && styles.frequencyOptionSelected,
-                    ]}
-                  >
-                    <Text
+              <View style={[styles.dropdownModalContent, { backgroundColor: modalBg, borderColor }]}>
+                <Text style={[styles.modalHeading, { color: textColor }]}>
+                  Período da Streak
+                </Text>
+                {(['day', 'week', 'month'] as const).map((period) => {
+                  const selected = frequencyPeriod === period;
+                  return (
+                    <TouchableOpacity
+                      key={period}
+                      activeOpacity={0.7}
+                      onPress={() => {
+                        setFrequencyPeriod(period);
+                        setFrequencyModalVisible(false);
+                      }}
                       style={[
-                        styles.frequencyOptionText,
-                        frequencyPeriod === period && styles.frequencyOptionTextSelected,
+                        styles.frequencyOption,
+                        {
+                          backgroundColor: selected
+                            ? isDark
+                              ? '#143322'
+                              : '#ECFDF5'
+                            : surfaceVariant,
+                        },
                       ]}
                     >
-                      {period}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
+                      <Text
+                        style={[
+                          styles.frequencyOptionText,
+                          { color: selected ? activeColor : textColor },
+                          selected && { fontWeight: '800' },
+                        ]}
+                      >
+                        {PERIOD_LABELS[period]}
+                      </Text>
+                    </TouchableOpacity>
+                  );
+                })}
               </View>
             </TouchableWithoutFeedback>
           </View>
@@ -492,33 +595,55 @@ export default function EditProfileScreen() {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
+  },
+  keyboardAvoid: {
+    flex: 1,
+  },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+  },
+  backButton: {
+    padding: 4,
+  },
+  headerTitle: {
+    fontSize: 19,
+    fontWeight: '800',
   },
   scrollView: {
     flex: 1,
   },
   contentContainer: {
     paddingHorizontal: 20,
-    paddingTop: 16,
-    paddingBottom: 50,
+    paddingTop: 18,
+    paddingBottom: 40,
+  },
+  card: {
+    borderRadius: 20,
+    borderWidth: 1,
+    padding: 18,
+    marginBottom: 14,
   },
   topProfileRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginVertical: 10,
+    marginBottom: 16,
   },
   avatarWrapper: {
     position: 'relative',
     marginRight: 16,
   },
   avatarContainer: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
+    width: 82,
+    height: 82,
+    borderRadius: 41,
     borderWidth: 2,
-    borderColor: '#E5E7EB',
     overflow: 'hidden',
-    backgroundColor: '#EBF3FE',
+    backgroundColor: '#DBEAFE',
   },
   avatarImage: {
     width: '100%',
@@ -529,223 +654,206 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  avatarEditOverlay: {
+  avatarBadge: {
     position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
     bottom: 0,
+    right: 0,
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: ACCENT_GREEN,
+    alignItems: 'center',
     justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: 'rgba(255, 255, 255, 0.25)',
+    borderWidth: 2,
+    borderColor: '#FFFFFF',
   },
-  nameInputContainer: {
+  nameColumn: {
     flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    borderBottomWidth: 1,
-    borderBottomColor: '#E5E7EB',
-    paddingBottom: 4,
+  },
+  fieldLabel: {
+    fontSize: 11,
+    fontWeight: '700',
+    letterSpacing: 0.8,
+    marginBottom: 6,
+  },
+  inputBox: {
+    borderWidth: 1,
+    borderRadius: 12,
+    paddingHorizontal: 12,
+    height: 44,
+    justifyContent: 'center',
   },
   nameTextInput: {
-    flex: 1,
-    fontSize: 20,
-    fontWeight: '800',
-    color: '#111827',
-    paddingVertical: 4,
+    fontSize: 16,
+    fontWeight: '700',
+    paddingVertical: 0,
   },
-  nameEditIcon: {
-    marginLeft: 6,
+  descriptionSection: {
+    marginTop: 4,
   },
-  divider: {
-    height: 1,
-    backgroundColor: '#E5E7EB',
-    marginVertical: 18,
-    width: '100%',
+  descriptionBox: {
+    borderWidth: 1,
+    borderRadius: 12,
+    padding: 12,
+    minHeight: 100,
   },
-  section: {
-    marginVertical: 4,
+  descriptionInput: {
+    fontSize: 15,
+    lineHeight: 22,
+    minHeight: 78,
   },
   sectionTitle: {
-    fontSize: 18,
+    fontSize: 17,
     fontWeight: '800',
-    color: '#111827',
-    marginBottom: 10,
+    marginBottom: 12,
   },
   tagsContainer: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 10,
+    gap: 8,
   },
   tagPill: {
-    backgroundColor: '#EEF2FF',
     flexDirection: 'row',
     alignItems: 'center',
-    paddingLeft: 16,
-    paddingRight: 10,
-    paddingVertical: 7,
-    borderRadius: 20,
+    paddingLeft: 13,
+    paddingRight: 8,
+    paddingVertical: 6,
+    borderRadius: 14,
   },
   tagText: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#2563EB',
+    fontSize: 13,
+    fontWeight: '700',
   },
   tagRemoveBtn: {
     marginLeft: 6,
     padding: 2,
   },
   addTagPill: {
-    backgroundColor: '#EEF2FF',
-    paddingHorizontal: 16,
-    paddingVertical: 7,
-    borderRadius: 20,
-    justifyContent: 'center',
+    flexDirection: 'row',
     alignItems: 'center',
+    gap: 4,
+    paddingHorizontal: 13,
+    paddingVertical: 6,
+    borderRadius: 14,
+    borderWidth: 1,
   },
   addTagText: {
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: '700',
-    color: '#2563EB',
-  },
-  descriptionBox: {
-    borderWidth: 1,
-    borderColor: '#E5E7EB',
-    borderRadius: 12,
-    padding: 12,
-    minHeight: 110,
-    backgroundColor: '#FFFFFF',
-  },
-  descriptionInput: {
-    fontSize: 15,
-    color: '#111827',
-    lineHeight: 22,
-    minHeight: 90,
   },
   frequencyRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginTop: 4,
   },
   frequencyCountInput: {
-    width: 48,
-    height: 38,
+    width: 52,
+    height: 42,
     borderWidth: 1,
-    borderColor: '#D1D5DB',
-    borderRadius: 8,
+    borderRadius: 12,
     textAlign: 'center',
     fontSize: 16,
-    fontWeight: '700',
-    color: '#111827',
-    backgroundColor: '#FFFFFF',
+    fontWeight: '800',
   },
   frequencyText: {
-    fontSize: 16,
-    fontWeight: '500',
-    color: '#111827',
-    marginHorizontal: 10,
+    fontSize: 15,
+    fontWeight: '600',
+    marginHorizontal: 12,
   },
   frequencyDropdown: {
     flexDirection: 'row',
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#D1D5DB',
-    borderRadius: 8,
+    borderRadius: 12,
     paddingHorizontal: 14,
-    height: 38,
-    backgroundColor: '#FFFFFF',
+    height: 42,
+    gap: 6,
   },
   frequencyDropdownText: {
     fontSize: 15,
-    fontWeight: '600',
-    color: '#111827',
-    marginRight: 6,
+    fontWeight: '700',
   },
-  visibleAchievementsTitle: {
-    fontSize: 16,
-    fontWeight: '800',
-    color: '#111827',
+  achievementsHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
     marginBottom: 10,
   },
-  achievementsBox: {
-    borderWidth: 1,
-    borderColor: '#E5E7EB',
-    borderRadius: 12,
-    padding: 14,
-    backgroundColor: '#FFFFFF',
+  limitPill: {
+    paddingHorizontal: 10,
+    paddingVertical: 3,
+    borderRadius: 10,
   },
-  achievementItemLabel: {
-    fontSize: 15,
-    fontWeight: '600',
-    color: '#111827',
+  limitPillText: {
+    fontSize: 12,
+    fontWeight: '800',
+  },
+  achievementsList: {
+    marginTop: 2,
+  },
+  emptyNotice: {
+    fontSize: 14,
+    fontStyle: 'italic',
+    paddingVertical: 6,
   },
   actionsRow: {
     flexDirection: 'row',
-    justifyContent: 'center',
-    gap: 16,
-    marginTop: 30,
-    marginBottom: 20,
+    gap: 12,
+    marginTop: 10,
   },
   cancelButton: {
-    backgroundColor: '#8E8E93',
-    paddingVertical: 12,
-    paddingHorizontal: 36,
-    borderRadius: 25,
-    minWidth: 130,
+    flex: 1,
+    height: 48,
+    borderRadius: 24,
     alignItems: 'center',
+    justifyContent: 'center',
   },
   cancelButtonText: {
-    color: '#FFFFFF',
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: '700',
   },
   confirmButton: {
-    backgroundColor: '#34c759',
-    paddingVertical: 12,
-    paddingHorizontal: 36,
-    borderRadius: 25,
-    minWidth: 130,
+    flex: 1,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: ACCENT_GREEN,
     alignItems: 'center',
+    justifyContent: 'center',
   },
   confirmButtonDisabled: {
     opacity: 0.6,
   },
   confirmButtonText: {
     color: '#FFFFFF',
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: '700',
-  },
-  emptyNotice: {
-    fontSize: 14,
-    color: '#6B7280',
-    fontStyle: 'italic',
-    paddingVertical: 8,
   },
   modalBackdrop: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.4)',
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
     justifyContent: 'center',
     alignItems: 'center',
     padding: 20,
   },
   modalContent: {
-    width: '90%',
-    backgroundColor: '#FFFFFF',
+    width: '100%',
+    maxWidth: 380,
     borderRadius: 20,
+    borderWidth: 1,
     padding: 20,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
+    shadowOffset: { width: 0, height: 6 },
     shadowOpacity: 0.2,
     shadowRadius: 12,
     elevation: 8,
   },
   dropdownModalContent: {
-    width: '80%',
-    backgroundColor: '#FFFFFF',
-    borderRadius: 16,
+    width: '100%',
+    maxWidth: 320,
+    borderRadius: 18,
+    borderWidth: 1,
     padding: 20,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
+    shadowOffset: { width: 0, height: 6 },
     shadowOpacity: 0.2,
     shadowRadius: 12,
     elevation: 8,
@@ -753,7 +861,6 @@ const styles = StyleSheet.create({
   modalHeading: {
     fontSize: 18,
     fontWeight: '800',
-    color: '#111827',
     marginBottom: 16,
     textAlign: 'center',
   },
@@ -762,7 +869,7 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
     justifyContent: 'center',
     gap: 14,
-    marginVertical: 12,
+    marginVertical: 10,
   },
   avatarPresetItem: {
     width: 64,
@@ -773,8 +880,8 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   avatarPresetSelected: {
-    borderColor: '#34c759',
-    transform: [{ scale: 1.05 }],
+    borderColor: ACCENT_GREEN,
+    transform: [{ scale: 1.06 }],
   },
   presetImage: {
     width: '100%',
@@ -788,18 +895,16 @@ const styles = StyleSheet.create({
   newTagTextInput: {
     flex: 1,
     borderWidth: 1,
-    borderColor: '#D1D5DB',
-    borderRadius: 10,
+    borderRadius: 12,
     paddingHorizontal: 12,
-    height: 42,
+    height: 44,
     fontSize: 14,
-    color: '#111827',
   },
   newTagSubmitBtn: {
-    backgroundColor: '#34c759',
-    paddingHorizontal: 14,
-    height: 42,
-    borderRadius: 10,
+    backgroundColor: ACCENT_GREEN,
+    paddingHorizontal: 16,
+    height: 44,
+    borderRadius: 12,
     justifyContent: 'center',
     alignItems: 'center',
     marginLeft: 8,
@@ -807,12 +912,11 @@ const styles = StyleSheet.create({
   newTagSubmitText: {
     color: '#FFFFFF',
     fontWeight: '700',
-    fontSize: 13,
+    fontSize: 14,
   },
   suggestedTagsHeading: {
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: '700',
-    color: '#4B5563',
     marginBottom: 10,
   },
   suggestedTagsContainer: {
@@ -822,52 +926,33 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   suggestedTagPill: {
-    backgroundColor: '#EEF2FF',
     paddingHorizontal: 12,
     paddingVertical: 6,
-    borderRadius: 16,
-  },
-  suggestedTagDisabled: {
-    backgroundColor: '#F3F4F6',
+    borderRadius: 14,
   },
   suggestedTagText: {
-    color: '#2563EB',
     fontSize: 13,
-    fontWeight: '600',
-  },
-  suggestedTagTextDisabled: {
-    color: '#9CA3AF',
+    fontWeight: '700',
   },
   modalCloseBtn: {
-    backgroundColor: '#F3F4F6',
-    paddingVertical: 10,
-    borderRadius: 12,
+    paddingVertical: 11,
+    borderRadius: 14,
     alignItems: 'center',
-    marginTop: 8,
+    marginTop: 6,
   },
   modalCloseText: {
     fontSize: 14,
     fontWeight: '700',
-    color: '#4B5563',
   },
   frequencyOption: {
     paddingVertical: 12,
     paddingHorizontal: 16,
-    borderRadius: 10,
+    borderRadius: 12,
     marginVertical: 4,
-    backgroundColor: '#F9FAFB',
-  },
-  frequencyOptionSelected: {
-    backgroundColor: '#E8F5E9',
   },
   frequencyOptionText: {
-    fontSize: 16,
-    color: '#111827',
+    fontSize: 15,
     fontWeight: '600',
     textAlign: 'center',
-  },
-  frequencyOptionTextSelected: {
-    color: '#34c759',
-    fontWeight: '800',
   },
 });

@@ -1,9 +1,12 @@
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { useThemeColor } from '@/hooks/use-theme-color';
+import { CommunityPreviewModal } from '@/src/components/community/CommunityPreviewModal';
+import { communityService, PublicCommunityItem } from '@/src/services/communityService';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import {
+  ActivityIndicator,
   Alert,
   KeyboardAvoidingView,
   Platform,
@@ -27,6 +30,8 @@ export default function AddCommunity() {
   const isDark = colorScheme === 'dark';
 
   const [communityLink, setCommunityLink] = useState('');
+  const [isSearchingCode, setIsSearchingCode] = useState(false);
+  const [foundCommunity, setFoundCommunity] = useState<PublicCommunityItem | null>(null);
 
   const backgroundColor = useThemeColor({}, 'background');
   const textColor = useThemeColor({}, 'text');
@@ -40,13 +45,44 @@ export default function AddCommunity() {
     router.back();
   };
 
-  const handleJoinByLink = () => {
+  const handleJoinByLink = async () => {
     const trimmed = communityLink.trim();
     if (!trimmed) {
-      Alert.alert('Link necessário', 'Por favor, digite o link ou código da comunidade para entrar.');
+      Alert.alert('Código necessário', 'Por favor, digite o link ou código da comunidade para buscar.');
       return;
     }
-    Alert.alert('Entrar na comunidade', `Procurando comunidade com o código/link: "${trimmed}"...`);
+
+    if (isSearchingCode) return;
+
+    try {
+      setIsSearchingCode(true);
+      const community = await communityService.getCommunityByCode(trimmed, 1);
+      setFoundCommunity(community);
+    } catch (error: any) {
+      const status = error?.response?.status;
+      if (status === 404) {
+        Alert.alert(
+          'Comunidade não encontrada',
+          `Nenhuma comunidade foi encontrada para o código "${trimmed}". Verifique e tente novamente.`
+        );
+      } else {
+        console.error('Erro ao buscar comunidade por código:', error);
+        Alert.alert('Erro', 'Não foi possível buscar a comunidade. Tente novamente.');
+      }
+    } finally {
+      setIsSearchingCode(false);
+    }
+  };
+
+  const handleJoinedFromModal = (community: PublicCommunityItem) => {
+    setFoundCommunity(null);
+    setCommunityLink('');
+    Alert.alert('Sucesso!', `Você agora faz parte da comunidade "${community.nome}"!`, [
+      {
+        text: 'OK',
+        onPress: () => router.push('/(tabs)/communities'),
+      },
+    ]);
   };
 
   const handleFindCommunity = () => {
@@ -114,8 +150,13 @@ export default function AddCommunity() {
                 style={styles.arrowButton}
                 onPress={handleJoinByLink}
                 activeOpacity={0.8}
+                disabled={isSearchingCode}
               >
-                <MaterialIcons name="arrow-forward" size={20} color="#FFFFFF" />
+                {isSearchingCode ? (
+                  <ActivityIndicator size="small" color="#FFFFFF" />
+                ) : (
+                  <MaterialIcons name="arrow-forward" size={20} color="#FFFFFF" />
+                )}
               </TouchableOpacity>
             </View>
           </View>
@@ -159,6 +200,15 @@ export default function AddCommunity() {
           </TouchableOpacity>
         </ScrollView>
       </KeyboardAvoidingView>
+
+      <CommunityPreviewModal
+        visible={!!foundCommunity}
+        community={foundCommunity}
+        userId={1}
+        onClose={() => setFoundCommunity(null)}
+        onJoined={handleJoinedFromModal}
+        onRequested={(updated) => setFoundCommunity(updated)}
+      />
     </SafeAreaView>
   );
 }

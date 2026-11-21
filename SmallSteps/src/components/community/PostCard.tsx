@@ -77,7 +77,6 @@ export function PostCard({
       <PostMediaCard
         mediaType={post.mediaType}
         mediaUrl={post.mediaUrl}
-        thumbnailUrl={post.thumbnailUrl}
         aspectRatio={post.aspectRatio}
         onPress={() => onMediaPress?.(post)}
       />

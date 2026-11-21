@@ -24,20 +24,20 @@ INSERT INTO usuario (id, streak_num, intervalo_atividade, ultima_atividade, ulti
 -- ---------------------------------------------------------------------
 -- COMUNIDADE
 -- ---------------------------------------------------------------------
-INSERT INTO comunidade (id, privado, dt_criacao, foto, nome) VALUES
-(1, false, '2026-01-10 10:00:00', 'https://images.unsplash.com/photo-1452626038306-9aae5e071dd3?w=150&auto=format&fit=crop&q=80',  'Corredores de Fim de Semana'),
-(2, true,  '2026-02-15 14:30:00', 'https://images.unsplash.com/photo-1512820790803-83ca734da794?w=150&auto=format&fit=crop&q=80',      'Clube do Livro'),
-(3, false, '2026-03-05 09:00:00', 'https://images.unsplash.com/photo-1517694712202-14dd9538aa97?w=150&auto=format&fit=crop&q=80',      'Devs em Estudo'),
-(4, false, '2026-04-20 16:45:00', 'https://images.unsplash.com/photo-1585320806297-9794b3e4eeae?w=150&auto=format&fit=crop&q=80',       'Hortas Urbanas'),
-(5, true,  '2026-05-01 07:00:00', 'https://images.unsplash.com/photo-1506126613408-eca07ce68773?w=150&auto=format&fit=crop&q=80',   'Meditação Diária'),
-(6, false, '2026-05-10 11:00:00', 'https://images.unsplash.com/photo-1520045892732-304bc3ac5d8e?w=150&auto=format&fit=crop&q=80',      'Sk8 Tarumã'),
-(7, false, '2026-05-15 15:30:00', NULL,                                                                                                    'Corredores do Tingui'),
-(8, false, '2026-05-20 09:00:00', 'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=150&auto=format&fit=crop&q=80',      'Desbravadores CWB'),
-(9, false, '2026-05-25 14:00:00', NULL,                                                                                                    'Roller Wizards'),
-(10, false, '2026-06-01 10:00:00', NULL,                                                                                                   'Hydroentusiastas'),
-(11, false, '2026-06-05 16:00:00', 'https://images.unsplash.com/photo-1579783900882-c0d3dad7b119?w=150&auto=format&fit=crop&q=80',      'StreetArt Grafite CWB'),
-(12, false, '2026-06-10 18:00:00', NULL,                                                                                                   'BookWorm'),
-(13, false, '2026-06-12 19:30:00', NULL,                                                                                                   'Badminton Bigorrilho');
+INSERT INTO comunidade (id, privado, dt_criacao, foto, nome, codigo_convite) VALUES
+(1, false, '2026-01-10 10:00:00', 'https://images.unsplash.com/photo-1452626038306-9aae5e071dd3?w=150&auto=format&fit=crop&q=80',  'Corredores de Fim de Semana', '#5b1c27'),
+(2, true,  '2026-02-15 14:30:00', 'https://images.unsplash.com/photo-1512820790803-83ca734da794?w=150&auto=format&fit=crop&q=80',  'Clube do Livro',              '#a3f912'),
+(3, false, '2026-03-05 09:00:00', 'https://images.unsplash.com/photo-1517694712202-14dd9538aa97?w=150&auto=format&fit=crop&q=80',  'Devs em Estudo',              '#2e8b57'),
+(4, false, '2026-04-20 16:45:00', 'https://images.unsplash.com/photo-1585320806297-9794b3e4eeae?w=150&auto=format&fit=crop&q=80',  'Hortas Urbanas',              '#c49a6c'),
+(5, true,  '2026-05-01 07:00:00', 'https://images.unsplash.com/photo-1506126613408-eca07ce68773?w=150&auto=format&fit=crop&q=80',  'Meditação Diária',            '#7d4e99'),
+(6, false, '2026-05-10 11:00:00', 'https://images.unsplash.com/photo-1520045892732-304bc3ac5d8e?w=150&auto=format&fit=crop&q=80',  'Sk8 Tarumã',                  '#ff6b35'),
+(7, false, '2026-05-15 15:30:00', NULL,                                                                                            'Corredores do Tingui',        '#3a86ff'),
+(8, false, '2026-05-20 09:00:00', 'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=150&auto=format&fit=crop&q=80',  'Desbravadores CWB',           '#8338ec'),
+(9, false, '2026-05-25 14:00:00', NULL,                                                                                            'Roller Wizards',              '#fb5607'),
+(10, false, '2026-06-01 10:00:00', NULL,                                                                                           'Hydroentusiastas',            '#00b4d8'),
+(11, false, '2026-06-05 16:00:00', 'https://images.unsplash.com/photo-1579783900882-c0d3dad7b119?w=150&auto=format&fit=crop&q=80', 'StreetArt Grafite CWB',       '#e63946'),
+(12, false, '2026-06-10 18:00:00', NULL,                                                                                           'BookWorm',                    '#457b9d'),
+(13, false, '2026-06-12 19:30:00', NULL,                                                                                           'Badminton Bigorrilho',        '#2a9d8f');
 
 -- ---------------------------------------------------------------------
 -- TAG
