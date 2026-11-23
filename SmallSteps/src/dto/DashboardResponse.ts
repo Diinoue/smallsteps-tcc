@@ -21,6 +21,8 @@ export interface GoalDTOResponse {
   concluido: boolean;
   dtInicio: string;
   dtFim: string;
+  urlMidia?: string | null;
+  tipoMidia?: 'IMAGE' | 'VIDEO' | string | null;
   subMetas: SubGoalDTOResponse[];
 }
 

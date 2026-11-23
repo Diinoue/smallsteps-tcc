@@ -43,8 +43,14 @@ public class Usuario {
     @Column(name = "ultima_atividade")
     private LocalDateTime ultimaAtividade;
 
+    @Column(name = "inicio_ciclo")
+    private LocalDateTime inicioCiclo;
+
     @Column(name = "ultimo_prazo")
     private LocalDateTime ultimoPrazo;
+
+    @Column(name = "ciclo_descongelamento")
+    private Boolean cicloDescongelamento = false;
 
     @JdbcTypeCode(SqlTypes.INTERVAL_SECOND)
     @Column(name = "intervalo_atividade")
@@ -125,12 +131,28 @@ public class Usuario {
         this.ultimaAtividade = ultimaAtividade;
     }
 
+    public LocalDateTime getInicioCiclo() {
+        return inicioCiclo;
+    }
+
+    public void setInicioCiclo(LocalDateTime inicioCiclo) {
+        this.inicioCiclo = inicioCiclo;
+    }
+
     public LocalDateTime getUltimoPrazo() {
         return ultimoPrazo;
     }
 
     public void setUltimoPrazo(LocalDateTime ultimoPrazo) {
         this.ultimoPrazo = ultimoPrazo;
+    }
+
+    public boolean isCicloDescongelamento() {
+        return cicloDescongelamento != null && cicloDescongelamento;
+    }
+
+    public void setCicloDescongelamento(Boolean cicloDescongelamento) {
+        this.cicloDescongelamento = cicloDescongelamento != null && cicloDescongelamento;
     }
 
     public Duration getIntervaloAtividade() {

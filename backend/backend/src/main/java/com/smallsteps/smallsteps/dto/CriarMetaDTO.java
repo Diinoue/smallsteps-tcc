@@ -19,5 +19,8 @@ public class CriarMetaDTO {
     @JsonDeserialize(using = FlexibleLocalDateTimeDeserializer.class)
     public LocalDateTime dtFim;
     
+    public String urlMidia;
+    public String tipoMidia;
+
     public List<SubMetaDTO> subMetas;
 }

@@ -26,16 +26,19 @@ public class PostService {
     private final CommunityRepository communityRepository;
     private final UserRepository userRepository;
     private final ComentarioRepository comentarioRepository;
+    private final StreakService streakService;
 
     public PostService(
             PostRepository postRepository,
             CommunityRepository communityRepository,
             UserRepository userRepository,
-            ComentarioRepository comentarioRepository) {
+            ComentarioRepository comentarioRepository,
+            StreakService streakService) {
         this.postRepository = postRepository;
         this.communityRepository = communityRepository;
         this.userRepository = userRepository;
         this.comentarioRepository = comentarioRepository;
+        this.streakService = streakService;
     }
 
     @Transactional(readOnly = true)
@@ -60,12 +63,13 @@ public class PostService {
             usuario = userRepository.findById(dto.getIdUsuario()).orElse(null);
         }
 
-        // Fallback de teste se idUsuario não for informado
+        // Fallback determinístico se idUsuario não for informado (usuário 1 no modo de testes)
         if (usuario == null) {
-            List<Usuario> usuarios = userRepository.findAll();
-            if (!usuarios.isEmpty()) {
-                usuario = usuarios.get(0);
-            }
+            usuario = userRepository.findById(1).orElseGet(() ->
+                userRepository.findAll().stream()
+                    .min(java.util.Comparator.comparingInt(Usuario::getId))
+                    .orElse(null)
+            );
         }
 
         if (usuario == null) {
@@ -81,6 +85,7 @@ public class PostService {
         post.setDtCriacao(LocalDateTime.now());
 
         Post salvo = postRepository.save(post);
+        streakService.registrarAtividadePorPost(usuario, communityId);
         return new PostResponseDTO(salvo, usuario.getStreakNum(), 0);
     }
 

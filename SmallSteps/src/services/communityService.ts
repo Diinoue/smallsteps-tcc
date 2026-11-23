@@ -231,6 +231,7 @@ export const communityService = {
   ): Promise<Post> {
     try {
       const payload = {
+        idUsuario: 1,
         descricao: input.content,
         tipoMidia: (input.mediaType || 'TEXT').toUpperCase(),
         urlMidia: input.mediaUrl || null,

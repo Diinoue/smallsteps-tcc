@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { useThemeColor } from '@/hooks/use-theme-color';
@@ -36,7 +36,13 @@ export function AchievementCard({
         { backgroundColor: surfaceVariant, borderColor },
       ]}
     >
-      {achievement.mediaType === 'video' ? (
+      {achievement.mediaUrl && achievement.mediaType !== 'video' ? (
+        <Image
+          source={{ uri: achievement.mediaUrl }}
+          style={styles.thumbnailImage}
+          resizeMode="cover"
+        />
+      ) : achievement.mediaType === 'video' ? (
         <View
           style={[
             styles.playIconContainer,
@@ -123,6 +129,11 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     justifyContent: 'center',
     alignItems: 'center',
+    overflow: 'hidden',
+  },
+  thumbnailImage: {
+    width: '100%',
+    height: '100%',
   },
   playIconContainer: {
     width: 48,

@@ -131,6 +131,12 @@ public class GoalService {
                 meta.setDtFim(LocalDateTime.now());
             }
         }
+        if (dto.urlMidia != null) {
+            meta.setUrlMidia(dto.urlMidia.trim().isEmpty() ? null : dto.urlMidia.trim());
+        }
+        if (dto.tipoMidia != null) {
+            meta.setTipoMidia(dto.tipoMidia.trim().isEmpty() ? null : dto.tipoMidia.trim().toUpperCase());
+        }
 
         // Atualiza submetas: remove as antigas e reinsere
         if (dto.subMetas != null) {
@@ -187,6 +193,8 @@ public class GoalService {
         dto.concluido = meta.isConcluido();
         dto.dtInicio = meta.getDtInicio();
         dto.dtFim = meta.getDtFim();
+        dto.urlMidia = meta.getUrlMidia();
+        dto.tipoMidia = meta.getTipoMidia();
 
         List<SubMeta> subs = subMetaRepository.findByMetaIdOrderByPos(meta.getId());
         dto.subMetas = subs.stream().map(s -> {

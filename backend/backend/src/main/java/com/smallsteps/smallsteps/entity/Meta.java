@@ -47,6 +47,12 @@ public class Meta {
     @Column(name = "milestone", nullable = false)
     private String milestone;
 
+    @Column(name = "url_midia")
+    private String urlMidia;
+
+    @Column(name = "tipo_midia", length = 20)
+    private String tipoMidia;
+
     @OneToMany(mappedBy = "meta", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<SubMeta> subMetas = new ArrayList<>();
 
@@ -136,5 +142,21 @@ public class Meta {
 
     public void setSubMetas(List<SubMeta> subMetas) {
         this.subMetas = subMetas;
+    }
+
+    public String getUrlMidia() {
+        return urlMidia;
+    }
+
+    public void setUrlMidia(String urlMidia) {
+        this.urlMidia = urlMidia;
+    }
+
+    public String getTipoMidia() {
+        return tipoMidia;
+    }
+
+    public void setTipoMidia(String tipoMidia) {
+        this.tipoMidia = tipoMidia;
     }
 }

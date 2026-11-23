@@ -7,6 +7,6 @@ import org.springframework.data.repository.query.Param;
 import com.smallsteps.smallsteps.entity.Post;
 
 public interface PostRepository extends JpaRepository<Post, Integer> {
-    @Query("SELECT p FROM Post p JOIN FETCH p.usuario WHERE p.comunidade.id = :comunidadeId ORDER BY p.dtCriacao DESC")
+    @Query("SELECT p FROM Post p JOIN FETCH p.usuario WHERE p.comunidade.id = :comunidadeId ORDER BY p.dtCriacao DESC, p.id DESC")
     List<Post> findByComunidadeIdOrderByDtCriacaoDesc(@Param("comunidadeId") int comunidadeId);
 }

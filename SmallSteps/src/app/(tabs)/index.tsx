@@ -24,6 +24,7 @@ export default function DashboardScreen() {
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const isFetchingRef = useRef(false);
+  const hasLoadedRef = useRef(false);
 
   const backgroundColor = useThemeColor({}, 'background');
   const textColor = useThemeColor({}, 'text');
@@ -33,18 +34,18 @@ export default function DashboardScreen() {
   const loadDashboardData = useCallback(async (force = false) => {
     if (isFetchingRef.current) return;
 
-    if (!force && dashboardData !== null) {
+    if (!force && hasLoadedRef.current) {
       setIsLoading(false);
       return;
     }
 
     isFetchingRef.current = true;
-    if (!dashboardData) setIsLoading(true);
+    if (!hasLoadedRef.current) setIsLoading(true);
 
     try {
-      const n = Math.floor(Math.random() * 10) + 1;
-      const response = await screenService.consultarDashboard(n);
+      const response = await screenService.consultarDashboard(1);
       setDashboardData(response);
+      hasLoadedRef.current = true;
     } catch (error) {
       console.error('Error loading dashboard data:', error);
     } finally {
@@ -52,11 +53,11 @@ export default function DashboardScreen() {
       setIsRefreshing(false);
       isFetchingRef.current = false;
     }
-  }, [dashboardData]);
+  }, []);
 
   useFocusEffect(
     useCallback(() => {
-      loadDashboardData(false);
+      loadDashboardData(true);
     }, [loadDashboardData])
   );
 

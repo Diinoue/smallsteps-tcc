@@ -161,22 +161,19 @@ public class UserService implements UserServiceDetails {
             usuario.setMetasPublicas(dto.publicCurrentGoals);
         }
 
-        // Frequência de streak
+        // Duração do ciclo da streak (ex.: 1 dia, 3 dias, 1 semana, 2 semanas, 1 mês)
         if (dto.streakFrequencyCount != null && dto.streakFrequencyCount > 0) {
-            String period = dto.streakFrequencyPeriod != null ? dto.streakFrequencyPeriod.toLowerCase() : "week";
+            String period = dto.streakFrequencyPeriod != null ? dto.streakFrequencyPeriod.toLowerCase() : "day";
             usuario.setFrequenciaNum(dto.streakFrequencyCount);
             usuario.setFrequenciaPeriodo(period);
 
             Duration intervalo;
-            if ("day".equals(period)) {
-                long seconds = (long)(86400.0 / dto.streakFrequencyCount);
-                intervalo = Duration.ofSeconds(Math.max(60, seconds));
+            if ("week".equals(period)) {
+                intervalo = Duration.ofDays(dto.streakFrequencyCount * 7L);
             } else if ("month".equals(period)) {
-                long seconds = (long)((30.0 * 86400.0) / dto.streakFrequencyCount);
-                intervalo = Duration.ofSeconds(Math.max(86400, seconds));
+                intervalo = Duration.ofDays(dto.streakFrequencyCount * 30L);
             } else {
-                long seconds = (long)((7.0 * 86400.0) / dto.streakFrequencyCount);
-                intervalo = Duration.ofSeconds(Math.max(3600, seconds));
+                intervalo = Duration.ofDays(dto.streakFrequencyCount);
             }
             usuario.setIntervaloAtividade(intervalo);
         }
@@ -195,16 +192,24 @@ public class UserService implements UserServiceDetails {
             }
         }
 
-        // Atualizar visibilidade das metas concluídas no perfil (estante de troféus, máx 5)
+        // Atualizar visibilidade apenas das metas concluídas (achievements) no perfil (máx 5)
         if (dto.visibleAchievementIds != null) {
             List<Integer> allowedIds = dto.visibleAchievementIds.stream()
                     .limit(5)
                     .collect(Collectors.toList());
             List<Meta> todasDoUsuario = goalRepository.findByUsuarioId(usuario.getId());
+            Map<Integer, List<SubMeta>> subMetasPorMeta = goalRepository
+                    .findAllSubMetasByUsuario(usuario.getId())
+                    .stream()
+                    .collect(Collectors.groupingBy(SubMeta::getIdMeta));
             for (Meta meta : todasDoUsuario) {
-                boolean visivel = allowedIds.contains(meta.getId());
-                meta.setVisivel(visivel);
-                goalRepository.save(meta);
+                List<SubMeta> subs = subMetasPorMeta.getOrDefault(meta.getId(), List.of());
+                boolean allSubsConcluidas = !subs.isEmpty() && subs.stream().allMatch(SubMeta::isConcluido);
+                boolean isConcluida = meta.isConcluido() || allSubsConcluidas;
+                if (isConcluida) {
+                    meta.setVisivel(allowedIds.contains(meta.getId()));
+                    goalRepository.save(meta);
+                }
             }
         }
 
@@ -235,28 +240,25 @@ public class UserService implements UserServiceDetails {
         dto.publicStreak = usuario.isStreakPublico();
         dto.publicCurrentGoals = usuario.isMetasPublicas();
 
-        // Calcular periodicidade de check-in / streak
+        // Calcular duração do ciclo da streak
         if (usuario.getFrequenciaNum() != null && usuario.getFrequenciaPeriodo() != null) {
             dto.streakFrequencyCount = usuario.getFrequenciaNum();
             dto.streakFrequencyPeriod = usuario.getFrequenciaPeriodo();
         } else if (usuario.getIntervaloAtividade() != null) {
-            long seconds = usuario.getIntervaloAtividade().getSeconds();
-            if (seconds < 86400) {
-                dto.streakFrequencyPeriod = "day";
-                dto.streakFrequencyCount = Math.max(1, (int) Math.round(86400.0 / Math.max(1, seconds)));
+            long days = Math.max(1, usuario.getIntervaloAtividade().toDays());
+            if (days % 30 == 0) {
+                dto.streakFrequencyPeriod = "month";
+                dto.streakFrequencyCount = (int) (days / 30);
+            } else if (days % 7 == 0) {
+                dto.streakFrequencyPeriod = "week";
+                dto.streakFrequencyCount = (int) (days / 7);
             } else {
-                long days = seconds / 86400;
-                if (days >= 15) {
-                    dto.streakFrequencyPeriod = "month";
-                    dto.streakFrequencyCount = Math.max(1, (int) Math.round(30.0 / days));
-                } else {
-                    dto.streakFrequencyPeriod = "week";
-                    dto.streakFrequencyCount = Math.max(1, (int) Math.round(7.0 / Math.max(1.0, (double)seconds / 86400.0)));
-                }
+                dto.streakFrequencyPeriod = "day";
+                dto.streakFrequencyCount = (int) days;
             }
         } else {
-            dto.streakFrequencyCount = 2;
-            dto.streakFrequencyPeriod = "week";
+            dto.streakFrequencyCount = 1;
+            dto.streakFrequencyPeriod = "day";
         }
 
         // Buscar tags do usuário
@@ -289,14 +291,17 @@ public class UserService implements UserServiceDetails {
                 long monthsJourney = daysJourney / 30;
                 String journeyText = monthsJourney > 0 ? monthsJourney + " Month journey" : daysJourney + " Days journey";
 
-                String mediaType = (meta.getId() % 2 == 0) ? "image" : "video";
+                String mediaType = meta.getTipoMidia() != null && !meta.getTipoMidia().isBlank()
+                        ? meta.getTipoMidia().toLowerCase()
+                        : "image";
 
                 ProfileAchievementDTO achDto = new ProfileAchievementDTO(
                         meta.getId(),
                         meta.getTitulo(),
                         journeyText,
                         subs.size(),
-                        mediaType
+                        mediaType,
+                        meta.getUrlMidia()
                 );
 
                 // Todas as conquistas finalizadas (para seleção no Editar Perfil)
@@ -307,8 +312,8 @@ public class UserService implements UserServiceDetails {
                     dto.visibleAchievementIds.add(meta.getId());
                     dto.achievements.add(achDto);
                 }
-            } else {
-                // Goal (Objetivo em andamento)
+            } else if (meta.isVisivel()) {
+                // Goal (Objetivo em andamento visível no perfil)
                 ProfileCurrentGoalDTO currentGoal = new ProfileCurrentGoalDTO(meta.getId(), meta.getTitulo());
                 for (SubMeta sub : subs) {
                     long subDays = 30;

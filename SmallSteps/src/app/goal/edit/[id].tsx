@@ -12,12 +12,16 @@ import {
 } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
+import { Image } from 'expo-image';
+import * as ImagePicker from 'expo-image-picker';
+import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { useThemeColor } from '@/hooks/use-theme-color';
 import { SubGoalEditItem } from '@/src/components/dashboard/SubGoalEditItem';
 import { Button } from '@/src/components/ui/Button';
 import { IconSymbol } from '@/src/components/ui/icon-symbol';
 import { goalService } from '@/src/services';
+import { uploadMedia } from '@/src/services/communityService';
 import { SubGoal } from '@/src/types/goal';
 
 function toBackendDateTime(dateStr?: string | null): string | null {
@@ -66,6 +70,12 @@ export default function EditGoalScreen() {
   const [wasCompletedOnLoad, setWasCompletedOnLoad] = useState(false);
   const [initialCompletedDate, setInitialCompletedDate] = useState<string | null>(null);
 
+  // Anexo de comprovação de conclusão (imagem ou vídeo)
+  const [proofUri, setProofUri] = useState<string | null>(null);
+  const [proofMime, setProofMime] = useState<string | null>(null);
+  const [proofType, setProofType] = useState<'IMAGE' | 'VIDEO' | null>(null);
+  const [proofChanged, setProofChanged] = useState(false);
+
   const backgroundColor = useThemeColor({}, 'background');
   const textColor = useThemeColor({}, 'text');
   const textMuted = useThemeColor({}, 'textMuted');
@@ -104,6 +114,15 @@ export default function EditGoalScreen() {
         setGoalCompletedDate(goal.dtFim ?? null);
         setWasCompletedOnLoad(goal.concluido ?? false);
         setInitialCompletedDate(goal.dtFim ?? null);
+        setProofUri(goal.urlMidia ?? null);
+        setProofType(
+          goal.tipoMidia?.toUpperCase() === 'VIDEO'
+            ? 'VIDEO'
+            : goal.urlMidia
+            ? 'IMAGE'
+            : null
+        );
+        setProofChanged(false);
       } else {
         Alert.alert('Erro', 'Meta não encontrada.');
         router.back();
@@ -197,6 +216,49 @@ export default function EditGoalScreen() {
     setSubGoals((prev) => [...prev, newSubGoal]);
   };
 
+  // Selecionar imagem ou vídeo como comprovante de conclusão
+  const handlePickProof = async (mediaKind: 'IMAGE' | 'VIDEO') => {
+    try {
+      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (status !== 'granted') {
+        Alert.alert(
+          'Permissão necessária',
+          'Precisamos da sua permissão para acessar a galeria.'
+        );
+        return;
+      }
+
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes:
+          mediaKind === 'VIDEO'
+            ? ImagePicker.MediaTypeOptions.Videos
+            : ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: mediaKind === 'IMAGE',
+        quality: 0.85,
+      });
+
+      if (!result.canceled && result.assets && result.assets.length > 0) {
+        const asset = result.assets[0];
+        setProofUri(asset.uri);
+        setProofMime(
+          asset.mimeType || (mediaKind === 'VIDEO' ? 'video/mp4' : 'image/jpeg')
+        );
+        setProofType(mediaKind);
+        setProofChanged(true);
+      }
+    } catch (error) {
+      console.error('Erro ao selecionar mídia de comprovação:', error);
+      Alert.alert('Erro', 'Não foi possível selecionar o arquivo.');
+    }
+  };
+
+  const handleRemoveProof = () => {
+    setProofUri(null);
+    setProofMime(null);
+    setProofType(null);
+    setProofChanged(true);
+  };
+
   // Save changes
   const handleSave = async () => {
     if (!title.trim()) {
@@ -210,11 +272,28 @@ export default function EditGoalScreen() {
 
     try {
       setIsSaving(true);
+
+      let uploadedUrl: string | undefined;
+      let uploadedType: string | undefined;
+      if (proofChanged) {
+        if (proofUri && proofType) {
+          uploadedUrl = await uploadMedia(
+            proofUri,
+            proofMime || (proofType === 'VIDEO' ? 'video/mp4' : 'image/jpeg')
+          );
+          uploadedType = proofType;
+        } else {
+          uploadedUrl = '';
+          uploadedType = '';
+        }
+      }
+
       await goalService.updateGoal(id, {
         titulo: title.trim(),
         milestone: targetMilestone.trim(),
         concluido: isGoalCompleted,
         dtFim: isGoalCompleted ? (toBackendDateTime(goalCompletedDate) ?? new Date().toISOString()) : undefined,
+        ...(uploadedUrl !== undefined ? { urlMidia: uploadedUrl, tipoMidia: uploadedType } : {}),
         subMetas: subGoals.map((sg) => ({
           titulo: sg.title.trim() || 'Nova submeta',
           concluido: sg.completed ?? false,
@@ -428,6 +507,77 @@ export default function EditGoalScreen() {
                   </Text>
                 </TouchableOpacity>
               )}
+
+              {/* Anexo de comprovação ao concluir a meta */}
+              {isGoalCompleted && (
+                <View style={[styles.proofCard, { backgroundColor: surfaceColor, borderColor }]}>
+                  <Text style={[styles.proofTitle, { color: textColor }]}>
+                    Comprovante de Conclusão
+                  </Text>
+                  <Text style={[styles.proofSubtitle, { color: textMuted }]}>
+                    Opcional: anexe uma foto ou vídeo comprovando que você concluiu esta meta.
+                  </Text>
+
+                  {proofUri ? (
+                    <View style={styles.proofPreviewContainer}>
+                      {proofType === 'VIDEO' ? (
+                        <View
+                          style={[
+                            styles.proofVideoBox,
+                            { borderColor, backgroundColor: colorScheme === 'dark' ? '#111827' : '#F3F4F6' },
+                          ]}
+                        >
+                          <MaterialIcons name="videocam" size={34} color={activeColor} />
+                          <Text style={[styles.proofVideoLabel, { color: textColor }]}>
+                            Vídeo anexado
+                          </Text>
+                        </View>
+                      ) : (
+                        <Image
+                          source={{ uri: proofUri }}
+                          style={styles.proofImagePreview}
+                          contentFit="cover"
+                        />
+                      )}
+
+                      <TouchableOpacity
+                        style={styles.removeProofBtn}
+                        onPress={handleRemoveProof}
+                        activeOpacity={0.75}
+                      >
+                        <MaterialIcons name="delete-outline" size={18} color="#EF4444" />
+                        <Text style={styles.removeProofText}>Remover anexo</Text>
+                      </TouchableOpacity>
+                    </View>
+                  ) : null}
+
+                  <View style={styles.proofButtonsRow}>
+                    <TouchableOpacity
+                      style={[styles.proofPickerBtn, { borderColor: activeColor }]}
+                      onPress={() => handlePickProof('IMAGE')}
+                      activeOpacity={0.75}
+                      disabled={isSaving}
+                    >
+                      <MaterialIcons name="image" size={18} color={activeColor} />
+                      <Text style={[styles.proofPickerText, { color: activeColor }]}>
+                        {proofUri ? 'Trocar imagem' : 'Anexar imagem'}
+                      </Text>
+                    </TouchableOpacity>
+
+                    <TouchableOpacity
+                      style={[styles.proofPickerBtn, { borderColor: activeColor }]}
+                      onPress={() => handlePickProof('VIDEO')}
+                      activeOpacity={0.75}
+                      disabled={isSaving}
+                    >
+                      <MaterialIcons name="videocam" size={18} color={activeColor} />
+                      <Text style={[styles.proofPickerText, { color: activeColor }]}>
+                        {proofUri ? 'Trocar vídeo' : 'Anexar vídeo'}
+                      </Text>
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              )}
             </View>
           </ScrollView>
 
@@ -598,6 +748,74 @@ const styles = StyleSheet.create({
   },
   completeBtnText: {
     fontSize: 15,
+    fontWeight: '700',
+  },
+  proofCard: {
+    marginTop: 18,
+    borderRadius: 16,
+    borderWidth: 1,
+    padding: 16,
+  },
+  proofTitle: {
+    fontSize: 16,
+    fontWeight: '800',
+    marginBottom: 4,
+  },
+  proofSubtitle: {
+    fontSize: 13,
+    lineHeight: 18,
+    marginBottom: 14,
+  },
+  proofPreviewContainer: {
+    marginBottom: 12,
+  },
+  proofImagePreview: {
+    width: '100%',
+    height: 190,
+    borderRadius: 12,
+  },
+  proofVideoBox: {
+    width: '100%',
+    height: 120,
+    borderRadius: 12,
+    borderWidth: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: 6,
+  },
+  proofVideoLabel: {
+    fontSize: 14,
+    fontWeight: '700',
+  },
+  removeProofBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    alignSelf: 'flex-end',
+    gap: 4,
+    marginTop: 8,
+    paddingVertical: 4,
+  },
+  removeProofText: {
+    color: '#EF4444',
+    fontSize: 13,
+    fontWeight: '700',
+  },
+  proofButtonsRow: {
+    flexDirection: 'row',
+    gap: 10,
+  },
+  proofPickerBtn: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    borderWidth: 1.5,
+    borderRadius: 12,
+    paddingVertical: 11,
+  },
+  proofPickerText: {
+    fontSize: 13,
     fontWeight: '700',
   },
 });

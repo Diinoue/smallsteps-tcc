@@ -2,6 +2,7 @@ import { CriarUserRequest } from "../dto/CriarUserRequest";
 import { UserResponse } from "../dto/UserResponse";
 import { UserProfileData } from "../context/ProfileContext";
 import { api } from "./api";
+import { formatImageUrl } from "./communityService";
 
 export const userService = {
   /**
@@ -20,7 +21,19 @@ export const userService = {
     try {
       const endpoint = idUsuario ? `/users/${idUsuario}` : `/users/profile`;
       const { data } = await api.get<UserProfileData>(endpoint);
-      return data;
+      if (!data) return null;
+      return {
+        ...data,
+        avatarUrl: formatImageUrl(data.avatarUrl) || "",
+        achievements: (data.achievements || []).map((a) => ({
+          ...a,
+          mediaUrl: formatImageUrl(a.mediaUrl),
+        })),
+        allCompletedAchievements: (data.allCompletedAchievements || []).map((a) => ({
+          ...a,
+          mediaUrl: formatImageUrl(a.mediaUrl),
+        })),
+      };
     } catch (error) {
       console.warn(
         "userService.consultarPerfil: backend indisponível ou offline. Mantendo estado mockado.",

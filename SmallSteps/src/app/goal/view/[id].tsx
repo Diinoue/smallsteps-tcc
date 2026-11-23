@@ -15,6 +15,8 @@ import { useThemeColor } from '@/hooks/use-theme-color';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { IconSymbol } from '@/src/components/ui/icon-symbol';
 import { Card } from '@/src/components/ui/Card';
+import { PostMediaCard } from '@/src/components/community/PostMediaCard';
+import { MediaViewer } from '@/src/components/community/MediaViewer';
 import { goalService } from '@/src/services';
 import { GoalDTOResponse, SubGoalDTOResponse } from '@/src/dto/DashboardResponse';
 
@@ -37,6 +39,7 @@ export default function GoalDetailScreen() {
 
   const [goal, setGoal] = useState<GoalDTOResponse | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [mediaViewerVisible, setMediaViewerVisible] = useState(false);
 
   const backgroundColor = useThemeColor({}, 'background');
   const textColor = useThemeColor({}, 'text');
@@ -241,8 +244,32 @@ export default function GoalDetailScreen() {
               </>
             )}
           </View>
+
+          {/* ── Comprovante de Conclusão (Imagem ou Vídeo) ── */}
+          {goal.concluido && goal.urlMidia ? (
+            <View style={styles.proofSection}>
+              <Text style={[styles.sectionTitle, { color: textColor }]}>
+                Comprovante de Conclusão
+              </Text>
+              <PostMediaCard
+                mediaType={goal.tipoMidia?.toUpperCase() === 'VIDEO' ? 'video' : 'image'}
+                mediaUrl={goal.urlMidia}
+                aspectRatio={16 / 9}
+                onPress={() => setMediaViewerVisible(true)}
+              />
+            </View>
+          ) : null}
         </ScrollView>
       )}
+
+      {goal?.urlMidia ? (
+        <MediaViewer
+          visible={mediaViewerVisible}
+          mediaType={goal.tipoMidia?.toUpperCase() === 'VIDEO' ? 'video' : 'image'}
+          mediaUrl={goal.urlMidia}
+          onClose={() => setMediaViewerVisible(false)}
+        />
+      ) : null}
     </SafeAreaView>
   );
 }
@@ -361,4 +388,5 @@ const styles = StyleSheet.create({
     marginBottom: 3,
   },
   milestoneText: { fontSize: 16, fontWeight: '800', lineHeight: 22 },
+  proofSection: { marginTop: 24 },
 });

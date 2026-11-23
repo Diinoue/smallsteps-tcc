@@ -7,6 +7,7 @@ export interface ProfileAchievement {
   journeyDuration: string;
   subGoalsCount: number;
   mediaType: 'image' | 'video';
+  mediaUrl?: string | null;
 }
 
 export interface ProfileTimelineNode {

@@ -17,27 +17,32 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
+import * as ImagePicker from 'expo-image-picker';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { useThemeColor } from '@/hooks/use-theme-color';
 import { useProfile } from '@/src/context/ProfileContext';
+import { uploadMedia } from '@/src/services/communityService';
 import { SquareCheckbox } from '@/src/components/profile/SquareCheckbox';
 
 const ACCENT_GREEN = '#34C759';
 
-const AVATAR_PRESETS = [
-  'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=300&auto=format&fit=crop&q=80',
-  'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=300&auto=format&fit=crop&q=80',
-  'https://images.unsplash.com/photo-1580489944761-15a19d654956?w=300&auto=format&fit=crop&q=80',
-  'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=300&auto=format&fit=crop&q=80',
-  'https://images.unsplash.com/photo-1570295999919-56ceb5ecca61?w=300&auto=format&fit=crop&q=80',
-];
-
-const PERIOD_LABELS: Record<'day' | 'week' | 'month', string> = {
+const PERIOD_LABELS_SINGULAR: Record<'day' | 'week' | 'month', string> = {
   day: 'dia',
   week: 'semana',
   month: 'mês',
 };
+
+const PERIOD_LABELS_PLURAL: Record<'day' | 'week' | 'month', string> = {
+  day: 'dias',
+  week: 'semanas',
+  month: 'meses',
+};
+
+function getPeriodLabel(period: 'day' | 'week' | 'month', countStr: string): string {
+  const num = parseInt(countStr, 10);
+  return num === 1 ? PERIOD_LABELS_SINGULAR[period] : PERIOD_LABELS_PLURAL[period];
+}
 
 export default function EditProfileScreen() {
   const router = useRouter();
@@ -66,6 +71,8 @@ export default function EditProfileScreen() {
   } = useProfile();
 
   const [avatarUrl, setAvatarUrl] = useState(profile.avatarUrl);
+  const [selectedAvatarMime, setSelectedAvatarMime] = useState<string | null>(null);
+  const [avatarChanged, setAvatarChanged] = useState(false);
   const [name, setName] = useState(profile.name);
   const [description, setDescription] = useState(profile.description);
   const [tags, setTags] = useState<string[]>([...profile.tags]);
@@ -86,13 +93,15 @@ export default function EditProfileScreen() {
   useEffect(() => {
     if (profile) {
       setAvatarUrl(profile.avatarUrl || '');
+      setSelectedAvatarMime(null);
+      setAvatarChanged(false);
       setName(profile.name || '');
       setDescription(profile.description || '');
       setTags([...(profile.tags || [])]);
       setFrequencyCount(
-        profile.streakFrequencyCount ? profile.streakFrequencyCount.toString() : '2'
+        profile.streakFrequencyCount ? profile.streakFrequencyCount.toString() : '1'
       );
-      setFrequencyPeriod(profile.streakFrequencyPeriod || 'week');
+      setFrequencyPeriod(profile.streakFrequencyPeriod || 'day');
       setPublicStreak(Boolean(profile.publicStreak));
       setPublicCurrentGoals(Boolean(profile.publicCurrentGoals));
       setVisibleAchievementIds([...(profile.visibleAchievementIds || [])]);
@@ -132,12 +141,58 @@ export default function EditProfileScreen() {
     });
   };
 
+  const handlePickAvatar = async () => {
+    try {
+      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (status !== 'granted') {
+        Alert.alert(
+          'Permissão necessária',
+          'Precisamos da sua permissão para acessar a galeria de fotos.'
+        );
+        return;
+      }
+
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        aspect: [1, 1],
+        quality: 0.85,
+      });
+
+      if (!result.canceled && result.assets && result.assets.length > 0) {
+        const asset = result.assets[0];
+        setAvatarUrl(asset.uri);
+        setSelectedAvatarMime(asset.mimeType || 'image/jpeg');
+        setAvatarChanged(true);
+        setAvatarModalVisible(false);
+      }
+    } catch (error) {
+      console.error('Erro ao selecionar foto de perfil:', error);
+      Alert.alert('Erro', 'Não foi possível selecionar a imagem.');
+    }
+  };
+
+  const handleRemoveAvatar = () => {
+    setAvatarUrl('');
+    setSelectedAvatarMime(null);
+    setAvatarChanged(true);
+    setAvatarModalVisible(false);
+  };
+
   const handleConfirm = async () => {
     try {
       setSaving(true);
+      let finalAvatarUrl = avatarUrl;
+      if (avatarChanged && avatarUrl) {
+        finalAvatarUrl = await uploadMedia(
+          avatarUrl,
+          selectedAvatarMime || 'image/jpeg'
+        );
+      }
+
       const parsedFrequency = parseInt(frequencyCount, 10);
       await updateProfile({
-        avatarUrl,
+        avatarUrl: finalAvatarUrl,
         name: name.trim() || profile.name,
         description,
         tags,
@@ -149,7 +204,8 @@ export default function EditProfileScreen() {
         visibleAchievementIds,
       });
       router.back();
-    } catch {
+    } catch (error) {
+      console.error('Erro ao salvar perfil:', error);
       Alert.alert('Erro', 'Não foi possível salvar as alterações.');
     } finally {
       setSaving(false);
@@ -290,12 +346,18 @@ export default function EditProfileScreen() {
             </View>
           </View>
 
-          {/* 3. Card de Frequência da Streak */}
+          {/* 3. Card de Duração do Ciclo da Streak */}
           <View style={[styles.card, { backgroundColor: surfaceColor, borderColor }]}>
-            <Text style={[styles.sectionTitle, { color: textColor }]}>
-              Frequência da Streak
+            <Text style={[styles.sectionTitle, { color: textColor, marginBottom: 4 }]}>
+              Ciclo da Streak
+            </Text>
+            <Text style={[styles.sectionSubtitle, { color: textMuted }]}>
+              Defina a duração de cada ciclo para manter sua sequência ativa (ex.: 3 dias, 1 semana, 2 semanas).
             </Text>
             <View style={styles.frequencyRow}>
+              <Text style={[styles.frequencyText, { color: textSecondary, marginLeft: 0 }]}>
+                A cada
+              </Text>
               <TextInput
                 value={frequencyCount}
                 onChangeText={setFrequencyCount}
@@ -306,20 +368,17 @@ export default function EditProfileScreen() {
                   { backgroundColor: inputBg, borderColor, color: textColor },
                 ]}
               />
-              <Text style={[styles.frequencyText, { color: textSecondary }]}>
-                vezes por
-              </Text>
 
               <TouchableOpacity
                 activeOpacity={0.7}
                 onPress={() => setFrequencyModalVisible(true)}
                 style={[
                   styles.frequencyDropdown,
-                  { backgroundColor: inputBg, borderColor },
+                  { backgroundColor: inputBg, borderColor, marginLeft: 10 },
                 ]}
               >
                 <Text style={[styles.frequencyDropdownText, { color: textColor }]}>
-                  {PERIOD_LABELS[frequencyPeriod]}
+                  {getPeriodLabel(frequencyPeriod, frequencyCount)}
                 </Text>
                 <MaterialIcons name="keyboard-arrow-down" size={20} color={textSecondary} />
               </TouchableOpacity>
@@ -427,31 +486,37 @@ export default function EditProfileScreen() {
             <TouchableWithoutFeedback>
               <View style={[styles.modalContent, { backgroundColor: modalBg, borderColor }]}>
                 <Text style={[styles.modalHeading, { color: textColor }]}>
-                  Escolher foto de perfil
+                  Foto de perfil
                 </Text>
-                <View style={styles.avatarPresetsGrid}>
-                  {AVATAR_PRESETS.map((url, idx) => (
-                    <TouchableOpacity
-                      key={idx}
-                      activeOpacity={0.8}
-                      onPress={() => {
-                        setAvatarUrl(url);
-                        setAvatarModalVisible(false);
-                      }}
-                      style={[
-                        styles.avatarPresetItem,
-                        avatarUrl === url && styles.avatarPresetSelected,
-                      ]}
-                    >
-                      <Image source={{ uri: url }} style={styles.presetImage} />
-                    </TouchableOpacity>
-                  ))}
-                </View>
+
+                <TouchableOpacity
+                  activeOpacity={0.8}
+                  onPress={handlePickAvatar}
+                  style={styles.galleryPickBtn}
+                >
+                  <MaterialIcons name="photo-library" size={20} color="#FFFFFF" />
+                  <Text style={styles.galleryPickBtnText}>Escolher da galeria</Text>
+                </TouchableOpacity>
+
+                {avatarUrl ? (
+                  <TouchableOpacity
+                    activeOpacity={0.8}
+                    onPress={handleRemoveAvatar}
+                    style={[
+                      styles.removeAvatarModalBtn,
+                      { borderColor: '#EF4444' },
+                    ]}
+                  >
+                    <MaterialIcons name="delete-outline" size={20} color="#EF4444" />
+                    <Text style={styles.removeAvatarModalText}>Remover foto</Text>
+                  </TouchableOpacity>
+                ) : null}
+
                 <TouchableOpacity
                   onPress={() => setAvatarModalVisible(false)}
                   style={[styles.modalCloseBtn, { backgroundColor: surfaceVariant }]}
                 >
-                  <Text style={[styles.modalCloseText, { color: textColor }]}>Fechar</Text>
+                  <Text style={[styles.modalCloseText, { color: textColor }]}>Cancelar</Text>
                 </TouchableOpacity>
               </View>
             </TouchableWithoutFeedback>
@@ -548,7 +613,7 @@ export default function EditProfileScreen() {
             <TouchableWithoutFeedback>
               <View style={[styles.dropdownModalContent, { backgroundColor: modalBg, borderColor }]}>
                 <Text style={[styles.modalHeading, { color: textColor }]}>
-                  Período da Streak
+                  Unidade do Ciclo
                 </Text>
                 {(['day', 'week', 'month'] as const).map((period) => {
                   const selected = frequencyPeriod === period;
@@ -578,7 +643,7 @@ export default function EditProfileScreen() {
                           selected && { fontWeight: '800' },
                         ]}
                       >
-                        {PERIOD_LABELS[period]}
+                        {getPeriodLabel(period, frequencyCount)}
                       </Text>
                     </TouchableOpacity>
                   );
@@ -706,6 +771,11 @@ const styles = StyleSheet.create({
     fontSize: 17,
     fontWeight: '800',
     marginBottom: 12,
+  },
+  sectionSubtitle: {
+    fontSize: 13,
+    lineHeight: 18,
+    marginBottom: 14,
   },
   tagsContainer: {
     flexDirection: 'row',
@@ -864,28 +934,35 @@ const styles = StyleSheet.create({
     marginBottom: 16,
     textAlign: 'center',
   },
-  avatarPresetsGrid: {
+  galleryPickBtn: {
     flexDirection: 'row',
-    flexWrap: 'wrap',
+    alignItems: 'center',
     justifyContent: 'center',
-    gap: 14,
-    marginVertical: 10,
+    gap: 8,
+    backgroundColor: ACCENT_GREEN,
+    paddingVertical: 13,
+    borderRadius: 14,
+    marginBottom: 10,
   },
-  avatarPresetItem: {
-    width: 64,
-    height: 64,
-    borderRadius: 32,
-    borderWidth: 2,
-    borderColor: 'transparent',
-    overflow: 'hidden',
+  galleryPickBtnText: {
+    color: '#FFFFFF',
+    fontSize: 15,
+    fontWeight: '700',
   },
-  avatarPresetSelected: {
-    borderColor: ACCENT_GREEN,
-    transform: [{ scale: 1.06 }],
+  removeAvatarModalBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    borderWidth: 1.5,
+    paddingVertical: 12,
+    borderRadius: 14,
+    marginBottom: 10,
   },
-  presetImage: {
-    width: '100%',
-    height: '100%',
+  removeAvatarModalText: {
+    color: '#EF4444',
+    fontSize: 15,
+    fontWeight: '700',
   },
   newTagInputRow: {
     flexDirection: 'row',

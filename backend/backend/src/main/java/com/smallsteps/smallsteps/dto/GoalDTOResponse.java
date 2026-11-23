@@ -12,6 +12,8 @@ public class GoalDTOResponse {
     public boolean concluido;
     public LocalDateTime dtInicio;
     public LocalDateTime dtFim;
+    public String urlMidia;
+    public String tipoMidia;
 
     public List<SubGoalDTOResponse> subMetas = new ArrayList<SubGoalDTOResponse>();
 }

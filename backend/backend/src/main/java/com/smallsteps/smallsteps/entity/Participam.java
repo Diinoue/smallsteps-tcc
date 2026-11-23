@@ -47,6 +47,9 @@ public class Participam {
     @Column(name = "dt_inicio", nullable = false)
     private LocalDateTime dtInicio;
 
+    @Column(name = "ultima_pontuacao")
+    private LocalDateTime ultimaPontuacao;
+
     public Participam() {}
 
     public Participam(int idUsuario, int idComunidade, int pontos, Cargo cargo, LocalDateTime dtInicio) {
@@ -117,5 +120,13 @@ public class Participam {
 
     public void setDtInicio(LocalDateTime dtInicio) {
         this.dtInicio = dtInicio;
+    }
+
+    public LocalDateTime getUltimaPontuacao() {
+        return ultimaPontuacao;
+    }
+
+    public void setUltimaPontuacao(LocalDateTime ultimaPontuacao) {
+        this.ultimaPontuacao = ultimaPontuacao;
     }
 }

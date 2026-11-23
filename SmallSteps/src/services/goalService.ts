@@ -1,4 +1,5 @@
 import { api } from './api';
+import { formatImageUrl } from './communityService';
 import { GoalDTOResponse } from '@/src/dto/DashboardResponse';
 
 // ─── Tipos de request ────────────────────────────────────────────────────────
@@ -25,6 +26,8 @@ export interface UpdateGoalRequest {
   milestone?: string | null;
   concluido?: boolean;
   dtFim?: string | null;
+  urlMidia?: string | null;
+  tipoMidia?: string | null;
   subMetas?: SubGoalRequest[];
 }
 
@@ -36,7 +39,10 @@ export const goalService = {
    */
   async getGoalsByUser(userId: number): Promise<GoalDTOResponse[]> {
     const { data } = await api.get<GoalDTOResponse[]>(`/goals/usuario/${userId}`);
-    return data || [];
+    return (data || []).map((g) => ({
+      ...g,
+      urlMidia: formatImageUrl(g.urlMidia),
+    }));
   },
 
   /**
@@ -46,7 +52,7 @@ export const goalService = {
   async getGoalById(id: string | number): Promise<GoalDTOResponse | null> {
     try {
       const { data } = await api.get<GoalDTOResponse>(`/goals/${id}`);
-      return data;
+      return data ? { ...data, urlMidia: formatImageUrl(data.urlMidia) } : null;
     } catch (error: any) {
       if (error?.response?.status === 404) return null;
       throw error;

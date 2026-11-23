@@ -312,8 +312,8 @@ export default function ProfileScreen() {
             ) : null}
           </View>
 
-          {/* 2. Card de Streak (no mesmo padrão visual do StreakCard do Dashboard) */}
-          {isOwnProfile || profile.publicStreak ? (
+          {/* 2. Card de Streak (exibido apenas quando permitido nas configurações de perfil) */}
+          {profile.publicStreak ? (
             <View
               style={[
                 styles.streakCard,
@@ -392,8 +392,8 @@ export default function ProfileScreen() {
             )}
           </View>
 
-          {/* 4. Metas Atuais */}
-          {isOwnProfile || profile.publicCurrentGoals ? (
+          {/* 4. Metas Atuais (exibido apenas quando permitido nas configurações de perfil) */}
+          {profile.publicCurrentGoals ? (
             <View style={styles.sectionBlock}>
               <View style={styles.sectionHeaderBetween}>
                 <View style={styles.sectionHeaderRow}>

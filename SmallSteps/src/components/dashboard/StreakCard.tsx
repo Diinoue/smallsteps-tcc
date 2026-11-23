@@ -77,27 +77,28 @@ export function calcularStatusStreak(
 ): StreakStatus {
   const janela = getJanela(ultimoPrazo, intervaloAtividade);
 
-  // Sem dados válidos (ex.: usuário antigo): não há como calcular
-  if (!janela) return StreakStatus.ATIVO;
+  // Usuário ainda não iniciou seu primeiro ciclo
+  if (!janela) return StreakStatus.PENDENTE;
 
   const { prazo, duracao, fim } = janela;
   const now = agora.getTime();
+  const ultima = ultimaAtividade ? parseData(ultimaAtividade) : NaN;
+  const cicloAnteriorConcluido =
+    !Number.isNaN(ultima) && ultima >= prazo - duracao && ultima <= prazo;
 
-  // Passou do prazo + intervalo
+  // Passou do prazo + intervalo (perdeu 1+ ciclos completos)
   if (now > fim) return StreakStatus.CONGELADO;
 
-  // Prazo já passou, mas ainda está dentro do intervalo de carência
-  if (now >= prazo) return StreakStatus.PENDENTE;
-
-  // Prazo no futuro: ATIVO se a última atividade está dentro do ciclo atual
-  if (ultimaAtividade) {
-    const ultima = parseData(ultimaAtividade);
-    if (!Number.isNaN(ultima) && ultima >= prazo - duracao && ultima <= prazo) {
-      return StreakStatus.ATIVO;
-    }
+  // Passou do prazo do ciclo anterior: está no próximo ciclo imediato [prazo, prazo + intervalo]
+  if (now > prazo) {
+    return cicloAnteriorConcluido ? StreakStatus.PENDENTE : StreakStatus.CONGELADO;
   }
 
-  // Prazo no futuro, mas ainda sem atividade neste ciclo
+  // Dentro do ciclo atual [prazo - intervalo, prazo]
+  if (cicloAnteriorConcluido) {
+    return StreakStatus.ATIVO;
+  }
+
   return StreakStatus.PENDENTE;
 }
 
@@ -172,7 +173,11 @@ export function StreakCard({
       case StreakStatus.ATIVO:
         return 'Step Taken!';
       case StreakStatus.PENDENTE: {
-        return formatTimeLeft(ultimoPrazo);
+        const janela = getJanela(ultimoPrazo, intervaloAtividade);
+        if (!janela) return 'Make a post to start!';
+        const now = Date.now();
+        const alvoMs = now > janela.prazo ? janela.fim - now : janela.prazo - now;
+        return formatTimeLeft(alvoMs);
       }
       case StreakStatus.CONGELADO:
         return 'Frozen';
