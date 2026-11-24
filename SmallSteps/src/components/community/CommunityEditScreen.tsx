@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
@@ -23,11 +23,11 @@ import {
   communityService,
   uploadMedia,
 } from '@/src/services/communityService';
+import { userService } from '@/src/services/userService';
 
 const ACCENT_GREEN = '#34C759';
 const DARK_GREEN = '#28833F';
 const DANGER_RED = '#EF4444';
-const TAG_SUGGESTIONS = ['Saúde', 'Produtividade', 'Estudos', 'Esportes', 'Música', 'Leitura'];
 
 export interface CommunityEditScreenProps {
   communityId: number | string;
@@ -60,7 +60,9 @@ export function CommunityEditScreen({
   const [description, setDescription] = useState(initialCommunity?.descricao || '');
   const [isPrivate, setIsPrivate] = useState(Boolean(initialCommunity?.privado));
   const [tags, setTags] = useState<string[]>([]);
-  const [newTagInput, setNewTagInput] = useState('');
+  const [tagSearchQuery, setTagSearchQuery] = useState('');
+  const [foundTags, setFoundTags] = useState<string[]>([]);
+  const [searchingTags, setSearchingTags] = useState(false);
   const [selectedImageUri, setSelectedImageUri] = useState<string | null>(
     initialCommunity?.foto || null
   );
@@ -134,19 +136,26 @@ export function CommunityEditScreen({
     setImageChanged(true);
   };
 
-  const handleAddTag = () => {
-    const trimmed = newTagInput.trim().replace(/^#/, '');
-    if (trimmed) {
-      if (!tags.some((t) => t.toLowerCase() === trimmed.toLowerCase())) {
-        setTags((prev) => [...prev, trimmed]);
-      }
-      setNewTagInput('');
+  const handleSearchTags = useCallback(async (query?: string) => {
+    try {
+      setSearchingTags(true);
+      const result = await userService.buscarTags(query);
+      setFoundTags(result);
+    } finally {
+      setSearchingTags(false);
     }
-  };
+  }, []);
 
-  const handleAddSuggestedTag = (suggested: string) => {
-    if (!tags.some((t) => t.toLowerCase() === suggested.toLowerCase())) {
-      setTags((prev) => [...prev, suggested]);
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      handleSearchTags(tagSearchQuery);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [tagSearchQuery, handleSearchTags]);
+
+  const handleSelectTag = (tagName: string) => {
+    if (!tags.some((t) => t.toLowerCase() === tagName.toLowerCase())) {
+      setTags((prev) => [...prev, tagName]);
     }
   };
 
@@ -542,29 +551,33 @@ export function CommunityEditScreen({
                     },
                   ]}
                 >
-                  <Text style={styles.hashPrefix}>#</Text>
+                  <MaterialIcons name="search" size={18} color={textMuted} style={{ marginRight: 6 }} />
                   <TextInput
                     style={[styles.tagInputText, { color: textColor }]}
-                    placeholder="Adicionar tema..."
+                    placeholder="Buscar tag no banco..."
                     placeholderTextColor={textMuted}
-                    value={newTagInput}
-                    onChangeText={setNewTagInput}
-                    onSubmitEditing={handleAddTag}
-                    returnKeyType="done"
+                    value={tagSearchQuery}
+                    onChangeText={setTagSearchQuery}
+                    onSubmitEditing={() => handleSearchTags(tagSearchQuery)}
+                    returnKeyType="search"
                   />
+                  {tagSearchQuery.length > 0 && (
+                    <TouchableOpacity
+                      onPress={() => setTagSearchQuery('')}
+                      hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                    >
+                      <MaterialIcons name="close" size={16} color={textMuted} />
+                    </TouchableOpacity>
+                  )}
                 </View>
 
                 <TouchableOpacity
-                  style={[
-                    styles.addTagButton,
-                    !newTagInput.trim() && styles.addTagButtonDisabled,
-                  ]}
-                  onPress={handleAddTag}
-                  disabled={!newTagInput.trim()}
+                  style={styles.addTagButton}
+                  onPress={() => handleSearchTags(tagSearchQuery)}
                   activeOpacity={0.7}
                 >
-                  <MaterialIcons name="add" size={20} color="#FFFFFF" />
-                  <Text style={styles.addTagButtonText}>Adicionar</Text>
+                  <MaterialIcons name="search" size={18} color="#FFFFFF" />
+                  <Text style={styles.addTagButtonText}>Buscar</Text>
                 </TouchableOpacity>
               </View>
 
@@ -595,51 +608,59 @@ export function CommunityEditScreen({
 
               <View style={styles.suggestionsSection}>
                 <Text style={[styles.suggestionsLabel, { color: textMuted }]}>
-                  Sugestões rápidas:
+                  Tags encontradas:
                 </Text>
-                <View style={styles.suggestionsRow}>
-                  {TAG_SUGGESTIONS.map((suggestion) => {
-                    const isAlreadyAdded = tags.some(
-                      (t) => t.toLowerCase() === suggestion.toLowerCase()
-                    );
-                    return (
-                      <TouchableOpacity
-                        key={suggestion}
-                        style={[
-                          styles.suggestionPill,
-                          {
-                            borderColor: isAlreadyAdded ? ACCENT_GREEN : borderColor,
-                            backgroundColor: isAlreadyAdded
-                              ? isDark
-                                ? '#163824'
-                                : '#E8F8EE'
-                              : isDark
-                              ? '#1F2937'
-                              : '#FFFFFF',
-                          },
-                        ]}
-                        onPress={() => handleAddSuggestedTag(suggestion)}
-                        disabled={isAlreadyAdded}
-                        activeOpacity={0.7}
-                      >
-                        <Text
+                {searchingTags ? (
+                  <ActivityIndicator size="small" color={ACCENT_GREEN} style={{ alignSelf: 'flex-start', marginVertical: 6 }} />
+                ) : foundTags.length > 0 ? (
+                  <View style={styles.suggestionsRow}>
+                    {foundTags.map((foundTag) => {
+                      const isAlreadyAdded = tags.some(
+                        (t) => t.toLowerCase() === foundTag.toLowerCase()
+                      );
+                      return (
+                        <TouchableOpacity
+                          key={foundTag}
                           style={[
-                            styles.suggestionPillText,
+                            styles.suggestionPill,
                             {
-                              color: isAlreadyAdded
-                                ? DARK_GREEN
+                              borderColor: isAlreadyAdded ? ACCENT_GREEN : borderColor,
+                              backgroundColor: isAlreadyAdded
+                                ? isDark
+                                  ? '#163824'
+                                  : '#E8F8EE'
                                 : isDark
-                                ? '#CBD5E1'
-                                : '#4B5563',
+                                ? '#1F2937'
+                                : '#FFFFFF',
                             },
                           ]}
+                          onPress={() => handleSelectTag(foundTag)}
+                          disabled={isAlreadyAdded}
+                          activeOpacity={0.7}
                         >
-                          +{suggestion}
-                        </Text>
-                      </TouchableOpacity>
-                    );
-                  })}
-                </View>
+                          <Text
+                            style={[
+                              styles.suggestionPillText,
+                              {
+                                color: isAlreadyAdded
+                                  ? DARK_GREEN
+                                  : isDark
+                                  ? '#CBD5E1'
+                                  : '#4B5563',
+                              },
+                            ]}
+                          >
+                            {foundTag} {isAlreadyAdded ? '✓' : '+'}
+                          </Text>
+                        </TouchableOpacity>
+                      );
+                    })}
+                  </View>
+                ) : (
+                  <Text style={[styles.suggestionsLabel, { color: textMuted, fontStyle: 'italic' }]}>
+                    Nenhuma tag encontrada para "{tagSearchQuery.trim()}".
+                  </Text>
+                )}
               </View>
             </View>
 

@@ -217,10 +217,17 @@ public class UserService implements UserServiceDetails {
     }
 
     /**
-     * Retorna todas as tags cadastradas no banco de dados para a seleção no Editar Perfil
+     * Busca tags cadastradas no banco de dados (todas ou filtradas por termo de pesquisa)
      */
     public List<String> getAllTags() {
-        return tagRepository.findAll().stream()
+        return getAllTags(null);
+    }
+
+    public List<String> getAllTags(String query) {
+        List<Tag> tags = (query != null && !query.trim().isEmpty())
+                ? tagRepository.findByDescricaoContainingIgnoreCaseOrderByDescricaoAsc(query.trim())
+                : tagRepository.findAllByOrderByDescricaoAsc();
+        return tags.stream()
                 .map(Tag::getDescricao)
                 .distinct()
                 .collect(Collectors.toList());

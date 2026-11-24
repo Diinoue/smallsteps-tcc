@@ -62,13 +62,16 @@ export const userService = {
   },
 
   /**
-   * Busca todas as tags cadastradas na tabela 'tag' do banco de dados.
-   * Chama GET /users/tags.
+   * Busca tags cadastradas na tabela 'tag' do banco de dados (todas ou filtradas por termo).
+   * Chama GET /users/tags?q=...
    */
-  async buscarTags(): Promise<string[]> {
+  async buscarTags(query?: string): Promise<string[]> {
     try {
-      const { data } = await api.get<string[]>("/users/tags");
-      return data;
+      const trimmed = query?.trim();
+      const { data } = await api.get<string[]>("/users/tags", {
+        params: trimmed ? { q: trimmed } : undefined,
+      });
+      return data || [];
     } catch (error) {
       console.warn("userService.buscarTags: backend indisponível. Usando tags locais.", error);
       return [];

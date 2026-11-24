@@ -288,6 +288,8 @@ export default function CommunitiesScreen() {
         communityId={selectedCommunity.id}
         communityName={selectedCommunity.nome}
         userRole={selectedCommunity.cargo}
+        isPrivate={isPrivateCommunity}
+        inviteCode={selectedCommunity.codigoConvite}
         onBackPress={() => {
           setSelectedCommunity(null);
           setCurrentView('feed');

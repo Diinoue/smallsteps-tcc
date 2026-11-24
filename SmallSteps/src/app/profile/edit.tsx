@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
@@ -23,6 +23,7 @@ import { useColorScheme } from '@/hooks/use-color-scheme';
 import { useThemeColor } from '@/hooks/use-theme-color';
 import { useProfile } from '@/src/context/ProfileContext';
 import { uploadMedia } from '@/src/services/communityService';
+import { userService } from '@/src/services/userService';
 import { SquareCheckbox } from '@/src/components/profile/SquareCheckbox';
 
 const ACCENT_GREEN = '#34C759';
@@ -111,21 +112,39 @@ export default function EditProfileScreen() {
   const [avatarModalVisible, setAvatarModalVisible] = useState(false);
   const [addTagModalVisible, setAddTagModalVisible] = useState(false);
   const [frequencyModalVisible, setFrequencyModalVisible] = useState(false);
-  const [customTagInput, setCustomTagInput] = useState('');
+  const [tagSearchQuery, setTagSearchQuery] = useState('');
+  const [foundTags, setFoundTags] = useState<string[]>(availableDbTags);
+  const [searchingTags, setSearchingTags] = useState(false);
   const [saving, setSaving] = useState(false);
+
+  const handleSearchTags = useCallback(async (query?: string) => {
+    try {
+      setSearchingTags(true);
+      const result = await userService.buscarTags(query);
+      setFoundTags(result);
+    } finally {
+      setSearchingTags(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!addTagModalVisible) return;
+    const timer = setTimeout(() => {
+      handleSearchTags(tagSearchQuery);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [addTagModalVisible, tagSearchQuery, handleSearchTags]);
 
   const handleRemoveTag = (tagToRemove: string) => {
     setTags((prev) => prev.filter((t) => t !== tagToRemove));
   };
 
-  const handleAddTag = (newTag: string) => {
-    const trimmed = newTag.trim();
+  const handleSelectTag = (selectedTag: string) => {
+    const trimmed = selectedTag.trim();
     if (!trimmed) return;
-    if (!tags.includes(trimmed)) {
+    if (!tags.some((t) => t.toLowerCase() === trimmed.toLowerCase())) {
       setTags((prev) => [...prev, trimmed]);
     }
-    setCustomTagInput('');
-    setAddTagModalVisible(false);
   };
 
   const handleToggleAchievement = (id: number) => {
@@ -524,7 +543,7 @@ export default function EditProfileScreen() {
         </TouchableWithoutFeedback>
       </Modal>
 
-      {/* Modal para Adicionar Tag */}
+      {/* Modal para Buscar Tag no Banco */}
       <Modal
         visible={addTagModalVisible}
         transparent={true}
@@ -535,59 +554,71 @@ export default function EditProfileScreen() {
           <View style={styles.modalBackdrop}>
             <TouchableWithoutFeedback>
               <View style={[styles.modalContent, { backgroundColor: modalBg, borderColor }]}>
-                <Text style={[styles.modalHeading, { color: textColor }]}>Adicionar Tag</Text>
+                <Text style={[styles.modalHeading, { color: textColor }]}>Buscar Tag</Text>
 
                 <View style={styles.newTagInputRow}>
                   <TextInput
-                    value={customTagInput}
-                    onChangeText={setCustomTagInput}
-                    placeholder="Digite uma nova tag..."
+                    value={tagSearchQuery}
+                    onChangeText={setTagSearchQuery}
+                    placeholder="Buscar tag no banco..."
                     placeholderTextColor={textMuted}
                     style={[
                       styles.newTagTextInput,
                       { backgroundColor: inputBg, borderColor, color: textColor },
                     ]}
-                    returnKeyType="done"
-                    onSubmitEditing={() => handleAddTag(customTagInput)}
+                    returnKeyType="search"
+                    onSubmitEditing={() => handleSearchTags(tagSearchQuery)}
                   />
                   <TouchableOpacity
-                    onPress={() => handleAddTag(customTagInput)}
+                    onPress={() => handleSearchTags(tagSearchQuery)}
                     style={styles.newTagSubmitBtn}
                   >
-                    <Text style={styles.newTagSubmitText}>Adicionar</Text>
+                    <Text style={styles.newTagSubmitText}>Buscar</Text>
                   </TouchableOpacity>
                 </View>
 
                 <Text style={[styles.suggestedTagsHeading, { color: textSecondary }]}>
-                  Sugeridas:
+                  Tags encontradas:
                 </Text>
-                <View style={styles.suggestedTagsContainer}>
-                  {availableDbTags.map((dbTag) => {
-                    const alreadyAdded = tags.includes(dbTag);
-                    return (
-                      <TouchableOpacity
-                        key={dbTag}
-                        disabled={alreadyAdded}
-                        onPress={() => handleAddTag(dbTag)}
-                        style={[
-                          styles.suggestedTagPill,
-                          {
-                            backgroundColor: alreadyAdded ? surfaceVariant : tagBg,
-                          },
-                        ]}
-                      >
-                        <Text
-                          style={[
-                            styles.suggestedTagText,
-                            { color: alreadyAdded ? textMuted : tagTextColor },
-                          ]}
-                        >
-                          {dbTag.toLowerCase()} {alreadyAdded ? '✓' : '+'}
-                        </Text>
-                      </TouchableOpacity>
-                    );
-                  })}
-                </View>
+                {searchingTags ? (
+                  <ActivityIndicator size="small" color={ACCENT_GREEN} style={{ marginVertical: 12 }} />
+                ) : foundTags.length > 0 ? (
+                  <ScrollView style={{ maxHeight: 220 }} showsVerticalScrollIndicator={false}>
+                    <View style={styles.suggestedTagsContainer}>
+                      {foundTags.map((dbTag) => {
+                        const alreadyAdded = tags.some(
+                          (t) => t.toLowerCase() === dbTag.toLowerCase()
+                        );
+                        return (
+                          <TouchableOpacity
+                            key={dbTag}
+                            disabled={alreadyAdded}
+                            onPress={() => handleSelectTag(dbTag)}
+                            style={[
+                              styles.suggestedTagPill,
+                              {
+                                backgroundColor: alreadyAdded ? surfaceVariant : tagBg,
+                              },
+                            ]}
+                          >
+                            <Text
+                              style={[
+                                styles.suggestedTagText,
+                                { color: alreadyAdded ? textMuted : tagTextColor },
+                              ]}
+                            >
+                              {dbTag.toLowerCase()} {alreadyAdded ? '✓' : '+'}
+                            </Text>
+                          </TouchableOpacity>
+                        );
+                      })}
+                    </View>
+                  </ScrollView>
+                ) : (
+                  <Text style={[styles.emptyNotice, { color: textMuted, marginBottom: 12 }]}>
+                    Nenhuma tag encontrada para "{tagSearchQuery.trim()}".
+                  </Text>
+                )}
 
                 <TouchableOpacity
                   onPress={() => setAddTagModalVisible(false)}

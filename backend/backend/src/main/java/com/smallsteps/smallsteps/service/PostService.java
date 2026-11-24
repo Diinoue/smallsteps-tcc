@@ -42,8 +42,10 @@ public class PostService {
     }
 
     @Transactional(readOnly = true)
-    public List<PostResponseDTO> getPostsByCommunity(int communityId) {
-        List<Post> posts = postRepository.findByComunidadeIdOrderByDtCriacaoDesc(communityId);
+    public List<PostResponseDTO> getPostsByCommunity(int communityId, String query) {
+        List<Post> posts = (query != null && !query.trim().isEmpty())
+                ? postRepository.searchByComunidadeId(communityId, query.trim())
+                : postRepository.findByComunidadeIdOrderByDtCriacaoDesc(communityId);
         return posts.stream()
                 .map(p -> {
                     int streak = p.getUsuario() != null ? p.getUsuario().getStreakNum() : 0;

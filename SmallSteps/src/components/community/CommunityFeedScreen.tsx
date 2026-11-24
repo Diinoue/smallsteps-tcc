@@ -19,6 +19,7 @@ import { Image } from 'expo-image';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import * as ImagePicker from 'expo-image-picker';
+import * as Clipboard from 'expo-clipboard';
 import { BottomTabBarHeightContext } from '@react-navigation/bottom-tabs';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { useThemeColor } from '@/hooks/use-theme-color';
@@ -34,6 +35,8 @@ export interface CommunityFeedScreenProps {
   communityId?: number | string;
   communityName?: string;
   userRole?: 'DONO' | 'ADMINISTRADOR' | 'MEMBRO' | 'ADMIN' | string;
+  isPrivate?: boolean;
+  inviteCode?: string;
   onBackPress?: () => void;
   onSearchPress?: () => void;
   onLocationPress?: () => void;
@@ -49,6 +52,8 @@ export function CommunityFeedScreen({
   communityId = 'default',
   communityName = 'Grupo #1 musica',
   userRole = 'MEMBRO',
+  isPrivate = false,
+  inviteCode,
   onBackPress,
   onSearchPress,
   onLocationPress,
@@ -85,6 +90,8 @@ export function CommunityFeedScreen({
   const [selectedPostForComments, setSelectedPostForComments] = useState<Post | null>(null);
   const [isLeaving, setIsLeaving] = useState(false);
   const [activeRole, setActiveRole] = useState<string>(userRole || 'MEMBRO');
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
 
   useEffect(() => {
     setActiveRole(userRole || 'MEMBRO');
@@ -140,6 +147,27 @@ export function CommunityFeedScreen({
     }
   };
 
+  const handleCopyCommunityLink = async () => {
+    try {
+      let code = inviteCode;
+      if (!code && communityId && communityId !== 'default') {
+        const data = await communityService.getCommunityById(communityId);
+        code = data?.codigoConvite;
+      }
+      if (!code) {
+        Alert.alert('Indisponível', 'Não foi possível obter o link desta comunidade.');
+        return;
+      }
+      const link = `smallsteps/invite/${code}`;
+      await Clipboard.setStringAsync(link);
+      setIsSettingsModalVisible(false);
+      Alert.alert('Link copiado!', `O link "${link}" foi copiado para a área de transferência.`);
+    } catch (error) {
+      console.error('Erro ao copiar link da comunidade:', error);
+      Alert.alert('Erro', 'Não foi possível copiar o link da comunidade.');
+    }
+  };
+
   const handleLeaveCommunity = () => {
     setIsSettingsModalVisible(false);
     Alert.alert(
@@ -178,10 +206,10 @@ export function CommunityFeedScreen({
     );
   };
 
-  const loadPosts = useCallback(async (showLoading = true) => {
+  const loadPosts = useCallback(async (showLoading = true, query?: string) => {
     if (showLoading) setIsLoading(true);
     try {
-      const data = await communityService.getCommunityPosts(communityId);
+      const data = await communityService.getCommunityPosts(communityId, query);
       setPosts(data);
     } catch (error) {
       console.error('Erro ao carregar posts da comunidade:', error);
@@ -192,12 +220,29 @@ export function CommunityFeedScreen({
   }, [communityId]);
 
   useEffect(() => {
-    loadPosts();
-  }, [loadPosts]);
+    const timer = setTimeout(() => {
+      loadPosts(false, isSearchOpen ? searchQuery : undefined);
+    }, isSearchOpen ? 300 : 0);
+
+    return () => clearTimeout(timer);
+  }, [loadPosts, isSearchOpen, searchQuery]);
 
   const handleRefresh = () => {
     setIsRefreshing(true);
-    loadPosts(false);
+    loadPosts(false, isSearchOpen ? searchQuery : undefined);
+  };
+
+  const handleToggleSearch = () => {
+    if (onSearchPress) {
+      onSearchPress();
+      return;
+    }
+    setIsSearchOpen((prev) => {
+      if (prev) {
+        setSearchQuery('');
+      }
+      return !prev;
+    });
   };
 
   const handleAttachMedia = async () => {
@@ -348,7 +393,8 @@ export function CommunityFeedScreen({
 
       <KeyboardAvoidingView
         style={styles.container}
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        behavior="padding"
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}
       >
         {/* Cabeçalho do Grupo (Top Bar) */}
         <View style={[styles.headerContainer, { borderBottomColor: borderColor }]}>
@@ -370,11 +416,15 @@ export function CommunityFeedScreen({
           {/* Ações da Direita: Busca, Localização, Membros, Configurações */}
           <View style={styles.actionsSection}>
             <TouchableOpacity
-              onPress={onSearchPress}
+              onPress={handleToggleSearch}
               hitSlop={{ top: 8, bottom: 8, left: 6, right: 6 }}
               style={styles.actionIcon}
             >
-              <MaterialIcons name="search" size={26} color={textColor} />
+              <MaterialIcons
+                name={isSearchOpen ? 'search-off' : 'search'}
+                size={26}
+                color={isSearchOpen ? primaryColor : textColor}
+              />
             </TouchableOpacity>
 
             <TouchableOpacity
@@ -402,6 +452,40 @@ export function CommunityFeedScreen({
             </TouchableOpacity>
           </View>
         </View>
+
+        {/* Barra de Pesquisa de Postagens */}
+        {isSearchOpen && (
+          <View style={[styles.searchBarContainer, { borderBottomColor: borderColor, backgroundColor }]}>
+            <View style={[styles.searchInputPill, { backgroundColor: surfaceVariant }]}>
+              <MaterialIcons name="search" size={20} color={textMuted} style={{ marginRight: 8 }} />
+              <TextInput
+                style={[styles.searchInput, { color: textColor }]}
+                placeholder="Pesquisar postagem ou autor..."
+                placeholderTextColor={textMuted}
+                value={searchQuery}
+                onChangeText={setSearchQuery}
+                autoFocus
+                returnKeyType="search"
+                onSubmitEditing={() => loadPosts(false, searchQuery)}
+              />
+              {searchQuery.length > 0 && (
+                <TouchableOpacity
+                  onPress={() => setSearchQuery('')}
+                  hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                >
+                  <MaterialIcons name="close" size={18} color={textMuted} />
+                </TouchableOpacity>
+              )}
+            </View>
+            <TouchableOpacity
+              onPress={handleToggleSearch}
+              style={styles.searchCancelBtn}
+              hitSlop={{ top: 8, bottom: 8, left: 4, right: 4 }}
+            >
+              <Text style={[styles.searchCancelText, { color: primaryColor }]}>Cancelar</Text>
+            </TouchableOpacity>
+          </View>
+        )}
 
         {/* Feed de Publicações */}
         {isLoading ? (
@@ -438,10 +522,14 @@ export function CommunityFeedScreen({
                   <MaterialIcons name="chat-bubble-outline" size={38} color={primaryColor} />
                 </View>
                 <Text style={[styles.emptyTitle, { color: textColor }]}>
-                  Nenhuma publicação ainda
+                  {isSearchOpen && searchQuery.trim().length > 0
+                    ? 'Nenhuma publicação encontrada'
+                    : 'Nenhuma publicação ainda'}
                 </Text>
                 <Text style={[styles.emptySubtitle, { color: textMuted }]}>
-                  Seja o primeiro a compartilhar algo com a comunidade! Digite uma mensagem abaixo para iniciar a conversa.
+                  {isSearchOpen && searchQuery.trim().length > 0
+                    ? `Não encontramos postagens correspondentes a "${searchQuery.trim()}".`
+                    : 'Seja o primeiro a compartilhar algo com a comunidade! Digite uma mensagem abaixo para iniciar a conversa.'}
                 </Text>
               </View>
             }
@@ -595,6 +683,36 @@ export function CommunityFeedScreen({
 
                   {/* Opções de Ação */}
                   <View style={styles.settingsActionsList}>
+                    {/* Ação: Copiar link da comunidade (qualquer usuário em comunidades públicas) */}
+                    {!isPrivate && (
+                      <TouchableOpacity
+                        style={[
+                          styles.settingsActionItem,
+                          { backgroundColor: isDark ? '#263238' : '#F9FAFB', borderColor },
+                        ]}
+                        onPress={handleCopyCommunityLink}
+                        activeOpacity={0.7}
+                      >
+                        <View
+                          style={[
+                            styles.settingsActionIconBox,
+                            { backgroundColor: isDark ? '#1E293B' : '#E8F2FF' },
+                          ]}
+                        >
+                          <MaterialIcons name="link" size={22} color="#2563EB" />
+                        </View>
+                        <View style={styles.settingsActionTextBox}>
+                          <Text style={[styles.settingsActionTitle, { color: textColor }]}>
+                            Copiar link da comunidade
+                          </Text>
+                          <Text style={[styles.settingsActionSubTitle, { color: textMuted }]}>
+                            Compartilhe o link para convidar outras pessoas
+                          </Text>
+                        </View>
+                        <MaterialIcons name="content-copy" size={20} color={textMuted} />
+                      </TouchableOpacity>
+                    )}
+
                     {/* Ação 1: Editar Comunidade (apenas para DONO e ADMIN) */}
                     {(normalizedRole === 'DONO' || normalizedRole === 'ADMIN') && (
                       <TouchableOpacity
@@ -854,6 +972,35 @@ const styles = StyleSheet.create({
   },
   actionIcon: {
     padding: 2,
+  },
+  searchBarContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    borderBottomWidth: 1,
+    gap: 10,
+  },
+  searchInputPill: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderRadius: 20,
+    paddingHorizontal: 12,
+    height: 40,
+  },
+  searchInput: {
+    flex: 1,
+    fontSize: 15,
+    paddingVertical: 0,
+  },
+  searchCancelBtn: {
+    paddingVertical: 4,
+    paddingHorizontal: 4,
+  },
+  searchCancelText: {
+    fontSize: 14,
+    fontWeight: '700',
   },
   loadingContainer: {
     flex: 1,

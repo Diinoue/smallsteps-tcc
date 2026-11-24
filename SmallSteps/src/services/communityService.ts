@@ -177,9 +177,15 @@ export const communityService = {
     }
   },
 
-  async getCommunityPosts(communityId: number | string = 'default'): Promise<Post[]> {
+  async getCommunityPosts(
+    communityId: number | string = 'default',
+    searchQuery?: string
+  ): Promise<Post[]> {
     try {
-      const response = await api.get<any[]>(`/community/${communityId}/posts`);
+      const trimmed = searchQuery?.trim();
+      const response = await api.get<any[]>(`/community/${communityId}/posts`, {
+        params: trimmed ? { q: trimmed } : undefined,
+      });
       if (Array.isArray(response.data)) {
         const baseUrl = api.defaults.baseURL || '';
         return response.data.map((p) => {

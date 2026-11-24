@@ -189,11 +189,6 @@ export default function GoalDetailScreen() {
                       <View style={styles.rowContent}>
                         <Text style={[styles.subTitle, { color: nodeColor }]}>{sub.titulo}</Text>
                         <View style={styles.datesSmall}>
-                          {sub.dtInicio && (
-                            <Text style={[styles.dateSmall, { color: textMuted }]}>
-                              Início: {formatDate(sub.dtInicio)}
-                            </Text>
-                          )}
                           {sub.concluido && sub.dtFim ? (
                             <Text style={[styles.dateSmall, { color: activeColor }]}>
                               Concluída: {formatDate(sub.dtFim)}
