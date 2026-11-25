@@ -24,7 +24,8 @@ export function SquareCheckbox({
 }: SquareCheckboxProps) {
   const textColor = useThemeColor({}, 'text');
   const borderColor = useThemeColor({}, 'border');
-  const activeColor = color || useThemeColor({}, 'streakActive');
+  const defaultActiveColor = useThemeColor({}, 'streakActive');
+  const activeColor = color || defaultActiveColor;
 
   return (
     <TouchableOpacity

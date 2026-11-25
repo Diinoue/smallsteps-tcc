@@ -10,6 +10,21 @@ interface CurrentGoalCardProps {
   onViewPress?: (id: number) => void;
 }
 
+function formatNodeLabelPtBr(raw: string): string {
+  if (!raw) return '';
+  const monthMatch = raw.match(/^(\d+)\s+Months?$/i);
+  if (monthMatch) {
+    const n = Number(monthMatch[1]);
+    return `${n} ${n === 1 ? 'mês' : 'meses'}`;
+  }
+  const dayMatch = raw.match(/^(\d+)\s+days?$/i);
+  if (dayMatch) {
+    const n = Number(dayMatch[1]);
+    return `${n} ${n === 1 ? 'dia' : 'dias'}`;
+  }
+  return raw;
+}
+
 export function CurrentGoalCard({ goal, onViewPress }: CurrentGoalCardProps) {
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
@@ -52,7 +67,7 @@ export function CurrentGoalCard({ goal, onViewPress }: CurrentGoalCardProps) {
             return (
               <View key={node.id} style={styles.nodeItem}>
                 <Text style={[styles.nodeLabel, { color: textSecondary }]} numberOfLines={1}>
-                  {node.label}
+                  {formatNodeLabelPtBr(node.label)}
                 </Text>
                 <View style={styles.pinWrapper}>
                   <MaterialIcons name="place" size={20} color={pinColor} />

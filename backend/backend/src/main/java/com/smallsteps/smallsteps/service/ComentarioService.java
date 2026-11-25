@@ -56,21 +56,12 @@ public class ComentarioService {
         Post post = postRepository.findById(postId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Post não encontrado"));
 
-        Usuario usuario = null;
-        if (dto.getIdUsuario() != null && dto.getIdUsuario() > 0) {
-            usuario = userRepository.findById(dto.getIdUsuario()).orElse(null);
+        if (dto.getIdUsuario() == null || dto.getIdUsuario() <= 0) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Usuário autenticado obrigatório");
         }
 
-        if (usuario == null) {
-            List<Usuario> usuarios = userRepository.findAll();
-            if (!usuarios.isEmpty()) {
-                usuario = usuarios.get(0);
-            }
-        }
-
-        if (usuario == null) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Usuário não encontrado");
-        }
+        Usuario usuario = userRepository.findById(dto.getIdUsuario())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Usuário não encontrado"));
 
         Comentario comentario = new Comentario();
         comentario.setPost(post);
@@ -87,21 +78,12 @@ public class ComentarioService {
         Evento evento = eventoRepository.findById(eventoId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Evento não encontrado"));
 
-        Usuario usuario = null;
-        if (dto.getIdUsuario() != null && dto.getIdUsuario() > 0) {
-            usuario = userRepository.findById(dto.getIdUsuario()).orElse(null);
+        if (dto.getIdUsuario() == null || dto.getIdUsuario() <= 0) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Usuário autenticado obrigatório");
         }
 
-        if (usuario == null) {
-            List<Usuario> usuarios = userRepository.findAll();
-            if (!usuarios.isEmpty()) {
-                usuario = usuarios.get(0);
-            }
-        }
-
-        if (usuario == null) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Usuário não encontrado");
-        }
+        Usuario usuario = userRepository.findById(dto.getIdUsuario())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Usuário não encontrado"));
 
         Comentario comentario = new Comentario();
         comentario.setEvento(evento);
@@ -111,6 +93,33 @@ public class ComentarioService {
 
         Comentario salvo = comentarioRepository.save(comentario);
         return new ComentarioResponseDTO(salvo);
+    }
+
+    @Transactional(readOnly = true)
+    public int getCommunityIdByPostId(int postId) {
+        Post post = postRepository.findById(postId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Post não encontrado"));
+        return post.getComunidade().getId();
+    }
+
+    @Transactional(readOnly = true)
+    public int getCommunityIdByEventId(int eventId) {
+        Evento evento = eventoRepository.findById(eventId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Evento não encontrado"));
+        return evento.getComunidade().getId();
+    }
+
+    @Transactional(readOnly = true)
+    public int getCommunityIdByCommentId(int commentId) {
+        Comentario comentario = comentarioRepository.findById(commentId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Comentário não encontrado"));
+        if (comentario.getPost() != null && comentario.getPost().getComunidade() != null) {
+            return comentario.getPost().getComunidade().getId();
+        }
+        if (comentario.getEvento() != null && comentario.getEvento().getComunidade() != null) {
+            return comentario.getEvento().getComunidade().getId();
+        }
+        throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Comentário não está vinculado a uma comunidade");
     }
 
     @Transactional

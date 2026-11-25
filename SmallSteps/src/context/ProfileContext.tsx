@@ -1,5 +1,6 @@
-import React, { createContext, useContext, useState, ReactNode } from 'react';
+import React, { createContext, useCallback, useContext, useEffect, useState, ReactNode } from 'react';
 import { userService } from '../services/userService';
+import { authSession } from '../services/authSession';
 
 export interface ProfileAchievement {
   id: number;
@@ -45,141 +46,69 @@ export interface ProfileContextType {
   isLoading: boolean;
   availableDbTags: string[];
   allCompletedAchievements: ProfileAchievement[];
-  carregarPerfil: (idUsuario?: number) => Promise<void>;
+  carregarPerfil: () => Promise<void>;
+  limparPerfil: () => void;
   updateProfile: (data: Partial<UserProfileData>) => Promise<void>;
   addTag: (tag: string) => void;
   removeTag: (tag: string) => void;
   toggleVisibleAchievement: (id: number) => void;
 }
 
-// Mock inicial baseado fielmente nos protótipos
-const INITIAL_PROFILE: UserProfileData = {
-  id: 1,
-  name: 'Lagarto Voador',
-  handle: '@Lagarto Voador',
-  avatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=300&auto=format&fit=crop&q=80',
-  description: 'Praticando piano por diversão!',
-  tags: ['Piano', 'Beginner', 'Casual'],
-  streakCount: 127,
-  streakFrequencyCount: 2,
-  streakFrequencyPeriod: 'week',
+const EMPTY_PROFILE: UserProfileData = {
+  id: 0,
+  name: '',
+  handle: '',
+  avatarUrl: '',
+  description: '',
+  tags: [],
+  streakCount: 0,
+  streakFrequencyCount: 1,
+  streakFrequencyPeriod: 'day',
   publicStreak: false,
   publicCurrentGoals: true,
-  visibleAchievementIds: [2, 3],
-  achievements: [
-    {
-      id: 2,
-      title: 'Canon in D:',
-      journeyDuration: '3 Month journey',
-      subGoalsCount: 17,
-      mediaType: 'image',
-    },
-    {
-      id: 3,
-      title: 'Prelude No. 1 in C:',
-      journeyDuration: '5 Month journey',
-      subGoalsCount: 8,
-      mediaType: 'video',
-    },
-  ],
-  currentGoals: [
-    {
-      id: 1,
-      title: 'Die Mittsommernacht-Fantasie',
-      nodes: [
-        { id: 101, label: '3 Months', completed: true },
-        { id: 102, label: '2 Months', completed: true },
-        { id: 103, label: '2 Months', completed: true },
-        { id: 104, label: '17 days', completed: true },
-      ],
-    },
-    {
-      id: 2,
-      title: 'Tout est bien qui finit bien',
-      nodes: [
-        { id: 201, label: '1 Months', completed: true },
-        { id: 202, label: '1 Months', completed: true },
-        { id: 203, label: '2 Months', completed: false },
-        { id: 204, label: '15 days', completed: false },
-      ],
-    },
-  ],
+  visibleAchievementIds: [],
+  achievements: [],
+  allCompletedAchievements: [],
+  currentGoals: [],
 };
-
-// Tabela de tags simulada do banco de dados
-const AVAILABLE_DB_TAGS = [
-  'Piano',
-  'Beginner',
-  'Casual',
-  'Classical',
-  'Jazz',
-  'Music Theory',
-  'Daily Practice',
-  'Intermediate',
-  'Advanced',
-  'Keyboard',
-  'Composition',
-  'Sight Reading',
-];
-
-// Todas as conquistas finalizadas disponíveis para seleção no Editar Perfil
-const ALL_COMPLETED_ACHIEVEMENTS: ProfileAchievement[] = [
-  {
-    id: 1,
-    title: 'Die Mittsommernacht-Fantasie',
-    journeyDuration: '4 Month journey',
-    subGoalsCount: 12,
-    mediaType: 'image',
-  },
-  {
-    id: 2,
-    title: 'Canon in D',
-    journeyDuration: '3 Month journey',
-    subGoalsCount: 17,
-    mediaType: 'image',
-  },
-  {
-    id: 3,
-    title: 'Prelude No. 1 in C',
-    journeyDuration: '5 Month journey',
-    subGoalsCount: 8,
-    mediaType: 'video',
-  },
-  {
-    id: 4,
-    title: 'Tout est bien qui finit bien',
-    journeyDuration: '2 Month journey',
-    subGoalsCount: 6,
-    mediaType: 'video',
-  },
-];
 
 const ProfileContext = createContext<ProfileContextType | undefined>(undefined);
 
 export function ProfileProvider({ children }: { children: ReactNode }) {
-  const [profile, setProfile] = useState<UserProfileData>(INITIAL_PROFILE);
+  const [profile, setProfile] = useState<UserProfileData>(EMPTY_PROFILE);
   const [isLoading, setIsLoading] = useState<boolean>(false);
-  const [dbTags, setDbTags] = useState<string[]>(AVAILABLE_DB_TAGS);
+  const [dbTags, setDbTags] = useState<string[]>([]);
   const [allCompletedAchievements, setAllCompletedAchievements] =
-    useState<ProfileAchievement[]>(ALL_COMPLETED_ACHIEVEMENTS);
+    useState<ProfileAchievement[]>([]);
+
+  const limparPerfil = useCallback(() => {
+    setProfile(EMPTY_PROFILE);
+    setAllCompletedAchievements([]);
+  }, []);
 
   /**
-   * Puxa as informações do perfil via userService.
-   * Chamado quando o usuário clica na aba de perfil ou abre o perfil.
+   * Puxa as informações do perfil do usuário autenticado na sessão atual (GET /users/profile).
    */
-  const carregarPerfil = async (idUsuario?: number) => {
+  const carregarPerfil = useCallback(async () => {
+    const token = await authSession.getToken();
+    if (!token) {
+      limparPerfil();
+      return;
+    }
+
     try {
       setIsLoading(true);
       const [dadosRemotos, tagsRemotas] = await Promise.all([
-        userService.consultarPerfil(idUsuario),
+        userService.consultarPerfil(),
         userService.buscarTags(),
       ]);
 
       if (dadosRemotos) {
         setProfile(dadosRemotos);
-        if (dadosRemotos.allCompletedAchievements) {
-          setAllCompletedAchievements(dadosRemotos.allCompletedAchievements);
+        if (dadosRemotos.id > 0) {
+          await authSession.setUserId(dadosRemotos.id);
         }
+        setAllCompletedAchievements(dadosRemotos.allCompletedAchievements || []);
       }
       if (tagsRemotas && tagsRemotas.length > 0) {
         setDbTags(tagsRemotas);
@@ -189,10 +118,25 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [limparPerfil]);
+
+  useEffect(() => {
+    carregarPerfil();
+
+    const unsubscribe = authSession.subscribeAuthState((authenticated) => {
+      if (authenticated) {
+        carregarPerfil();
+      } else {
+        limparPerfil();
+      }
+    });
+
+    return () => {
+      unsubscribe();
+    };
+  }, [carregarPerfil, limparPerfil]);
 
   const updateProfile = async (data: Partial<UserProfileData>) => {
-    // Atualização local imediata
     setProfile((prev) => {
       const updated = { ...prev, ...data };
       if (data.visibleAchievementIds) {
@@ -204,7 +148,6 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
       return updated;
     });
 
-    // Envia atualização para a userService
     const ok = await userService.atualizarPerfil(data);
     if (ok) {
       await carregarPerfil();
@@ -260,6 +203,7 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
         availableDbTags: dbTags,
         allCompletedAchievements,
         carregarPerfil,
+        limparPerfil,
         updateProfile,
         addTag,
         removeTag,

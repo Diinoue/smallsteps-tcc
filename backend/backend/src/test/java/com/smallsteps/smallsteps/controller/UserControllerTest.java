@@ -61,7 +61,7 @@ public class UserControllerTest {
         usuarioTeste.setDescricao("Bio de teste");
         usuarioTeste.setStreakNum(127);
 
-        authentication = new TestingAuthenticationToken("teste@email.com", "password");
+        authentication = new TestingAuthenticationToken("teste@email.com", "password", "read");
     }
 
     @Test
@@ -106,7 +106,7 @@ public class UserControllerTest {
     @Test
     @DisplayName("GET /users/tags deve retornar tags cadastradas")
     void deveRetornarTags() {
-        when(tagRepository.findAll()).thenReturn(List.of(
+        when(tagRepository.findAllByOrderByDescricaoAsc()).thenReturn(List.of(
                 new Tag(1, "Piano"),
                 new Tag(2, "Leitura"),
                 new Tag(3, "Saude")

@@ -88,7 +88,7 @@ export function PostCard({
                 {post.author.name}
                 {'  '}
                 <Text style={[styles.streakText, { color: activeStreakColor }]}>
-                  {post.author.streakDays} days
+                  {post.author.streakDays} {post.author.streakDays === 1 ? 'dia' : 'dias'}
                 </Text>
               </Text>
             </View>

@@ -228,7 +228,7 @@ export function GoalTimelineCard({
               </View>
 
               <Button
-                title="view goal"
+                title="ver meta"
                 variant="pill"
                 customColor="#6B7280"
                 size="small"
@@ -243,7 +243,7 @@ export function GoalTimelineCard({
         {!hasMilestone && (
           <View style={styles.noMilestoneViewGoalRow}>
             <Button
-              title="view goal"
+              title="ver meta"
               variant="pill"
               customColor="#6B7280"
               size="small"

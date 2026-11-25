@@ -88,7 +88,6 @@ const PostHeader = memo(function PostHeader({
       <PostMediaCard
         mediaType={post.mediaType}
         mediaUrl={post.mediaUrl}
-        thumbnailUrl={post.thumbnailUrl}
         aspectRatio={post.aspectRatio || 16 / 9}
       />
 
@@ -211,7 +210,7 @@ export function PostCommentsScreen({
       if (userRole) {
         setActiveRole(userRole);
       } else if (communityId && communityId !== 'default') {
-        const role = await communityService.getUserRole(communityId, 1);
+        const role = await communityService.getUserRole(communityId);
         if (role) {
           setActiveRole(role);
         }
@@ -248,7 +247,7 @@ export function PostCommentsScreen({
       try {
         setIsSubmitting(true);
         const newComment = await commentService.createComment(post.id, text, {
-          id: 1,
+          id: profile.id,
           name: profile.name || 'Você',
           avatarUrl: profile.avatarUrl || null,
         });
@@ -269,7 +268,7 @@ export function PostCommentsScreen({
         setIsSubmitting(false);
       }
     },
-    [post.id, profile.name, profile.avatarUrl, onCommentCountChange]
+    [post.id, profile.id, profile.name, profile.avatarUrl, onCommentCountChange]
   );
 
   const handleCommentOptions = useCallback(

@@ -32,6 +32,7 @@ const DANGER_RED = '#EF4444';
 export interface CommunityEditScreenProps {
   communityId: number | string;
   initialCommunity?: Partial<CommunityItem>;
+  userRole?: string;
   onBackPress: () => void;
   onSaved: (updated: CommunityItem) => void;
   onDeleted: () => void;
@@ -40,10 +41,13 @@ export interface CommunityEditScreenProps {
 export function CommunityEditScreen({
   communityId,
   initialCommunity,
+  userRole,
   onBackPress,
   onSaved,
   onDeleted,
 }: CommunityEditScreenProps) {
+  const effectiveRole = (userRole || initialCommunity?.cargo || '').trim().toUpperCase();
+  const isOwner = effectiveRole === 'DONO' || effectiveRole === 'OWNER';
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
   const insets = useSafeAreaInsets();
@@ -80,7 +84,7 @@ export function CommunityEditScreen({
     async function loadDetails() {
       try {
         setInitialLoading(true);
-        const details = await communityService.getCommunityDetails(communityId, 1);
+        const details = await communityService.getCommunityDetails(communityId);
         if (!active) return;
         setName(details.nome || '');
         setDescription(details.descricao || '');
@@ -658,7 +662,7 @@ export function CommunityEditScreen({
                   </View>
                 ) : (
                   <Text style={[styles.suggestionsLabel, { color: textMuted, fontStyle: 'italic' }]}>
-                    Nenhuma tag encontrada para "{tagSearchQuery.trim()}".
+                    {`Nenhuma tag encontrada para "${tagSearchQuery.trim()}".`}
                   </Text>
                 )}
               </View>
@@ -701,25 +705,27 @@ export function CommunityEditScreen({
               </TouchableOpacity>
             </View>
 
-            {/* Botão Vermelho de Deletar Comunidade no fim da página */}
-            <TouchableOpacity
-              style={[styles.deleteButton, isBusy && styles.confirmButtonDisabled]}
-              onPress={handleDeleteCommunity}
-              disabled={isBusy}
-              activeOpacity={0.85}
-            >
-              {deleting ? (
-                <View style={styles.loadingRow}>
-                  <ActivityIndicator size="small" color="#FFFFFF" />
-                  <Text style={styles.deleteButtonText}>Deletando...</Text>
-                </View>
-              ) : (
-                <View style={styles.loadingRow}>
-                  <MaterialIcons name="delete-forever" size={20} color="#FFFFFF" />
-                  <Text style={styles.deleteButtonText}>Deletar Comunidade</Text>
-                </View>
-              )}
-            </TouchableOpacity>
+            {/* Botão Vermelho de Deletar Comunidade — visível apenas para o DONO */}
+            {isOwner && (
+              <TouchableOpacity
+                style={[styles.deleteButton, isBusy && styles.confirmButtonDisabled]}
+                onPress={handleDeleteCommunity}
+                disabled={isBusy}
+                activeOpacity={0.85}
+              >
+                {deleting ? (
+                  <View style={styles.loadingRow}>
+                    <ActivityIndicator size="small" color="#FFFFFF" />
+                    <Text style={styles.deleteButtonText}>Deletando...</Text>
+                  </View>
+                ) : (
+                  <View style={styles.loadingRow}>
+                    <MaterialIcons name="delete-forever" size={20} color="#FFFFFF" />
+                    <Text style={styles.deleteButtonText}>Deletar Comunidade</Text>
+                  </View>
+                )}
+              </TouchableOpacity>
+            )}
           </ScrollView>
         </KeyboardAvoidingView>
       )}

@@ -1,40 +1,44 @@
-import * as SecureStore from "expo-secure-store";
 import { LoginRequest } from "../dto/LoginRequest";
 import { LoginResponse } from "../dto/LoginResponse";
 import { api } from "./api";
-
-const TOKEN_KEY = "token";
+import { authSession } from "./authSession";
 
 export const loginService = {
-  // Salva o token JWT no armazenamento seguro
-  async save(key: string = TOKEN_KEY, value: string) {
-    await SecureStore.setItemAsync(key, value);
+  // Salva o token JWT (e opcionalmente o userId) no armazenamento seguro
+  async save(_key: string = "token", value: string, userId?: number | null) {
+    await authSession.setSession(value, userId);
   },
 
   // Retorna o token armazenado
-  async getToken(key: string = TOKEN_KEY): Promise<string | null> {
-    return await SecureStore.getItemAsync(key);
+  async getToken(): Promise<string | null> {
+    return await authSession.getToken();
+  },
+
+  // Retorna o userId armazenado da sessão atual
+  async getUserId(): Promise<number | null> {
+    return await authSession.getUserId();
   },
 
   // Remove o token para logout
-  async removeToken(key: string = TOKEN_KEY): Promise<void> {
-    await SecureStore.deleteItemAsync(key);
+  async removeToken(): Promise<void> {
+    await authSession.clearSession();
   },
 
-  // Realiza autenticação no backend
-  async logIn(data: LoginRequest): Promise<string> {
+  // Realiza autenticação no backend e salva a sessão
+  async logIn(data: LoginRequest): Promise<LoginResponse> {
     const response = await api.post<LoginResponse>("/login", data);
-    return response.data.token;
+    await authSession.setSession(response.data.token, response.data.userId ?? null);
+    return response.data;
   },
 
   // Realiza logout limpando a sessão
   async logOut(): Promise<void> {
-    await this.removeToken();
+    await authSession.clearSession();
   },
 
   // Método auxiliar para testes e depuração
-  async getValueFor(key: string = TOKEN_KEY) {
-    const result = await SecureStore.getItemAsync(key);
+  async getValueFor() {
+    const result = await authSession.getToken();
     if (result) {
       alert("🔐 Token JWT: 🔐 \n" + result);
     } else {

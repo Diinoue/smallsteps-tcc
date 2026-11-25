@@ -25,6 +25,7 @@ import { useColorScheme } from '@/hooks/use-color-scheme';
 import { useThemeColor } from '@/hooks/use-theme-color';
 import { Post, MediaType } from '@/src/types/community';
 import { communityService, uploadMedia } from '@/src/services/communityService';
+import { useProfile } from '@/src/context/ProfileContext';
 import { PostCard } from './PostCard';
 import { MediaViewer } from './MediaViewer';
 import { PostCommentsScreen } from './PostCommentsScreen';
@@ -75,6 +76,7 @@ export function CommunityFeedScreen({
   const borderColor = isDark ? '#2D3748' : '#EEEEEE';
 
   const tabBarHeight = useContext(BottomTabBarHeightContext) ?? 0;
+  const { profile } = useProfile();
 
   const [posts, setPosts] = useState<Post[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -100,7 +102,7 @@ export function CommunityFeedScreen({
   useEffect(() => {
     async function fetchUserRole() {
       if (!communityId || communityId === 'default') return;
-      const role = await communityService.getUserRole(communityId, 1);
+      const role = await communityService.getUserRole(communityId);
       if (role) {
         setActiveRole(role);
       }
@@ -683,8 +685,8 @@ export function CommunityFeedScreen({
 
                   {/* Opções de Ação */}
                   <View style={styles.settingsActionsList}>
-                    {/* Ação: Copiar link da comunidade (qualquer usuário em comunidades públicas) */}
-                    {!isPrivate && (
+                    {/* Ação: Copiar link da comunidade (todos em públicas; apenas DONO/ADMIN em privadas) */}
+                    {(!isPrivate || normalizedRole === 'DONO' || normalizedRole === 'ADMIN') && (
                       <TouchableOpacity
                         style={[
                           styles.settingsActionItem,
@@ -713,8 +715,8 @@ export function CommunityFeedScreen({
                       </TouchableOpacity>
                     )}
 
-                    {/* Ação 1: Editar Comunidade (apenas para DONO e ADMIN) */}
-                    {(normalizedRole === 'DONO' || normalizedRole === 'ADMIN') && (
+                    {/* Ação 1: Editar Comunidade (somente para DONO — UC028) */}
+                    {normalizedRole === 'DONO' && (
                       <TouchableOpacity
                         style={[
                           styles.settingsActionItem,
@@ -836,9 +838,7 @@ export function CommunityFeedScreen({
                       style={[styles.settingsCommunityName, { color: textMuted }]}
                       numberOfLines={1}
                     >
-                      {String(selectedPostForOptions.author?.id) === '1' ||
-                      selectedPostForOptions.author?.id === 1 ||
-                      selectedPostForOptions.author?.id === 'me'
+                      {profile.id > 0 && Number(selectedPostForOptions.author?.id) === profile.id
                         ? 'Sua publicação'
                         : `Publicado por ${selectedPostForOptions.author?.name || 'Membro'}`}
                     </Text>
@@ -849,9 +849,7 @@ export function CommunityFeedScreen({
                   {/* Lista de Ações */}
                   <View style={styles.settingsActionsList}>
                     {selectedPostForOptions &&
-                    (String(selectedPostForOptions.author?.id) === '1' ||
-                      selectedPostForOptions.author?.id === 1 ||
-                      selectedPostForOptions.author?.id === 'me' ||
+                    ((profile.id > 0 && Number(selectedPostForOptions.author?.id) === profile.id) ||
                       normalizedRole === 'DONO' ||
                       normalizedRole === 'ADMIN') ? (
                       <TouchableOpacity

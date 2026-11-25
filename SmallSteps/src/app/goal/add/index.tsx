@@ -19,9 +19,6 @@ import { IconSymbol } from '@/src/components/ui/icon-symbol';
 import { goalService } from '@/src/services';
 import { SubGoal } from '@/src/types/goal';
 
-// TODO: substituir pelo ID do usuário logado quando existir autenticação
-const CURRENT_USER_ID = 1;
-
 export default function CreateGoalScreen() {
   const router = useRouter();
 
@@ -128,7 +125,7 @@ export default function CreateGoalScreen() {
       return;
     }
     if (!targetMilestone.trim()) {
-      Alert.alert('Atenção', 'O objetivo final (milestone) é obrigatório.');
+      Alert.alert('Atenção', 'O objetivo final é obrigatório.');
       return;
     }
 
@@ -137,7 +134,6 @@ export default function CreateGoalScreen() {
       await goalService.createGoal({
         titulo: title.trim(),
         milestone: targetMilestone.trim(),
-        idUsuario: CURRENT_USER_ID,
         visivel: true,
         dtInicio: new Date().toISOString(),
         subMetas: subGoals.map((sg) => ({
@@ -203,7 +199,7 @@ export default function CreateGoalScreen() {
 
             <View style={styles.fieldGroup}>
               <Text style={[styles.fieldLabel, { color: textMuted }]}>
-                Objetivo Final (Milestone) *
+                Objetivo Final *
               </Text>
               <TextInput
                 style={[styles.textInput, { color: textColor, borderColor }]}

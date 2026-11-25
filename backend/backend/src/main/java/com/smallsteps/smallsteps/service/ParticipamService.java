@@ -12,10 +12,12 @@ import org.springframework.web.server.ResponseStatusException;
 
 import com.smallsteps.smallsteps.dto.MembroComunidadeDTO;
 import com.smallsteps.smallsteps.dto.ParticipamDTO;
+import com.smallsteps.smallsteps.entity.Comunidade;
 import com.smallsteps.smallsteps.entity.Participam;
 import com.smallsteps.smallsteps.entity.ParticipamId;
 import com.smallsteps.smallsteps.entity.Usuario;
 import com.smallsteps.smallsteps.enums.Cargo;
+import com.smallsteps.smallsteps.repository.CommunityRepository;
 import com.smallsteps.smallsteps.repository.ParticipamRepository;
 import com.smallsteps.smallsteps.repository.UserRepository;
 
@@ -26,10 +28,15 @@ public class ParticipamService {
 
     private final ParticipamRepository participamRepository;
     private final UserRepository userRepository;
+    private final CommunityRepository communityRepository;
 
-    public ParticipamService(ParticipamRepository participamRepository, UserRepository userRepository) {
+    public ParticipamService(
+            ParticipamRepository participamRepository,
+            UserRepository userRepository,
+            CommunityRepository communityRepository) {
         this.participamRepository = participamRepository;
         this.userRepository = userRepository;
+        this.communityRepository = communityRepository;
     }
 
     @Transactional(readOnly = true)
@@ -95,6 +102,12 @@ public class ParticipamService {
 
     @Transactional
     public Participam create(ParticipamDTO dto) {
+        Comunidade comunidade = communityRepository.findById(dto.getIdComunidade())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Comunidade não encontrada"));
+        if (comunidade.isPrivado()) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Comunidades privadas exigem aprovação por solicitação");
+        }
+
         ParticipamId id = new ParticipamId(dto.getIdUsuario(), dto.getIdComunidade());
         if (participamRepository.existsById(id)) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "Usuário já participa desta comunidade");

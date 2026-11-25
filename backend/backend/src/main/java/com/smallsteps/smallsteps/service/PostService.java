@@ -58,25 +58,14 @@ public class PostService {
     @Transactional
     public PostResponseDTO createPost(int communityId, CriarPostRequestDTO dto) {
         Comunidade comunidade = communityRepository.findById(communityId)
-                .orElseThrow(() -> new RuntimeException("Comunidade não encontrada com id: " + communityId));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Comunidade não encontrada com id: " + communityId));
 
-        Usuario usuario = null;
-        if (dto.getIdUsuario() != null && dto.getIdUsuario() > 0) {
-            usuario = userRepository.findById(dto.getIdUsuario()).orElse(null);
+        if (dto.getIdUsuario() == null || dto.getIdUsuario() <= 0) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Usuário autenticado obrigatório para criar o post");
         }
 
-        // Fallback determinístico se idUsuario não for informado (usuário 1 no modo de testes)
-        if (usuario == null) {
-            usuario = userRepository.findById(1).orElseGet(() ->
-                userRepository.findAll().stream()
-                    .min(java.util.Comparator.comparingInt(Usuario::getId))
-                    .orElse(null)
-            );
-        }
-
-        if (usuario == null) {
-            throw new RuntimeException("Usuário não encontrado para criar o post");
-        }
+        Usuario usuario = userRepository.findById(dto.getIdUsuario())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Usuário não encontrado para criar o post"));
 
         Post post = new Post();
         post.setComunidade(comunidade);
@@ -92,7 +81,7 @@ public class PostService {
     }
 
     @Transactional
-    public void deletePost(int communityId, int postId) {
+    public void deletePost(int communityId, int postId, int currentUserId, boolean isAdminOrOwner) {
         Post post = postRepository.findById(postId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Post não encontrado"));
 
@@ -100,6 +89,12 @@ public class PostService {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Post não pertence a esta comunidade");
         }
 
+        boolean isAuthor = post.getUsuario() != null && post.getUsuario().getId() == currentUserId;
+        if (!isAuthor && !isAdminOrOwner) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Sem permissão para excluir esta publicação");
+        }
+
+        comentarioRepository.deleteByPostId(postId);
         postRepository.delete(post);
     }
 }

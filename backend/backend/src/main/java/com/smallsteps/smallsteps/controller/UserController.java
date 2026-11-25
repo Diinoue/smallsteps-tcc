@@ -4,6 +4,7 @@ import java.util.List;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -16,6 +17,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.server.ResponseStatusException;
 
 import com.smallsteps.smallsteps.dto.ProfileDTOResponse;
 import com.smallsteps.smallsteps.dto.UpdateProfileDTORequest;
@@ -36,15 +38,33 @@ public class UserController {
         this.passwordEncoder = passwordEncoder;
     }
 
+    private String requireAuthenticatedEmail(Authentication authentication) {
+        Authentication auth = (authentication != null)
+                ? authentication
+                : SecurityContextHolder.getContext().getAuthentication();
+        if (auth == null || !auth.isAuthenticated()
+                || auth.getName() == null
+                || auth.getName().isBlank()
+                || "anonymousUser".equals(auth.getName())) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Usuário não autenticado");
+        }
+        return auth.getName();
+    }
+
     /**
      * Cadastro de novo usuário
      */
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public Usuario create(@RequestBody UserDTO dto) {
+        if (dto.getName() == null || dto.getName().isBlank()
+                || dto.getEmail() == null || dto.getEmail().isBlank()
+                || dto.getPassword() == null || dto.getPassword().isBlank()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Nome, e-mail e senha são obrigatórios");
+        }
         Usuario user = new Usuario();
-        user.setNome(dto.getName());
-        user.setEmail(dto.getEmail());
+        user.setNome(dto.getName().trim());
+        user.setEmail(dto.getEmail().trim().toLowerCase());
         user.setSenha(passwordEncoder.encode(dto.getPassword()));
         return userService.createUsuario(user);
     }
@@ -54,10 +74,7 @@ public class UserController {
      */
     @GetMapping("/profile")
     public ProfileDTOResponse getMyProfile(Authentication authentication) {
-        Authentication auth = (authentication != null) ? authentication : org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication();
-        String email = (auth != null && auth.getName() != null && !"anonymousUser".equals(auth.getName()))
-                ? auth.getName()
-                : "ana.souza@email.com";
+        String email = requireAuthenticatedEmail(authentication);
         return userService.getProfileByEmail(email);
     }
 
@@ -66,10 +83,7 @@ public class UserController {
      */
     @PutMapping("/profile")
     public ProfileDTOResponse updateMyProfile(Authentication authentication, @RequestBody UpdateProfileDTORequest dto) {
-        Authentication auth = (authentication != null) ? authentication : org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication();
-        String email = (auth != null && auth.getName() != null && !"anonymousUser".equals(auth.getName()))
-                ? auth.getName()
-                : "ana.souza@email.com";
+        String email = requireAuthenticatedEmail(authentication);
         return userService.updateProfileByEmail(email, dto);
     }
 
@@ -82,10 +96,18 @@ public class UserController {
     }
 
     /**
-     * Atualiza o perfil por ID direto
+     * Atualiza o perfil por ID (somente o próprio usuário autenticado)
      */
     @PutMapping("/{id}")
-    public ProfileDTOResponse updateProfileById(@PathVariable int id, @RequestBody UpdateProfileDTORequest dto) {
+    public ProfileDTOResponse updateProfileById(
+            @PathVariable int id,
+            @RequestBody UpdateProfileDTORequest dto,
+            Authentication authentication) {
+        String email = requireAuthenticatedEmail(authentication);
+        ProfileDTOResponse me = userService.getProfileByEmail(email);
+        if (me.id != id) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Sem permissão para editar o perfil de outro usuário");
+        }
         return userService.updateProfileById(id, dto);
     }
 
@@ -110,10 +132,15 @@ public class UserController {
     }
 
     /**
-     * Deleta um usuário por ID
+     * Deleta o próprio usuário autenticado
      */
     @DeleteMapping("/{id}")
-    public boolean deleteUser(@PathVariable int id) {
+    public boolean deleteUser(@PathVariable int id, Authentication authentication) {
+        String email = requireAuthenticatedEmail(authentication);
+        ProfileDTOResponse me = userService.getProfileByEmail(email);
+        if (me.id != id) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Sem permissão para excluir outro usuário");
+        }
         return userService.deleteUsuario(id);
     }
 }

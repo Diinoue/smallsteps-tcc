@@ -344,6 +344,9 @@ public class UserService implements UserServiceDetails {
     }
 
     public Usuario createUsuario(Usuario user) {
+        if (user.getEmail() != null && userRepository.findByEmail(user.getEmail()).isPresent()) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Já existe uma conta cadastrada com este e-mail");
+        }
         return userRepository.save(user);
     }
 

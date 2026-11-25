@@ -107,10 +107,14 @@ public class GoalService {
 
     // ── Atualizar meta existente ──────────────────────────────────────────────
     @Transactional
-    public GoalDTOResponse update(int id, CriarMetaDTO dto) {
+    public GoalDTOResponse update(int id, CriarMetaDTO dto, int currentUserId) {
         Meta meta = goalRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(
                         HttpStatus.NOT_FOUND, "Meta não encontrada com id: " + id));
+
+        if (meta.getUsuario() == null || meta.getUsuario().getId() != currentUserId) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Sem permissão para editar esta meta");
+        }
 
         if (dto.titulo != null) {
             if (dto.titulo.isBlank()) {
@@ -164,9 +168,11 @@ public class GoalService {
 
     // ── Deletar meta ──────────────────────────────────────────────────────────
     @Transactional
-    public void delete(int id) {
-        if (!goalRepository.existsById(id)) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Meta não encontrada com id: " + id);
+    public void delete(int id, int currentUserId) {
+        Meta meta = goalRepository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Meta não encontrada com id: " + id));
+        if (meta.getUsuario() == null || meta.getUsuario().getId() != currentUserId) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Sem permissão para excluir esta meta");
         }
         subMetaRepository.deleteByMetaId(id);
         goalRepository.deleteById(id);
@@ -174,10 +180,13 @@ public class GoalService {
 
     // ── Marcar meta como concluída ────────────────────────────────────────────
     @Transactional
-    public GoalDTOResponse concluir(int id) {
+    public GoalDTOResponse concluir(int id, int currentUserId) {
         Meta meta = goalRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(
                         HttpStatus.NOT_FOUND, "Meta não encontrada com id: " + id));
+        if (meta.getUsuario() == null || meta.getUsuario().getId() != currentUserId) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Sem permissão para concluir esta meta");
+        }
         meta.setConcluido(true);
         meta.setDtFim(LocalDateTime.now());
         return toDto(goalRepository.save(meta));

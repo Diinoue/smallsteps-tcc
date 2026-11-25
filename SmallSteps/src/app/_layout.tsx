@@ -7,7 +7,7 @@ import 'react-native-reanimated';
 
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { ProfileProvider } from '../context/ProfileContext';
-import { loginService } from '../services/loginService';
+import { authSession } from '../services/authSession';
 
 export const unstable_settings = {
   anchor: '(tabs)',
@@ -18,22 +18,61 @@ export default function RootLayout() {
   const router = useRouter();
   const segments = useSegments();
   const [loading, setLoading] = useState(true);
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
 
-   useEffect(() => {
+  // 1. Verifica token inicial e escuta mudanças de autenticação / 401
+  useEffect(() => {
+    let mounted = true;
+
     async function verificarAutenticacao() {
-      // const token = await loginService.getToken();
-      // const inAuthGroup = segments[0] === '(auth)';
-      // // Se não tem token e não está na tela de login/cadastro, manda pro login
-      // if (!token && !inAuthGroup) {        
-      //   router.replace('/login');
-      // }
-      setLoading(false);
+      try {
+        const token = await authSession.getToken();
+        if (mounted) {
+          setIsAuthenticated(Boolean(token));
+        }
+      } finally {
+        if (mounted) {
+          setLoading(false);
+        }
+      }
     }
 
-        verificarAutenticacao();
-  }, []);
+    verificarAutenticacao();
 
-  // Exibe um loading rápido enquanto confere o SecureStore
+    const unsubscribeAuth = authSession.subscribeAuthState((authenticated) => {
+      if (mounted) {
+        setIsAuthenticated(authenticated);
+      }
+    });
+
+    const unsubscribeUnauthorized = authSession.subscribeUnauthorized(() => {
+      if (mounted) {
+        setIsAuthenticated(false);
+        router.replace('/(auth)/login');
+      }
+    });
+
+    return () => {
+      mounted = false;
+      unsubscribeAuth();
+      unsubscribeUnauthorized();
+    };
+  }, [router]);
+
+  // 2. Guard de rotas: redireciona para login se não autenticado, ou para tabs se já autenticado no grupo (auth)
+  useEffect(() => {
+    if (loading) return;
+
+    const inAuthGroup = segments[0] === '(auth)';
+
+    if (!isAuthenticated && !inAuthGroup) {
+      router.replace('/(auth)/login');
+    } else if (isAuthenticated && inAuthGroup) {
+      router.replace('/(tabs)');
+    }
+  }, [isAuthenticated, loading, segments, router]);
+
+  // Exibe um loading rápido enquanto confere o armazenamento da sessão
   if (loading) {
     return (
       <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>

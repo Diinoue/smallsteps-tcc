@@ -37,8 +37,8 @@ export default function ProfileGoalsScreen() {
   const borderColor = useThemeColor({}, 'border');
   const activeColor = useThemeColor({}, 'streakActive');
 
-  const targetUserId = params.userId ? Number(params.userId) : profile.id || 1;
-  const isOwnProfile = !params.userId || Number(params.userId) === (profile.id || 1);
+  const targetUserId = params.userId ? Number(params.userId) : undefined;
+  const isOwnProfile = !targetUserId || (profile.id > 0 && targetUserId === profile.id);
 
   const [goals, setGoals] = useState<GoalDTOResponse[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -53,7 +53,9 @@ export default function ProfileGoalsScreen() {
       }
 
       try {
-        const data = await goalService.getGoalsByUser(targetUserId);
+        const data = isOwnProfile
+          ? await goalService.getMyGoals()
+          : await goalService.getGoalsByUser(targetUserId!);
         setGoals(data);
       } catch (error) {
         console.error('Erro ao carregar metas do perfil:', error);
@@ -63,7 +65,7 @@ export default function ProfileGoalsScreen() {
         setIsRefreshing(false);
       }
     },
-    [targetUserId]
+    [isOwnProfile, targetUserId]
   );
 
   useFocusEffect(

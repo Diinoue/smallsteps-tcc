@@ -243,7 +243,7 @@ export function EventCommentsScreen({
       if (userRole) {
         setActiveRole(userRole);
       } else if (communityId && communityId !== 'default') {
-        const role = await communityService.getUserRole(communityId, 1);
+        const role = await communityService.getUserRole(communityId);
         if (role) {
           setActiveRole(role);
         }
@@ -280,7 +280,7 @@ export function EventCommentsScreen({
       try {
         setIsSubmitting(true);
         const newComment = await commentService.createEventComment(event.id, text, {
-          id: 1,
+          id: profile.id,
           name: profile.name || 'Você',
           avatarUrl: profile.avatarUrl || null,
         });
@@ -301,7 +301,7 @@ export function EventCommentsScreen({
         setIsSubmitting(false);
       }
     },
-    [event.id, profile.name, profile.avatarUrl, onCommentCountChange]
+    [event.id, profile.id, profile.name, profile.avatarUrl, onCommentCountChange]
   );
 
   const handleCommentOptions = useCallback(
@@ -429,7 +429,7 @@ export function EventCommentsScreen({
             </TouchableOpacity>
           )}
           <Text style={[styles.headerTitle, { color: textColor }]}>
-            Events
+            Eventos
           </Text>
         </View>
       </View>

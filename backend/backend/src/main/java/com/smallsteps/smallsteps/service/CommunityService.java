@@ -122,21 +122,16 @@ public class CommunityService {
         // Associa o criador da comunidade como DONO na tabela participam
         Integer idUsuario = dto.getIdUsuario();
         if (idUsuario == null || idUsuario <= 0) {
-            Usuario primeiro = userRepository.findAll().stream().findFirst().orElse(null);
-            if (primeiro != null) {
-                idUsuario = primeiro.getId();
-            }
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Usuário autenticado obrigatório para criar comunidade");
         }
 
-        if (idUsuario != null && idUsuario > 0) {
-            Participam participam = new Participam();
-            participam.setIdUsuario(idUsuario);
-            participam.setIdComunidade(salva.getId());
-            participam.setPontos(0);
-            participam.setCargo(Cargo.DONO);
-            participam.setDtInicio(LocalDateTime.now());
-            participamRepository.save(participam);
-        }
+        Participam participam = new Participam();
+        participam.setIdUsuario(idUsuario);
+        participam.setIdComunidade(salva.getId());
+        participam.setPontos(0);
+        participam.setCargo(Cargo.DONO);
+        participam.setDtInicio(LocalDateTime.now());
+        participamRepository.save(participam);
 
         // Associa as tags se fornecidas
         if (dto.getTags() != null && !dto.getTags().isEmpty()) {

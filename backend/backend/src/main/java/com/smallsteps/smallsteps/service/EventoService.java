@@ -60,6 +60,13 @@ public class EventoService {
     }
 
     @Transactional(readOnly = true)
+    public int getCommunityIdByEventId(int id) {
+        Evento evento = eventoRepository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Evento não encontrado com id: " + id));
+        return evento.getComunidade().getId();
+    }
+
+    @Transactional(readOnly = true)
     public EventoResponseDTO findById(int id) {
         Evento evento = eventoRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Evento não encontrado com id: " + id));
@@ -71,21 +78,12 @@ public class EventoService {
         Comunidade comunidade = communityRepository.findById(comunidadeId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Comunidade não encontrada com id: " + comunidadeId));
 
-        Usuario usuario = null;
-        if (dto.getIdUsuario() != null && dto.getIdUsuario() > 0) {
-            usuario = userRepository.findById(dto.getIdUsuario()).orElse(null);
+        if (dto.getIdUsuario() == null || dto.getIdUsuario() <= 0) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Usuário autenticado obrigatório para criar o evento");
         }
 
-        if (usuario == null) {
-            List<Usuario> usuarios = userRepository.findAll();
-            if (!usuarios.isEmpty()) {
-                usuario = usuarios.get(0);
-            }
-        }
-
-        if (usuario == null) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Usuário não encontrado para criar o evento");
-        }
+        Usuario usuario = userRepository.findById(dto.getIdUsuario())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Usuário não encontrado para criar o evento"));
 
         Evento evento = new Evento();
         evento.setComunidade(comunidade);
@@ -124,7 +122,7 @@ public class EventoService {
         }
 
         Evento atualizado = eventoRepository.save(evento);
-        return new EventoResponseDTO(atualizado);
+        return toDTO(atualizado);
     }
 
     @Transactional
@@ -132,6 +130,7 @@ public class EventoService {
         if (!eventoRepository.existsById(id)) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Evento não encontrado com id: " + id);
         }
+        comentarioRepository.deleteByEventoId(id);
         eventoRepository.deleteById(id);
     }
 }

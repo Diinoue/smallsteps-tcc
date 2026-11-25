@@ -30,7 +30,6 @@ export interface CommunityPreviewModalProps {
 export function CommunityPreviewModal({
   visible,
   community,
-  userId = 1,
   onClose,
   onJoined,
   onRequested,
@@ -73,7 +72,7 @@ export function CommunityPreviewModal({
     try {
       setIsSubmitting(true);
       if (isPrivate) {
-        await communityService.requestJoinCommunity(community.id, userId);
+        await communityService.requestJoinCommunity(community.id);
         setLocalRequested(true);
         onRequested?.({ ...community, jaSolicitou: true });
         Alert.alert(
@@ -81,7 +80,7 @@ export function CommunityPreviewModal({
           `Seu pedido para entrar em "${community.nome}" foi enviado aos administradores.`
         );
       } else {
-        await communityService.joinCommunity(community.id, userId);
+        await communityService.joinCommunity(community.id);
         setLocalJoined(true);
         onJoined?.({ ...community, jaParticipa: true });
       }

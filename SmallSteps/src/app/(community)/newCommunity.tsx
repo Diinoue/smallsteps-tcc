@@ -170,7 +170,6 @@ export default function NewCommunity() {
         privado: isPrivate,
         foto: foto,
         tags: tags,
-        idUsuario: 1, // Fallback para vincular o criador como DONO
       });
 
       if (Platform.OS === 'web') {
@@ -596,7 +595,7 @@ export default function NewCommunity() {
                 </View>
               ) : (
                 <Text style={[styles.suggestionsLabel, { color: textMuted, fontStyle: 'italic' }]}>
-                  Nenhuma tag encontrada para "{tagSearchQuery.trim()}".
+                  {`Nenhuma tag encontrada para "${tagSearchQuery.trim()}".`}
                 </Text>
               )}
             </View>

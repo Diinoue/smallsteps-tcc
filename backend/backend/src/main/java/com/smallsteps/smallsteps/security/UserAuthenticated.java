@@ -17,6 +17,14 @@ public class UserAuthenticated implements UserDetails{
             this.usuario = usuario;
         }
 
+    public int getId() {
+        return usuario.getId();
+    }
+
+    public Usuario getUsuario() {
+        return usuario;
+    }
+
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
         return List.of(() -> "read");

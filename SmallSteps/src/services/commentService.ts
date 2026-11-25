@@ -85,64 +85,31 @@ export const commentService = {
     content: string,
     currentUser?: CommentUserParam
   ): Promise<PostComment> {
-    try {
-      const userId = Number(currentUser?.id) || 1;
-      const response = await api.post(`/posts/${postId}/comments`, {
-        conteudo: content,
-        idUsuario: userId,
-      });
+    const response = await api.post(`/posts/${postId}/comments`, {
+      conteudo: content,
+    });
 
-      const c = response.data;
-      if (c && c.id) {
-        const baseUrl = api.defaults.baseURL || '';
-        let avatarUrl = c.author?.avatarUrl || null;
-        if (avatarUrl && avatarUrl.startsWith('/')) {
-          avatarUrl = `${baseUrl}${avatarUrl}`;
-        }
-        if (!avatarUrl && currentUser?.avatarUrl) {
-          avatarUrl = currentUser.avatarUrl;
-        }
-
-        const newComment: PostComment = {
-          id: c.id,
-          postId: c.idPost || postId,
-          author: {
-            id: c.author?.id || userId,
-            name: c.author?.name || currentUser?.name || 'Você',
-            avatarUrl,
-          },
-          content: c.conteudo || content,
-          createdAt: c.createdAt || new Date().toLocaleDateString('pt-BR'),
-        };
-
-        if (!MOCK_COMMENTS[postId]) {
-          MOCK_COMMENTS[postId] = [];
-        }
-        MOCK_COMMENTS[postId] = [...MOCK_COMMENTS[postId], newComment];
-
-        return newComment;
-      }
-    } catch (error) {
-      console.warn('Erro ao chamar POST /posts/:id/comments na API, usando mock:', error);
+    const c = response.data;
+    const baseUrl = api.defaults.baseURL || '';
+    let avatarUrl = c.author?.avatarUrl || null;
+    if (avatarUrl && avatarUrl.startsWith('/')) {
+      avatarUrl = `${baseUrl}${avatarUrl}`;
+    }
+    if (!avatarUrl && currentUser?.avatarUrl) {
+      avatarUrl = currentUser.avatarUrl;
     }
 
-    const newComment: PostComment = {
-      id: Date.now(),
-      postId,
+    return {
+      id: c.id,
+      postId: c.idPost || postId,
       author: {
-        id: currentUser?.id || 1,
-        name: currentUser?.name || 'Você',
-        avatarUrl: currentUser?.avatarUrl || null,
+        id: c.author?.id || currentUser?.id || 0,
+        name: c.author?.name || currentUser?.name || 'Você',
+        avatarUrl,
       },
-      content,
-      createdAt: new Date().toLocaleDateString('pt-BR'),
+      content: c.conteudo || content,
+      createdAt: c.createdAt || new Date().toLocaleDateString('pt-BR'),
     };
-
-    if (!MOCK_COMMENTS[postId]) {
-      MOCK_COMMENTS[postId] = [];
-    }
-    MOCK_COMMENTS[postId] = [...MOCK_COMMENTS[postId], newComment];
-    return newComment;
   },
 
   async createEventComment(
@@ -150,64 +117,31 @@ export const commentService = {
     content: string,
     currentUser?: CommentUserParam
   ): Promise<PostComment> {
-    try {
-      const userId = Number(currentUser?.id) || 1;
-      const response = await api.post(`/events/${eventId}/comments`, {
-        conteudo: content,
-        idUsuario: userId,
-      });
+    const response = await api.post(`/events/${eventId}/comments`, {
+      conteudo: content,
+    });
 
-      const c = response.data;
-      if (c && c.id) {
-        const baseUrl = api.defaults.baseURL || '';
-        let avatarUrl = c.author?.avatarUrl || null;
-        if (avatarUrl && avatarUrl.startsWith('/')) {
-          avatarUrl = `${baseUrl}${avatarUrl}`;
-        }
-        if (!avatarUrl && currentUser?.avatarUrl) {
-          avatarUrl = currentUser.avatarUrl;
-        }
-
-        const newComment: PostComment = {
-          id: c.id,
-          postId: c.idEvento || eventId,
-          author: {
-            id: c.author?.id || userId,
-            name: c.author?.name || currentUser?.name || 'Você',
-            avatarUrl,
-          },
-          content: c.conteudo || content,
-          createdAt: c.createdAt || new Date().toLocaleDateString('pt-BR'),
-        };
-
-        if (!MOCK_EVENT_COMMENTS[eventId]) {
-          MOCK_EVENT_COMMENTS[eventId] = [];
-        }
-        MOCK_EVENT_COMMENTS[eventId] = [...MOCK_EVENT_COMMENTS[eventId], newComment];
-
-        return newComment;
-      }
-    } catch (error) {
-      console.warn('Erro ao chamar POST /events/:id/comments na API, usando mock:', error);
+    const c = response.data;
+    const baseUrl = api.defaults.baseURL || '';
+    let avatarUrl = c.author?.avatarUrl || null;
+    if (avatarUrl && avatarUrl.startsWith('/')) {
+      avatarUrl = `${baseUrl}${avatarUrl}`;
+    }
+    if (!avatarUrl && currentUser?.avatarUrl) {
+      avatarUrl = currentUser.avatarUrl;
     }
 
-    const newComment: PostComment = {
-      id: Date.now(),
-      postId: eventId,
+    return {
+      id: c.id,
+      postId: c.idEvento || eventId,
       author: {
-        id: currentUser?.id || 1,
-        name: currentUser?.name || 'Você',
-        avatarUrl: currentUser?.avatarUrl || null,
+        id: c.author?.id || currentUser?.id || 0,
+        name: c.author?.name || currentUser?.name || 'Você',
+        avatarUrl,
       },
-      content,
-      createdAt: new Date().toLocaleDateString('pt-BR'),
+      content: c.conteudo || content,
+      createdAt: c.createdAt || new Date().toLocaleDateString('pt-BR'),
     };
-
-    if (!MOCK_EVENT_COMMENTS[eventId]) {
-      MOCK_EVENT_COMMENTS[eventId] = [];
-    }
-    MOCK_EVENT_COMMENTS[eventId] = [...MOCK_EVENT_COMMENTS[eventId], newComment];
-    return newComment;
   },
 
   async deleteComment(commentId: string | number): Promise<void> {

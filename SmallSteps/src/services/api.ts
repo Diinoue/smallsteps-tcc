@@ -1,14 +1,14 @@
 import axios from 'axios';
 import Constants from 'expo-constants';
 import { Platform } from 'react-native';
-import * as SecureStore from 'expo-secure-store';
+import { authSession } from './authSession';
 
 const getBaseUrl = (): string => {
-  if(process.env.EXPO_PUBLIC_API_URL) {
+  if (process.env.EXPO_PUBLIC_API_URL) {
     return process.env.EXPO_PUBLIC_API_URL;
   }
 
-  if (Platform.OS === "web") {
+  if (Platform.OS === 'web') {
     return 'http://localhost:8080';
   }
 
@@ -28,30 +28,37 @@ export const api = axios.create({
   },
 });
 
+const isPublicAuthRoute = (method?: string, url?: string): boolean => {
+  const ehCadastro =
+    method?.toLowerCase() === 'post' && (url === '/users' || url === '/users/');
+  const ehLogin = url === '/login' || url === '/login/' || Boolean(url?.endsWith('/login'));
+  return ehCadastro || ehLogin;
+};
+
 // Interceptor para injetar o JWT nas requisições
 api.interceptors.request.use(async (config) => {
-  // Apenas cadastro de novo usuário (POST /users) e login não precisam de JWT
-  const ehCadastro = config.method?.toLowerCase() === 'post' && (config.url === '/users' || config.url === '/users/');
-  const ehLogin = config.url?.includes('/login');
-  const ehRotaPublica = ehCadastro || ehLogin;
-
-  if (!ehRotaPublica) {
-    const token = await SecureStore.getItemAsync('token');
+  if (!isPublicAuthRoute(config.method, config.url)) {
+    const token = await authSession.getToken();
     if (token && config.headers) {
       config.headers.Authorization = `Bearer ${token}`;
     }
   }
-  
+
   return config;
 });
 
-// // Interceptor para tratar 401 do Spring Security
-// api.interceptors.response.use(
-//   (response) => response,
-//   (error) => {
-//     if (error.response?.status === 401) {
-//       // Ex: Redirecionar para login ou limpar sessão
-//     }
-//     return Promise.reject(error);
-//   }
-// );
+// Interceptor para tratar 401 do Spring Security (sessão ausente/expirada)
+api.interceptors.response.use(
+  (response) => response,
+  async (error) => {
+    const status = error?.response?.status;
+    const reqUrl = error?.config?.url;
+    const reqMethod = error?.config?.method;
+
+    if (status === 401 && !isPublicAuthRoute(reqMethod, reqUrl)) {
+      await authSession.handleUnauthorized();
+    }
+
+    return Promise.reject(error);
+  }
+);

@@ -110,19 +110,19 @@ export function formatTimeLeft(
   prazoOrMs: string | number | null,
   agora: Date = new Date(),
 ): string {
-  if (prazoOrMs == null) return 'Pending';
+  if (prazoOrMs == null) return 'Pendente';
 
   let diffMs: number;
   if (typeof prazoOrMs === 'number') {
     diffMs = prazoOrMs;
   } else {
     const prazo = parseData(prazoOrMs);
-    if (!Number.isFinite(prazo) || Number.isNaN(prazo)) return 'Pending';
+    if (!Number.isFinite(prazo) || Number.isNaN(prazo)) return 'Pendente';
     diffMs = prazo - agora.getTime();
   }
 
-  if (!Number.isFinite(diffMs)) return 'Pending';
-  if (diffMs <= 0) return 'Deadline passed';
+  if (!Number.isFinite(diffMs)) return 'Pendente';
+  if (diffMs <= 0) return 'Prazo encerrado';
 
   const totalMin = Math.floor(diffMs / 60000);
   const hours = Math.floor(totalMin / 60);
@@ -131,12 +131,12 @@ export function formatTimeLeft(
   if (hours >= 24) {
     const days = Math.floor(hours / 24);
     const remHours = hours % 24;
-    const dayLabel = days === 1 ? 'day' : 'days';
-    const hourLabel = remHours === 1 ? 'hour' : 'hours';
-    return `${days} ${dayLabel} ${remHours} ${hourLabel} left`;
+    const dayLabel = days === 1 ? 'dia' : 'dias';
+    const hourLabel = remHours === 1 ? 'hora' : 'horas';
+    return `${days} ${dayLabel} e ${remHours} ${hourLabel} restantes`;
   }
-  if (hours > 0) return `${hours}h ${minutes}min left`;
-  return `${minutes} min left`;
+  if (hours > 0) return `${hours}h ${minutes}min restantes`;
+  return `${minutes} min restantes`;
 }
 
 export function StreakCard({
@@ -171,16 +171,16 @@ export function StreakCard({
   const getSubtext = (): string => {
     switch (status) {
       case StreakStatus.ATIVO:
-        return 'Step Taken!';
+        return 'Passo concluído!';
       case StreakStatus.PENDENTE: {
         const janela = getJanela(ultimoPrazo, intervaloAtividade);
-        if (!janela) return 'Make a post to start!';
+        if (!janela) return 'Faça uma publicação para começar!';
         const now = Date.now();
         const alvoMs = now > janela.prazo ? janela.fim - now : janela.prazo - now;
         return formatTimeLeft(alvoMs);
       }
       case StreakStatus.CONGELADO:
-        return 'Frozen';
+        return 'Congelada';
       default:
         return '';
     }
@@ -194,10 +194,10 @@ export function StreakCard({
           <Text style={[styles.daysNumber, { color: statusColor }]}>{days}</Text>
           <View style={styles.daysLabelColumn}>
             <Text style={[styles.daysText, { color: statusColor }]}>
-              {days === 1 ? 'DAY' : 'DAYS'}
+              {days === 1 ? 'DIA' : 'DIAS'}
             </Text>
             <Text style={[styles.streakSublabel, { color: statusColor }]}>
-              Current Streak
+              Sequência Atual
             </Text>
           </View>
         </View>

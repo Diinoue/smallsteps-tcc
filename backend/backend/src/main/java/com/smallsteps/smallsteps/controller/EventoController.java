@@ -3,6 +3,7 @@ package com.smallsteps.smallsteps.controller;
 import java.util.List;
 
 import org.springframework.http.HttpStatus;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -16,6 +17,8 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.smallsteps.smallsteps.dto.CriarEventoDTO;
 import com.smallsteps.smallsteps.dto.EventoResponseDTO;
+import com.smallsteps.smallsteps.security.AuthenticatedUserService;
+import com.smallsteps.smallsteps.security.CommunityAuthorizationService;
 import com.smallsteps.smallsteps.service.EventoService;
 
 @CrossOrigin
@@ -23,9 +26,16 @@ import com.smallsteps.smallsteps.service.EventoService;
 public class EventoController {
 
     private final EventoService eventoService;
+    private final AuthenticatedUserService authenticatedUserService;
+    private final CommunityAuthorizationService communityAuthService;
 
-    public EventoController(EventoService eventoService) {
+    public EventoController(
+            EventoService eventoService,
+            AuthenticatedUserService authenticatedUserService,
+            CommunityAuthorizationService communityAuthService) {
         this.eventoService = eventoService;
+        this.authenticatedUserService = authenticatedUserService;
+        this.communityAuthService = communityAuthService;
     }
 
     // Listar eventos da comunidade
@@ -34,12 +44,16 @@ public class EventoController {
         return eventoService.findByComunidade(communityId);
     }
 
-    // Criar evento dentro da comunidade
+    // Criar evento dentro da comunidade (somente ADMIN ou DONO)
     @PostMapping("/community/{communityId}/events")
     @ResponseStatus(HttpStatus.CREATED)
     public EventoResponseDTO createEvent(
             @PathVariable int communityId,
-            @RequestBody CriarEventoDTO dto) {
+            @RequestBody CriarEventoDTO dto,
+            Authentication authentication) {
+        int currentUserId = authenticatedUserService.getCurrentUserId(authentication);
+        communityAuthService.requireAdminOrOwner(currentUserId, communityId);
+        dto.setIdUsuario(currentUserId);
         return eventoService.create(communityId, dto);
     }
 
@@ -58,18 +72,25 @@ public class EventoController {
         return eventoService.findById(id);
     }
 
-    // Atualizar evento por ID
+    // Atualizar evento por ID (somente ADMIN ou DONO da comunidade)
     @PutMapping("/events/{id}")
     public EventoResponseDTO updateEvent(
             @PathVariable int id,
-            @RequestBody CriarEventoDTO dto) {
+            @RequestBody CriarEventoDTO dto,
+            Authentication authentication) {
+        int currentUserId = authenticatedUserService.getCurrentUserId(authentication);
+        int communityId = eventoService.getCommunityIdByEventId(id);
+        communityAuthService.requireAdminOrOwner(currentUserId, communityId);
         return eventoService.update(id, dto);
     }
 
-    // Deletar evento por ID
+    // Deletar evento por ID (somente ADMIN ou DONO da comunidade)
     @DeleteMapping("/events/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void deleteEvent(@PathVariable int id) {
+    public void deleteEvent(@PathVariable int id, Authentication authentication) {
+        int currentUserId = authenticatedUserService.getCurrentUserId(authentication);
+        int communityId = eventoService.getCommunityIdByEventId(id);
+        communityAuthService.requireAdminOrOwner(currentUserId, communityId);
         eventoService.delete(id);
     }
 }

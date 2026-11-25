@@ -6,7 +6,7 @@ const MOCK_EVENTS: Record<number | string, CommunityEvent[]> = {
     {
       id: 1,
       idComunidade: 1,
-      idUsuario: 1,
+      idUsuario: 0,
       nomeUsuario: 'Lagarto Voador',
       titulo: 'Encontro musica',
       local: 'Travessa das Flores, 789, Bairro Novo, Vila Fictícia, RJ',
@@ -145,7 +145,7 @@ export const eventService = {
     const newEvent: CommunityEvent = {
       id: Date.now(),
       idComunidade: Number(communityId) || 1,
-      idUsuario: 1,
+      idUsuario: input.idUsuario || 0,
       nomeUsuario: 'Você',
       titulo: input.titulo,
       local: input.local,
@@ -244,7 +244,7 @@ export const eventService = {
       updatedEvent = {
         id: eventId,
         idComunidade: input.idComunidade || 1,
-        idUsuario: 1,
+        idUsuario: input.idUsuario || 0,
         nomeUsuario: 'Você',
         titulo: input.titulo || '',
         local: input.local || '',

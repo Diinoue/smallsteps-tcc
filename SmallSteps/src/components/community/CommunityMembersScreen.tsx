@@ -1,5 +1,6 @@
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { useThemeColor } from '@/hooks/use-theme-color';
+import { useProfile } from '@/src/context/ProfileContext';
 import { CommunityMemberItem, communityService } from '@/src/services/communityService';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { useRouter } from 'expo-router';
@@ -46,11 +47,13 @@ export function CommunityMembersScreen({
   communityName,
   isPrivate,
   userRole,
-  currentUserId = 1,
+  currentUserId: currentUserIdProp,
   onBackPress,
   onAddMembersPress,
 }: CommunityMembersScreenProps) {
   const router = useRouter();
+  const { profile } = useProfile();
+  const currentUserId = currentUserIdProp ?? profile.id;
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
 
@@ -215,7 +218,7 @@ export function CommunityMembersScreen({
                   { color: isHighlighted ? ACCENT_GREEN : textMuted },
                 ]}
               >
-                {item.pontos} points
+                {item.pontos} {item.pontos === 1 ? 'ponto' : 'pontos'}
               </Text>
               {roleLabel ? (
                 <Text style={[styles.roleText, { color: textMuted }]}>
@@ -266,7 +269,8 @@ export function CommunityMembersScreen({
                   {selectedMember.nome}
                 </Text>
                 <Text style={[styles.sheetSubtitle, { color: textMuted }]}>
-                  {getRoleDisplay(selectedMember.cargo) || 'Membro'} • {selectedMember.pontos} points
+                  {getRoleDisplay(selectedMember.cargo) || 'Membro'} • {selectedMember.pontos}{' '}
+                  {selectedMember.pontos === 1 ? 'ponto' : 'pontos'}
                 </Text>
 
                 <View style={[styles.sheetDivider, { backgroundColor: borderColor }]} />
@@ -357,7 +361,7 @@ export function CommunityMembersScreen({
           >
             <MaterialIcons name="arrow-back" size={24} color={textColor} />
           </TouchableOpacity>
-          <Text style={[styles.headerTitle, { color: textColor }]}>Members</Text>
+          <Text style={[styles.headerTitle, { color: textColor }]}>Membros</Text>
         </View>
 
         <View style={styles.headerActions}>

@@ -340,7 +340,7 @@ export function CommunityEventsScreen({
             </TouchableOpacity>
           )}
           <Text style={[styles.headerTitle, { color: textColor }]}>
-            Events
+            Eventos
           </Text>
         </View>
 

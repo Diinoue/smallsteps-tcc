@@ -4,11 +4,12 @@ import { GoalTimelineCard } from '@/src/components/dashboard/GoalTimelineCard';
 import { StreakCard } from '@/src/components/dashboard/StreakCard';
 import { Button } from '@/src/components/ui/Button';
 import { DashboardDTOResponse } from '@/src/dto/DashboardResponse';
-import { screenService } from '@/src/services';
+import { goalService, screenService } from '@/src/services';
 import { useFocusEffect, useRouter } from 'expo-router';
 import React, { useCallback, useRef, useState } from 'react';
 import {
   ActivityIndicator,
+  Alert,
   RefreshControl,
   ScrollView,
   StatusBar,
@@ -43,7 +44,7 @@ export default function DashboardScreen() {
     if (!hasLoadedRef.current) setIsLoading(true);
 
     try {
-      const response = await screenService.consultarDashboard(1);
+      const response = await screenService.consultarDashboard();
       setDashboardData(response);
       hasLoadedRef.current = true;
     } catch (error) {
@@ -78,10 +79,23 @@ export default function DashboardScreen() {
     router.push(`/goal/edit/${goalId}`);
   };
 
-  const handleDeleteGoal = async (goalId: number) => {
-    // TODO: implementar exclusão via service e recarregar o dashboard
-    // await goalService.deleteGoal(goalId);
-    // await loadDashboardData();
+  const handleDeleteGoal = (goalId: number) => {
+    Alert.alert('Excluir Meta', 'Tem certeza que deseja excluir esta meta?', [
+      { text: 'Cancelar', style: 'cancel' },
+      {
+        text: 'Excluir',
+        style: 'destructive',
+        onPress: async () => {
+          try {
+            await goalService.deleteGoal(goalId);
+            await loadDashboardData(true);
+          } catch (error) {
+            console.error('Erro ao excluir meta:', error);
+            Alert.alert('Erro', 'Não foi possível excluir a meta.');
+          }
+        },
+      },
+    ]);
   };
 
   return (
@@ -106,7 +120,7 @@ export default function DashboardScreen() {
         {/* Screen Header */}
         <View style={styles.header}>
           <Text style={[styles.headerTitle, { color: textColor }]}>
-            Your Dashboard
+            Seu Painel
           </Text>
         </View>
 
@@ -130,10 +144,10 @@ export default function DashboardScreen() {
             {/* 2. Current Goals Section Header */}
             <View style={styles.goalsHeaderRow}>
               <Text style={[styles.sectionTitle, { color: textColor }]}>
-                Current Goals
+                Metas Atuais
               </Text>
               <Button
-                title="add goal"
+                title="nova meta"
                 variant="pill"
                 customColor={activeColor}
                 size="small"

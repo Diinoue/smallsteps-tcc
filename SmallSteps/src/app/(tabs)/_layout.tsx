@@ -44,11 +44,11 @@ export default function TabLayout() {
         }}
       />
 
-      {/* 2. Center Tab: Dashboard */}
+      {/* 2. Center Tab: Painel */}
       <Tabs.Screen
         name="index"
         options={{
-          title: 'Dashboard',
+          title: 'Painel',
           tabBarIcon: ({ color }) => <MaterialIcons size={32} name="bolt" color={color} />,
         }}
       />

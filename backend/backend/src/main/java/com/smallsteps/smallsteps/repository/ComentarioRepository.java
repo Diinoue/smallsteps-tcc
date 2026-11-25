@@ -16,4 +16,8 @@ public interface ComentarioRepository extends JpaRepository<Comentario, Integer>
     List<Comentario> findByEventoIdOrderByDtCriacaoAsc(@Param("eventoId") int eventoId);
 
     int countByEventoId(int eventoId);
+
+    void deleteByPostId(int postId);
+
+    void deleteByEventoId(int eventoId);
 }

@@ -11,6 +11,21 @@ interface AchievementCardProps {
   onViewPress?: (id: number) => void;
 }
 
+function formatJourneyDurationPtBr(raw: string): string {
+  if (!raw) return '';
+  const monthMatch = raw.match(/^(\d+)\s+Months?\s+journey$/i);
+  if (monthMatch) {
+    const n = Number(monthMatch[1]);
+    return `Jornada de ${n} ${n === 1 ? 'mês' : 'meses'}`;
+  }
+  const dayMatch = raw.match(/^(\d+)\s+Days?\s+journey$/i);
+  if (dayMatch) {
+    const n = Number(dayMatch[1]);
+    return `Jornada de ${n} ${n === 1 ? 'dia' : 'dias'}`;
+  }
+  return raw;
+}
+
 export function AchievementCard({
   achievement,
   layoutVariant = 'left',
@@ -66,14 +81,14 @@ export function AchievementCard({
       <View style={styles.metaRow}>
         <MaterialIcons name="schedule" size={14} color={textMuted} />
         <Text style={[styles.journeyText, { color: textSecondary }]} numberOfLines={1}>
-          {achievement.journeyDuration}
+          {formatJourneyDurationPtBr(achievement.journeyDuration)}
         </Text>
       </View>
 
       <View style={styles.metaRow}>
         <MaterialIcons name="check-circle-outline" size={14} color={activeColor} />
         <Text style={[styles.subGoalsText, { color: textSecondary }]}>
-          {achievement.subGoalsCount} Sub-Goals
+          {achievement.subGoalsCount} {achievement.subGoalsCount === 1 ? 'Submeta' : 'Submetas'}
         </Text>
       </View>
 

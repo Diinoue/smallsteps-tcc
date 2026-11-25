@@ -17,6 +17,7 @@ import { IconSymbol } from '@/src/components/ui/icon-symbol';
 import { Card } from '@/src/components/ui/Card';
 import { PostMediaCard } from '@/src/components/community/PostMediaCard';
 import { MediaViewer } from '@/src/components/community/MediaViewer';
+import { useProfile } from '@/src/context/ProfileContext';
 import { goalService } from '@/src/services';
 import { GoalDTOResponse, SubGoalDTOResponse } from '@/src/dto/DashboardResponse';
 
@@ -36,6 +37,7 @@ const formatDate = (iso: string | null | undefined): string => {
 export default function GoalDetailScreen() {
   const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
+  const { profile } = useProfile();
 
   const [goal, setGoal] = useState<GoalDTOResponse | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -74,8 +76,7 @@ export default function GoalDetailScreen() {
     : [];
 
   const hasMilestone = !!goal?.milestone?.trim();
-  const CURRENT_USER_ID = 1;
-  const isAuthor = goal != null && goal.idUsuario === CURRENT_USER_ID;
+  const isAuthor = goal != null && profile.id > 0 && goal.idUsuario === profile.id;
 
   return (
     <SafeAreaView style={[styles.safeArea, { backgroundColor }]}>

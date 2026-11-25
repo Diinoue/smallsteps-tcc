@@ -196,9 +196,9 @@ export function CommunityAddMembersScreen({
             />
           }
         >
-          {/* Seção: Requests */}
+          {/* Seção: Solicitações */}
           <View style={[styles.sectionHeader, { borderBottomColor: borderColor }]}>
-            <Text style={[styles.sectionTitle, { color: textColor }]}>Requests</Text>
+            <Text style={[styles.sectionTitle, { color: textColor }]}>Solicitações</Text>
             {requests.length > 0 ? (
               <View style={styles.countPill}>
                 <Text style={styles.countPillText}>{requests.length}</Text>
@@ -285,10 +285,10 @@ export function CommunityAddMembersScreen({
             })
           )}
 
-          {/* Seção: Send Invite */}
+          {/* Seção: Enviar Convite */}
           <View style={styles.inviteSection}>
             <Text style={[styles.sectionTitle, { color: textColor, marginBottom: 14 }]}>
-              Send Invite
+              Enviar Convite
             </Text>
 
             <TouchableOpacity

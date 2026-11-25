@@ -1,12 +1,12 @@
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { useThemeColor } from '@/hooks/use-theme-color';
+import { useProfile } from '@/src/context/ProfileContext';
 import { CommunityItem, communityService } from '@/src/services';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { useFocusEffect, useNavigation, useRouter } from 'expo-router';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
-  Alert,
   BackHandler,
   FlatList,
   Image,
@@ -18,8 +18,6 @@ import {
   View,
 } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
-import { loginService } from '@/src/services/loginService';
-import { Button } from '@/src/components/ui/Button';
 import { CommunityFeedScreen } from '@/src/components/community/CommunityFeedScreen';
 import { CommunityEventsScreen } from '@/src/components/community/CommunityEventsScreen';
 import { CommunityMembersScreen } from '@/src/components/community/CommunityMembersScreen';
@@ -33,6 +31,7 @@ const ACCENT_GREEN = '#34C759';
 export default function CommunitiesScreen() {
   const router = useRouter();
   const navigation = useNavigation();
+  const { profile } = useProfile();
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
 
@@ -84,6 +83,11 @@ export default function CommunitiesScreen() {
           setCurrentView('members');
           return true;
         }
+        if (currentView === 'comments') {
+          setSelectedPostForComments(null);
+          setCurrentView('feed');
+          return true;
+        }
         if (currentView === 'events' || currentView === 'members' || currentView === 'edit') {
           setCurrentView('feed');
           return true;
@@ -126,7 +130,7 @@ export default function CommunitiesScreen() {
 
   useFocusEffect(
     useCallback(() => {
-      loadCommunities(false);
+      loadCommunities(true);
     }, [loadCommunities])
   );
 
@@ -181,17 +185,6 @@ export default function CommunitiesScreen() {
     );
   };
 
-// TEMPORÁRIO: exibe o JWT salvo no SecureStore
-  const handlePrintJwt = async () => {
-    await loginService.getValueFor();
-  };
-
-  // TEMPORÁRIO: remove o JWT do SecureStore
-  const handleClearJwt = async () => {
-    await loginService.removeToken();
-    Alert.alert('JWT removido', 'O token foi apagado do armazenamento seguro.');
-  };
-
   // Se uma comunidade for selecionada, exibe a tela de feed, eventos, membros ou adicionar membros
   if (selectedCommunity) {
     const isAdminOrOwner =
@@ -203,7 +196,7 @@ export default function CommunitiesScreen() {
         <CommunityEventsScreen
           communityId={selectedCommunity.id}
           communityName={selectedCommunity.nome}
-          isAdmin={isAdminOrOwner || !selectedCommunity.cargo}
+          isAdmin={isAdminOrOwner}
           userRole={selectedCommunity.cargo}
           onBackPress={() => setCurrentView('feed')}
         />
@@ -231,6 +224,7 @@ export default function CommunitiesScreen() {
           communityName={selectedCommunity.nome}
           isPrivate={isPrivateCommunity}
           userRole={selectedCommunity.cargo}
+          currentUserId={profile.id}
           onBackPress={() => setCurrentView('feed')}
           onAddMembersPress={
             isPrivateCommunity && isAdminOrOwner
@@ -263,11 +257,12 @@ export default function CommunitiesScreen() {
       );
     }
 
-    if (currentView === 'edit') {
+    if (currentView === 'edit' && selectedCommunity.cargo === 'DONO') {
       return (
         <CommunityEditScreen
           communityId={selectedCommunity.id}
           initialCommunity={selectedCommunity}
+          userRole={selectedCommunity.cargo}
           onBackPress={() => setCurrentView('feed')}
           onSaved={(updated) => {
             setSelectedCommunity((prev) => (prev ? { ...prev, ...updated } : prev));
@@ -318,17 +313,17 @@ export default function CommunitiesScreen() {
 
       {/* Header com Título */}
       <View style={styles.header}>
-        <Text style={[styles.title, { color: textColor }]}>Your communities</Text>
+        <Text style={[styles.title, { color: textColor }]}>Suas comunidades</Text>
       </View>
 
-      {/* Botão "Add community" posicionado acima da lista conforme solicitado */}
+      {/* Botão "Adicionar comunidade" posicionado acima da lista conforme solicitado */}
       <TouchableOpacity
         style={[styles.addCommunityButton, { borderBottomColor: borderColor }]}
         onPress={handleAddCommunity}
         activeOpacity={0.7}
       >
         <MaterialIcons name="add-circle-outline" size={26} color={textColor} />
-        <Text style={[styles.addCommunityText, { color: textColor }]}>Add community</Text>
+        <Text style={[styles.addCommunityText, { color: textColor }]}>Adicionar comunidade</Text>
       </TouchableOpacity>
 
       {/* Conteúdo principal / Lista */}
@@ -354,27 +349,8 @@ export default function CommunitiesScreen() {
           ListEmptyComponent={
             <View style={styles.emptyContainer}>
               <Text style={[styles.emptyText, { color: textMuted }]}>
-                Nenhuma comunidade encontrada.
+                Você ainda não participa de nenhuma comunidade.
               </Text>
-              <TouchableOpacity
-                style={{
-                  marginTop: 16,
-                  paddingVertical: 10,
-                  paddingHorizontal: 16,
-                  borderRadius: 20,
-                  backgroundColor: isDark ? '#2D3748' : '#E2E8F0',
-                }}
-                onPress={() =>
-                  setSelectedCommunity({
-                    id: 1,
-                    nome: 'Grupo #1 musica',
-                  })
-                }
-              >
-                <Text style={{ fontWeight: '700', color: textColor }}>
-                  Ver Grupo #1 musica (Protótipo)
-                </Text>
-              </TouchableOpacity>
             </View>
           }
         />

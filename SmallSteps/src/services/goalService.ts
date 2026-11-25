@@ -14,7 +14,7 @@ export interface SubGoalRequest {
 export interface CreateGoalRequest {
   titulo: string;
   milestone?: string | null;
-  idUsuario: number;
+  idUsuario?: number;
   visivel?: boolean;
   dtInicio?: string | null;
   dtFim?: string | null;
@@ -35,7 +35,18 @@ export interface UpdateGoalRequest {
 
 export const goalService = {
   /**
-   * Buscar todas as metas de um usuário (não concluídas primeiro, concluídas depois).
+   * Buscar todas as metas do usuário autenticado na sessão atual.
+   */
+  async getMyGoals(): Promise<GoalDTOResponse[]> {
+    const { data } = await api.get<GoalDTOResponse[]>('/goals/me');
+    return (data || []).map((g) => ({
+      ...g,
+      urlMidia: formatImageUrl(g.urlMidia),
+    }));
+  },
+
+  /**
+   * Buscar todas as metas de um usuário específico (ex.: ao visualizar perfil de outro usuário).
    */
   async getGoalsByUser(userId: number): Promise<GoalDTOResponse[]> {
     const { data } = await api.get<GoalDTOResponse[]>(`/goals/usuario/${userId}`);

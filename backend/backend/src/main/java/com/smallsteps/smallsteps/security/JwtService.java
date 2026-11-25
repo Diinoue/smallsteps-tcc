@@ -20,19 +20,24 @@ public class JwtService {
 
     public String generateToken (Authentication authentication) {
         Instant now = Instant.now();
-        long expiry = 3600L;
+        long expiry = 86400L; // 24 horas
 
         String scopes = authentication.getAuthorities().stream()
                         .map(GrantedAuthority::getAuthority)
                         .collect(Collectors.joining(" "));
 
-        var claims = JwtClaimsSet.builder()
+        var claimsBuilder = JwtClaimsSet.builder()
             .issuer("smallsteps")
             .issuedAt(now)
             .expiresAt(now.plusSeconds(expiry))
             .subject(authentication.getName())
-            .claim("scope", scopes)
-            .build();
+            .claim("scope", scopes);
+
+        if (authentication.getPrincipal() instanceof UserAuthenticated userAuth) {
+            claimsBuilder.claim("userId", userAuth.getId());
+        }
+
+        var claims = claimsBuilder.build();
 
         return encoder.encode(
             JwtEncoderParameters.from(claims))

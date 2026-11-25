@@ -365,10 +365,10 @@ export default function EditProfileScreen() {
             </View>
           </View>
 
-          {/* 3. Card de Duração do Ciclo da Streak */}
+          {/* 3. Card de Duração do Ciclo da Sequência */}
           <View style={[styles.card, { backgroundColor: surfaceColor, borderColor }]}>
             <Text style={[styles.sectionTitle, { color: textColor, marginBottom: 4 }]}>
-              Ciclo da Streak
+              Ciclo da Sequência
             </Text>
             <Text style={[styles.sectionSubtitle, { color: textMuted }]}>
               Defina a duração de cada ciclo para manter sua sequência ativa (ex.: 3 dias, 1 semana, 2 semanas).
@@ -411,7 +411,7 @@ export default function EditProfileScreen() {
             <SquareCheckbox
               checked={publicStreak}
               onPress={() => setPublicStreak(!publicStreak)}
-              label="Exibir Streak publicamente"
+              label="Exibir sequência publicamente"
               size={22}
               color={ACCENT_GREEN}
             />
@@ -616,7 +616,7 @@ export default function EditProfileScreen() {
                   </ScrollView>
                 ) : (
                   <Text style={[styles.emptyNotice, { color: textMuted, marginBottom: 12 }]}>
-                    Nenhuma tag encontrada para "{tagSearchQuery.trim()}".
+                    {`Nenhuma tag encontrada para "${tagSearchQuery.trim()}".`}
                   </Text>
                 )}
 

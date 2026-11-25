@@ -53,7 +53,7 @@ export default function FindCommunity() {
     }
 
     try {
-      const data = await getPublicCommunities(search, 1);
+      const data = await getPublicCommunities(search);
       // Filtra para garantir que apenas comunidades que o usuário NÃO participa sejam exibidas
       setCommunities((data || []).filter((c) => !c.jaParticipa));
     } catch (error) {
@@ -257,7 +257,6 @@ export default function FindCommunity() {
       <CommunityPreviewModal
         visible={!!selectedCommunity}
         community={selectedCommunity}
-        userId={1}
         onClose={() => setSelectedCommunity(null)}
         onJoined={handleJoinedCommunity}
       />

@@ -12,6 +12,8 @@ Campo de entrada de dados em um formulário
     5) ...textInputProps: Se tiver mais algum prop que o TextInput usar, pode botar na declaração do FormField de boa.
 */
 
+import { useColorScheme } from "@/hooks/use-color-scheme";
+import { useThemeColor } from "@/hooks/use-theme-color";
 import { Control, Controller, FieldPath, FieldValues } from "react-hook-form";
 import { StyleSheet, Text, TextInput, TextInputProps, View } from "react-native";
 
@@ -29,16 +31,31 @@ export default function FormField<T extends FieldValues>({
   error,
   ...textInputProps
 }: FormFieldProps<T>) {
+  const isDark = useColorScheme() === "dark";
+  const textColor = useThemeColor({}, "text");
+  const textMuted = useThemeColor({}, "textMuted");
+  const borderColor = useThemeColor({}, "border");
+  const errorColor = useThemeColor({}, "error");
+  const inputBg = isDark ? "#1F2937" : "#FFFFFF";
+
   return (
     <View>
-      <Text style={styles.label}>{label}</Text>
+      <Text style={[styles.label, { color: textColor }]}>{label}</Text>
 
       <Controller
         control={control}
         name={name}
         render={({ field: { onChange, onBlur, value } }) => (
           <TextInput
-            style={styles.field}
+            style={[
+              styles.field,
+              {
+                backgroundColor: inputBg,
+                borderColor: error ? errorColor : borderColor,
+                color: textColor,
+              },
+            ]}
+            placeholderTextColor={textMuted}
             onChangeText={onChange}
             onBlur={onBlur}
             value={value}
@@ -47,7 +64,7 @@ export default function FormField<T extends FieldValues>({
         )}
       />
 
-      {error && <Text style={styles.warning}>{error}</Text>}
+      {error && <Text style={[styles.warning, { color: errorColor }]}>{error}</Text>}
     </View>
   );
 }
@@ -60,15 +77,14 @@ const styles = StyleSheet.create({
   },
   field: {
     borderWidth: 1,
-    borderRadius: 6,
-    borderColor: "#c5c5c5",
-    paddingVertical: 10,
-    paddingHorizontal: 12,
+    borderRadius: 12,
+    paddingVertical: 12,
+    paddingHorizontal: 14,
+    fontSize: 15,
     marginBottom: 16,
   },
   warning: {
     fontSize: 13,
-    color: "#e63946",
     marginTop: -12,
     marginBottom: 12,
   },

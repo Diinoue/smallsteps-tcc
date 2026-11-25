@@ -56,7 +56,7 @@ export default function AddCommunity() {
 
     try {
       setIsSearchingCode(true);
-      const community = await communityService.getCommunityByCode(trimmed, 1);
+      const community = await communityService.getCommunityByCode(trimmed);
       setFoundCommunity(community);
     } catch (error: any) {
       const status = error?.response?.status;
@@ -122,9 +122,9 @@ export default function AddCommunity() {
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
         >
-          {/* Section: Use link */}
+          {/* Section: Usar link ou código */}
           <View style={styles.useLinkSection}>
-            <Text style={[styles.useLinkLabel, { color: textColor }]}>Use link:</Text>
+            <Text style={[styles.useLinkLabel, { color: textColor }]}>Usar link ou código:</Text>
 
             <View
               style={[
@@ -173,13 +173,13 @@ export default function AddCommunity() {
             onPress={handleFindCommunity}
             activeOpacity={0.75}
           >
-            <Text style={styles.cardTitle}>Find{'\n'}Community</Text>
+            <Text style={styles.cardTitle}>Buscar{'\n'}Comunidade</Text>
             <View style={styles.iconWrapper}>
               <MaterialIcons name="search" size={38} color={ACCENT_GREEN} />
             </View>
           </TouchableOpacity>
 
-          {/* Card 2: Create Community */}
+          {/* Card 2: Criar Comunidade */}
           <TouchableOpacity
             style={[
               styles.actionCard,
@@ -191,7 +191,7 @@ export default function AddCommunity() {
             onPress={handleCreateCommunity}
             activeOpacity={0.75}
           >
-            <Text style={styles.cardTitle}>Create{'\n'}Community</Text>
+            <Text style={styles.cardTitle}>Criar{'\n'}Comunidade</Text>
             <View style={styles.iconWrapper}>
               <View style={styles.plusSquareIcon}>
                 <MaterialIcons name="add" size={22} color={ACCENT_GREEN} />
@@ -204,7 +204,6 @@ export default function AddCommunity() {
       <CommunityPreviewModal
         visible={!!foundCommunity}
         community={foundCommunity}
-        userId={1}
         onClose={() => setFoundCommunity(null)}
         onJoined={handleJoinedFromModal}
         onRequested={(updated) => setFoundCommunity(updated)}

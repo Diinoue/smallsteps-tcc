@@ -17,17 +17,21 @@ import { useRouter, useLocalSearchParams, useFocusEffect } from 'expo-router';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { useThemeColor } from '@/hooks/use-theme-color';
-import { useProfile } from '@/src/context/ProfileContext';
+import { useProfile, UserProfileData } from '@/src/context/ProfileContext';
 import { AchievementCard } from '@/src/components/profile/AchievementCard';
 import { CurrentGoalCard } from '@/src/components/profile/CurrentGoalCard';
 import { loginService } from '@/src/services/loginService';
+import { userService } from '@/src/services/userService';
 
 const ACCENT_GREEN = '#34C759';
 
 export default function ProfileScreen() {
   const router = useRouter();
   const params = useLocalSearchParams<{ id?: string; isPublic?: string }>();
-  const isOwnProfile = !params.id && params.isPublic !== 'true';
+  const { profile: ownProfile, isLoading: isOwnLoading, carregarPerfil, limparPerfil } = useProfile();
+
+  const paramId = params.id ? Number(params.id) : undefined;
+  const isOwnProfile = (!paramId || (ownProfile.id > 0 && paramId === ownProfile.id)) && params.isPublic !== 'true';
 
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
@@ -44,22 +48,42 @@ export default function ProfileScreen() {
   const tagBg = isDark ? '#1E293B' : '#E8F2FF';
   const tagTextColor = isDark ? '#60A5FA' : '#2563EB';
 
-  const { profile, isLoading, carregarPerfil } = useProfile();
+  const [viewedProfile, setViewedProfile] = useState<UserProfileData | null>(null);
+  const [isViewingLoading, setIsViewingLoading] = useState(false);
   const [menuVisible, setMenuVisible] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [avatarError, setAvatarError] = useState(false);
 
+  const profile = isOwnProfile ? ownProfile : viewedProfile || ownProfile;
+  const isLoading = isOwnProfile ? isOwnLoading : isViewingLoading;
+
+  const loadTargetProfile = useCallback(async () => {
+    if (isOwnProfile) {
+      await carregarPerfil();
+    } else if (paramId) {
+      try {
+        setIsViewingLoading(true);
+        const dados = await userService.consultarPerfil(paramId);
+        if (dados) {
+          setViewedProfile(dados);
+        }
+      } finally {
+        setIsViewingLoading(false);
+      }
+    }
+  }, [isOwnProfile, paramId, carregarPerfil]);
+
   useFocusEffect(
     useCallback(() => {
       setAvatarError(false);
-      carregarPerfil(params.id ? Number(params.id) : undefined);
-    }, [params.id])
+      loadTargetProfile();
+    }, [loadTargetProfile])
   );
 
   const handleRefresh = async () => {
     setIsRefreshing(true);
     try {
-      await carregarPerfil(params.id ? Number(params.id) : undefined);
+      await loadTargetProfile();
     } finally {
       setIsRefreshing(false);
     }
@@ -73,11 +97,12 @@ export default function ProfileScreen() {
   const handleLogout = async () => {
     setMenuVisible(false);
     try {
+      limparPerfil();
       await loginService.logOut();
     } catch (e) {
       console.warn('Erro ao deslogar:', e);
     }
-    router.replace('/login');
+    router.replace('/(auth)/login');
   };
 
   const handleViewGoal = (goalId: number) => {
@@ -86,7 +111,7 @@ export default function ProfileScreen() {
 
   const handleViewAllGoals = () => {
     setMenuVisible(false);
-    const targetId = params.id ? Number(params.id) : profile.id || 1;
+    const targetId = paramId ?? profile.id;
     router.push({
       pathname: '/profile/goals',
       params: isOwnProfile
@@ -130,7 +155,7 @@ export default function ProfileScreen() {
             ]}
             numberOfLines={1}
           >
-            {isOwnProfile ? 'Your Profile' : profile.name || 'Perfil'}
+            {isOwnProfile ? 'Seu Perfil' : profile.name || 'Perfil'}
           </Text>
         </View>
 
@@ -326,10 +351,10 @@ export default function ProfileScreen() {
                 </Text>
                 <View style={styles.streakLabelColumn}>
                   <Text style={[styles.daysText, { color: activeColor }]}>
-                    {profile.streakCount === 1 ? 'DAY' : 'DAYS'}
+                    {profile.streakCount === 1 ? 'DIA' : 'DIAS'}
                   </Text>
                   <Text style={[styles.streakSublabel, { color: activeColor }]}>
-                    Current Streak
+                    Sequência Atual
                   </Text>
                 </View>
               </View>
@@ -353,7 +378,7 @@ export default function ProfileScreen() {
           {/* 3. Conquistas */}
           <View style={styles.sectionBlock}>
             <View style={styles.sectionHeaderRow}>
-              <Text style={[styles.sectionTitle, { color: textColor }]}>Achievements</Text>
+              <Text style={[styles.sectionTitle, { color: textColor }]}>Conquistas</Text>
               {profile.achievements && profile.achievements.length > 0 ? (
                 <View
                   style={[
@@ -398,7 +423,7 @@ export default function ProfileScreen() {
               <View style={styles.sectionHeaderBetween}>
                 <View style={styles.sectionHeaderRow}>
                   <Text style={[styles.sectionTitle, { color: textColor }]}>
-                    Current Goals
+                    Metas Atuais
                   </Text>
                   {profile.currentGoals && profile.currentGoals.length > 0 ? (
                     <View

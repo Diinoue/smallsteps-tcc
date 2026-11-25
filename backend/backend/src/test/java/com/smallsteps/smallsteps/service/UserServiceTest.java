@@ -183,7 +183,7 @@ public class UserServiceTest {
     @Test
     @DisplayName("Deve retornar todas as tags disponíveis")
     void deveRetornarTodasAsTags() {
-        when(tagRepository.findAll()).thenReturn(List.of(
+        when(tagRepository.findAllByOrderByDescricaoAsc()).thenReturn(List.of(
                 new Tag(1, "Piano"),
                 new Tag(2, "Jazz"),
                 new Tag(3, "Iniciante")

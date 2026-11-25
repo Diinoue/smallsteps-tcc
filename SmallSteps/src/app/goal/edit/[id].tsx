@@ -420,7 +420,7 @@ export default function EditGoalScreen() {
 
                 <View style={styles.fieldGroup}>
                   <Text style={[styles.fieldLabel, { color: textMuted }]}>
-                    Objetivo Final (Milestone) *
+                    Objetivo Final *
                   </Text>
                   <TextInput
                     style={[styles.textInput, { color: textColor, borderColor }]}
