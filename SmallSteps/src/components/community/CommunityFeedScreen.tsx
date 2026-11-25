@@ -76,7 +76,7 @@ export function CommunityFeedScreen({
   const borderColor = isDark ? '#2D3748' : '#EEEEEE';
 
   const tabBarHeight = useContext(BottomTabBarHeightContext) ?? 0;
-  const { profile } = useProfile();
+  const { profile, carregarPerfil } = useProfile();
 
   const [posts, setPosts] = useState<Post[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -306,6 +306,17 @@ export function CommunityFeedScreen({
       setPosts((prev) => [newPost, ...prev]);
       setPostText('');
       handleRemoveMedia();
+
+      // Atualiza dados do perfil (streakCount, streakStatus, prazos) em segundo plano
+      carregarPerfil();
+
+      if (newPost.streakMessage) {
+        if (Platform.OS === 'web') {
+          window.alert(newPost.streakMessage);
+        } else {
+          Alert.alert('Sequência', newPost.streakMessage);
+        }
+      }
     } catch (error) {
       console.error('Erro ao criar post:', error);
       Alert.alert('Erro', 'Não foi possível publicar seu post.');

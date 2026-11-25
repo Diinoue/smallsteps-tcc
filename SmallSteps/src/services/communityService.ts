@@ -246,6 +246,8 @@ export const communityService = {
       mediaUrl,
       aspectRatio: 16 / 9,
       commentsCount: 0,
+      streakAction: p.streakAction ?? null,
+      streakMessage: p.streakMessage ?? null,
     };
   },
 

@@ -138,6 +138,9 @@ export default function DashboardScreen() {
                 ultimaAtividade={dashboardData.ultimaAtividade}
                 ultimoPrazo={dashboardData.ultimoPrazo}
                 intervaloAtividade={dashboardData.intervaloAtividade}
+                proximoIntervalo={dashboardData.proximoIntervalo}
+                cicloDescongelamento={dashboardData.cicloDescongelamento}
+                streakStatus={dashboardData.streakStatus}
               />
             )}
 

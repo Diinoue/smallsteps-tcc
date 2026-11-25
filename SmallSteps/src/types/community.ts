@@ -17,6 +17,8 @@ export interface Post {
   mediaUrl?: string | null;
   aspectRatio?: number;
   commentsCount: number;
+  streakAction?: string | null;
+  streakMessage?: string | null;
 }
 
 export interface CreatePostInput {

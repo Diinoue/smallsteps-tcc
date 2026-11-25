@@ -30,6 +30,9 @@ export interface DashboardDTOResponse {
   streakNum: number;
   ultimaAtividade: string | null;
   ultimoPrazo: string | null; // ISO-8601, ex: "2026-10-21T14:30:00"
-  intervaloAtividade: number | null; // duração em segundos, ex: 86400 = 1 dia
+  intervaloAtividade: number | string | null; // duração em segundos ou ISO-8601
+  proximoIntervalo?: number | string | null;
+  cicloDescongelamento?: boolean;
+  streakStatus?: StreakStatus | string | null;
   metas: GoalDTOResponse[];
 }

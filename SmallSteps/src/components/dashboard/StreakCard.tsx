@@ -9,6 +9,9 @@ export interface StreakCardProps {
   ultimoPrazo: string | null; // prazo (deadline) do ciclo atual
   // duração do ciclo: segundos (number) ou ISO-8601 (ex.: "PT24H"), dependendo do Jackson
   intervaloAtividade: number | string | null;
+  proximoIntervalo?: number | string | null;
+  cicloDescongelamento?: boolean;
+  streakStatus?: StreakStatus | string | null;
 }
 
 /**
@@ -43,10 +46,11 @@ function parseDuracaoSegundos(valor: number | string | null): number | null {
   return Number(d) * 86400 + Number(h) * 3600 + Number(min) * 60 + Number(s);
 }
 
-/** Retorna o prazo e o fim da carência (prazo + intervalo), ou null se os dados forem inválidos. */
+/** Retorna o prazo e o fim da carência (prazo + proximoIntervalo/intervalo), ou null se os dados forem inválidos. */
 function getJanela(
   ultimoPrazo: string | null,
   intervaloAtividade: number | string | null,
+  proximoIntervalo?: number | string | null,
 ) {
   if (!ultimoPrazo) return null;
 
@@ -55,27 +59,27 @@ function getJanela(
   if (Number.isNaN(prazo) || segundos == null || segundos <= 0) return null;
 
   const duracao = segundos * 1000;
-  return { prazo, duracao, fim: prazo + duracao };
+  const segundosProximo = parseDuracaoSegundos(proximoIntervalo ?? null);
+  const duracaoProximo =
+    segundosProximo != null && segundosProximo > 0 ? segundosProximo * 1000 : duracao;
+  return { prazo, duracao, fim: prazo + duracaoProximo };
 }
 
 /**
  * Linha do tempo (prazo = ultimoPrazo, intervalo = intervaloAtividade):
  *
- *   [prazo - intervalo ........ prazo] [prazo ........ prazo + intervalo] [prazo + intervalo ...
- *      ciclo atual (ATIVO se fez)         pendente (carência)                  CONGELADO
- *
- * - ATIVO:     o prazo está no futuro E a última atividade está em [prazo - intervalo, prazo]
- * - PENDENTE:  hoje está em [prazo, prazo + intervalo]
- *              (ou o prazo está no futuro, mas ainda não há atividade no ciclo)
- * - CONGELADO: hoje é maior que prazo + intervalo
+ *   [prazo - intervalo ........ prazo] [prazo ........ prazo + proximoIntervalo] [ ...
+ *      ciclo atual (ATIVO se fez)         pendente (próximo ciclo)                CONGELADO
  */
 export function calcularStatusStreak(
   ultimaAtividade: string | null,
   ultimoPrazo: string | null,
   intervaloAtividade: number | string | null,
   agora: Date = new Date(),
+  cicloDescongelamento = false,
+  proximoIntervalo?: number | string | null,
 ): StreakStatus {
-  const janela = getJanela(ultimoPrazo, intervaloAtividade);
+  const janela = getJanela(ultimoPrazo, intervaloAtividade, proximoIntervalo);
 
   // Usuário ainda não iniciou seu primeiro ciclo
   if (!janela) return StreakStatus.PENDENTE;
@@ -83,19 +87,21 @@ export function calcularStatusStreak(
   const { prazo, duracao, fim } = janela;
   const now = agora.getTime();
   const ultima = ultimaAtividade ? parseData(ultimaAtividade) : NaN;
-  const cicloAnteriorConcluido =
-    !Number.isNaN(ultima) && ultima >= prazo - duracao && ultima <= prazo;
+  const cicloAtualConcluido =
+    !cicloDescongelamento && !Number.isNaN(ultima) && ultima > prazo - duracao && ultima <= prazo;
 
-  // Passou do prazo + intervalo (perdeu 1+ ciclos completos)
+  // Passou do prazo + proximoIntervalo (perdeu 1+ ciclos completos)
   if (now > fim) return StreakStatus.CONGELADO;
 
-  // Passou do prazo do ciclo anterior: está no próximo ciclo imediato [prazo, prazo + intervalo]
+  // Passou do prazo do ciclo anterior: está no próximo ciclo imediato [prazo, prazo + proximoIntervalo]
   if (now > prazo) {
-    return cicloAnteriorConcluido ? StreakStatus.PENDENTE : StreakStatus.CONGELADO;
+    return cicloDescongelamento || cicloAtualConcluido
+      ? StreakStatus.PENDENTE
+      : StreakStatus.CONGELADO;
   }
 
   // Dentro do ciclo atual [prazo - intervalo, prazo]
-  if (cicloAnteriorConcluido) {
+  if (cicloAtualConcluido) {
     return StreakStatus.ATIVO;
   }
 
@@ -144,6 +150,9 @@ export function StreakCard({
   ultimaAtividade,
   ultimoPrazo,
   intervaloAtividade,
+  proximoIntervalo,
+  cicloDescongelamento = false,
+  streakStatus,
 }: StreakCardProps) {
   const activeColor = useThemeColor({}, 'streakActive');
   const warningColor = useThemeColor({}, 'streakWarning');
@@ -151,7 +160,19 @@ export function StreakCard({
   const surfaceColor = useThemeColor({}, 'surface');
 
   const days = streakNum;
-  const status = calcularStatusStreak(ultimaAtividade, ultimoPrazo, intervaloAtividade);
+  const status: StreakStatus =
+    streakStatus === StreakStatus.ATIVO ||
+    streakStatus === StreakStatus.PENDENTE ||
+    streakStatus === StreakStatus.CONGELADO
+      ? streakStatus
+      : calcularStatusStreak(
+          ultimaAtividade,
+          ultimoPrazo,
+          intervaloAtividade,
+          new Date(),
+          cicloDescongelamento,
+          proximoIntervalo,
+        );
 
   const getStatusColor = (): string => {
     switch (status) {
@@ -173,9 +194,12 @@ export function StreakCard({
       case StreakStatus.ATIVO:
         return 'Passo concluído!';
       case StreakStatus.PENDENTE: {
-        const janela = getJanela(ultimoPrazo, intervaloAtividade);
+        const janela = getJanela(ultimoPrazo, intervaloAtividade, proximoIntervalo);
         if (!janela) return 'Faça uma publicação para começar!';
         const now = Date.now();
+        if (cicloDescongelamento && now <= janela.prazo) {
+          return `Em descongelamento • ${formatTimeLeft(janela.prazo - now)}`;
+        }
         const alvoMs = now > janela.prazo ? janela.fim - now : janela.prazo - now;
         return formatTimeLeft(alvoMs);
       }

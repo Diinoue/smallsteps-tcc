@@ -20,6 +20,8 @@ import { useThemeColor } from '@/hooks/use-theme-color';
 import { useProfile, UserProfileData } from '@/src/context/ProfileContext';
 import { AchievementCard } from '@/src/components/profile/AchievementCard';
 import { CurrentGoalCard } from '@/src/components/profile/CurrentGoalCard';
+import { calcularStatusStreak } from '@/src/components/dashboard/StreakCard';
+import { StreakStatus } from '@/src/dto/DashboardResponse';
 import { loginService } from '@/src/services/loginService';
 import { userService } from '@/src/services/userService';
 
@@ -43,6 +45,8 @@ export default function ProfileScreen() {
   const textMuted = useThemeColor({}, 'textMuted');
   const borderColor = useThemeColor({}, 'border');
   const activeColor = useThemeColor({}, 'streakActive');
+  const warningColor = useThemeColor({}, 'streakWarning');
+  const frozenColor = useThemeColor({}, 'streakFrozen');
   const errorColor = useThemeColor({}, 'error');
 
   const tagBg = isDark ? '#1E293B' : '#E8F2FF';
@@ -121,6 +125,55 @@ export default function ProfileScreen() {
   };
 
   const hasAvatar = Boolean(profile.avatarUrl) && !avatarError;
+
+  const ownStreakStatus: StreakStatus =
+    profile.streakStatus === StreakStatus.ATIVO ||
+    profile.streakStatus === StreakStatus.PENDENTE ||
+    profile.streakStatus === StreakStatus.CONGELADO
+      ? profile.streakStatus
+      : calcularStatusStreak(
+          profile.ultimaAtividade ?? null,
+          profile.ultimoPrazo ?? null,
+          profile.intervaloAtividade ?? null,
+          new Date(),
+          Boolean(profile.cicloDescongelamento),
+          profile.proximoIntervalo ?? null
+        );
+
+  const isUnfreezingCycle = (() => {
+    if (!profile.cicloDescongelamento || !profile.ultimoPrazo) return false;
+    const prazoMs = new Date(
+      profile.ultimoPrazo.replace(' ', 'T').replace(/(\.\d{3})\d+/, '$1')
+    ).getTime();
+    return Number.isFinite(prazoMs) && Date.now() <= prazoMs;
+  })();
+
+  const streakDisplayColor = isOwnProfile
+    ? ownStreakStatus === StreakStatus.ATIVO
+      ? activeColor
+      : ownStreakStatus === StreakStatus.PENDENTE
+      ? warningColor
+      : frozenColor
+    : activeColor;
+
+  const streakFooterIcon: 'check-circle-outline' | 'schedule' | 'ac-unit' | 'local-fire-department' =
+    isOwnProfile
+      ? ownStreakStatus === StreakStatus.ATIVO
+        ? 'check-circle-outline'
+        : ownStreakStatus === StreakStatus.PENDENTE
+        ? 'schedule'
+        : 'ac-unit'
+      : 'local-fire-department';
+
+  const streakFooterLabel = isOwnProfile
+    ? ownStreakStatus === StreakStatus.ATIVO
+      ? 'Sequência ativa'
+      : ownStreakStatus === StreakStatus.PENDENTE
+      ? isUnfreezingCycle
+        ? 'Sequência em descongelamento — retome no próximo ciclo'
+        : 'Sequência pendente — publique em uma comunidade'
+      : 'Sequência congelada — publique para retomar'
+    : 'Sequência pública';
 
   return (
     <SafeAreaView edges={['top', 'left', 'right']} style={[styles.safeArea, { backgroundColor }]}>
@@ -337,8 +390,8 @@ export default function ProfileScreen() {
             ) : null}
           </View>
 
-          {/* 2. Card de Streak (exibido apenas quando permitido nas configurações de perfil) */}
-          {profile.publicStreak ? (
+          {/* 2. Card de Streak (no próprio perfil mostra cor do estado; em terceiros apenas se pública, sem revelar estado) */}
+          {isOwnProfile || profile.publicStreak ? (
             <View
               style={[
                 styles.streakCard,
@@ -346,14 +399,14 @@ export default function ProfileScreen() {
               ]}
             >
               <View style={styles.streakTopRow}>
-                <Text style={[styles.streakNumber, { color: activeColor }]}>
+                <Text style={[styles.streakNumber, { color: streakDisplayColor }]}>
                   {profile.streakCount}
                 </Text>
                 <View style={styles.streakLabelColumn}>
-                  <Text style={[styles.daysText, { color: activeColor }]}>
+                  <Text style={[styles.daysText, { color: streakDisplayColor }]}>
                     {profile.streakCount === 1 ? 'DIA' : 'DIAS'}
                   </Text>
-                  <Text style={[styles.streakSublabel, { color: activeColor }]}>
+                  <Text style={[styles.streakSublabel, { color: streakDisplayColor }]}>
                     Sequência Atual
                   </Text>
                 </View>
@@ -362,14 +415,14 @@ export default function ProfileScreen() {
               <View
                 style={[
                   styles.streakDivider,
-                  { backgroundColor: activeColor, opacity: 0.3 },
+                  { backgroundColor: streakDisplayColor, opacity: 0.3 },
                 ]}
               />
 
               <View style={styles.streakFooterRow}>
-                <MaterialIcons name="check-circle-outline" size={18} color={activeColor} />
-                <Text style={[styles.streakFooterText, { color: activeColor }]}>
-                  Sequência ativa
+                <MaterialIcons name={streakFooterIcon} size={18} color={streakDisplayColor} />
+                <Text style={[styles.streakFooterText, { color: streakDisplayColor }]}>
+                  {streakFooterLabel}
                 </Text>
               </View>
             </View>

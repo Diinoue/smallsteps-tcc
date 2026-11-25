@@ -31,6 +31,12 @@ export interface UserProfileData {
   description: string;
   tags: string[];
   streakCount: number;
+  streakStatus?: 'ATIVO' | 'PENDENTE' | 'CONGELADO' | string;
+  ultimaAtividade?: string | null;
+  ultimoPrazo?: string | null;
+  intervaloAtividade?: number | string | null;
+  proximoIntervalo?: number | string | null;
+  cicloDescongelamento?: boolean;
   streakFrequencyCount: number;
   streakFrequencyPeriod: 'day' | 'week' | 'month';
   publicStreak: boolean;
@@ -62,6 +68,12 @@ const EMPTY_PROFILE: UserProfileData = {
   description: '',
   tags: [],
   streakCount: 0,
+  streakStatus: 'PENDENTE',
+  ultimaAtividade: null,
+  ultimoPrazo: null,
+  intervaloAtividade: null,
+  proximoIntervalo: null,
+  cicloDescongelamento: false,
   streakFrequencyCount: 1,
   streakFrequencyPeriod: 'day',
   publicStreak: false,
