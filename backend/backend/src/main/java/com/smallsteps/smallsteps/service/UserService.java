@@ -76,6 +76,9 @@ public class UserService implements UserServiceDetails {
         dashboard.ultimaAtividade = usuario.getUltimaAtividade();
         dashboard.ultimoPrazo = usuario.getUltimoPrazo();
         dashboard.intervaloAtividade = usuario.getIntervaloAtividade();
+        dashboard.proximoIntervalo = usuario.getProximoIntervalo();
+        dashboard.cicloDescongelamento = usuario.isCicloDescongelamento();
+        dashboard.streakStatus = StreakService.calcularEstado(usuario).name();
 
         for (Meta meta : metas) {
             GoalDTOResponse goalDto = new GoalDTOResponse();
@@ -164,8 +167,6 @@ public class UserService implements UserServiceDetails {
         // Duração do ciclo da streak (ex.: 1 dia, 3 dias, 1 semana, 2 semanas, 1 mês)
         if (dto.streakFrequencyCount != null && dto.streakFrequencyCount > 0) {
             String period = dto.streakFrequencyPeriod != null ? dto.streakFrequencyPeriod.toLowerCase() : "day";
-            usuario.setFrequenciaNum(dto.streakFrequencyCount);
-            usuario.setFrequenciaPeriodo(period);
 
             Duration intervalo;
             if ("week".equals(period)) {
@@ -175,7 +176,26 @@ public class UserService implements UserServiceDetails {
             } else {
                 intervalo = Duration.ofDays(dto.streakFrequencyCount);
             }
-            usuario.setIntervaloAtividade(intervalo);
+
+            // Se for a primeira vez que o usuário define a sequência (ultimo_prazo == null),
+            // aplica imediatamente e define ultimo_prazo = data atual + intervalo_atividade.
+            // Caso já tenha um ciclo em andamento, mantém intervalo_atividade e ultimo_prazo
+            // atuais intactos e agenda o novo valor em proximo_intervalo para o próximo ciclo.
+            if (usuario.getUltimoPrazo() == null) {
+                usuario.setIntervaloAtividade(intervalo);
+                usuario.setProximoIntervalo(null);
+                usuario.setUltimoPrazo(LocalDateTime.now().plus(intervalo));
+            } else {
+                Duration atual = usuario.getIntervaloAtividade();
+                if (atual == null) {
+                    usuario.setIntervaloAtividade(intervalo);
+                    usuario.setProximoIntervalo(null);
+                } else if (atual.equals(intervalo)) {
+                    usuario.setProximoIntervalo(null);
+                } else {
+                    usuario.setProximoIntervalo(intervalo);
+                }
+            }
         }
 
         userRepository.save(usuario);
@@ -244,15 +264,21 @@ public class UserService implements UserServiceDetails {
         dto.avatarUrl = usuario.getFoto() != null ? usuario.getFoto() : "";
         dto.description = usuario.getDescricao() != null ? usuario.getDescricao() : "";
         dto.streakCount = usuario.getStreakNum();
+        dto.streakStatus = StreakService.calcularEstado(usuario).name();
+        dto.ultimaAtividade = usuario.getUltimaAtividade();
+        dto.ultimoPrazo = usuario.getUltimoPrazo();
+        dto.intervaloAtividade = usuario.getIntervaloAtividade();
+        dto.proximoIntervalo = usuario.getProximoIntervalo();
+        dto.cicloDescongelamento = usuario.isCicloDescongelamento();
         dto.publicStreak = usuario.isStreakPublico();
         dto.publicCurrentGoals = usuario.isMetasPublicas();
 
-        // Calcular duração do ciclo da streak
-        if (usuario.getFrequenciaNum() != null && usuario.getFrequenciaPeriodo() != null) {
-            dto.streakFrequencyCount = usuario.getFrequenciaNum();
-            dto.streakFrequencyPeriod = usuario.getFrequenciaPeriodo();
-        } else if (usuario.getIntervaloAtividade() != null) {
-            long days = Math.max(1, usuario.getIntervaloAtividade().toDays());
+        // Calcular duração exibida no Editar Perfil (usa proximo_intervalo se houver alteração agendada)
+        Duration intervaloConfigurado = usuario.getProximoIntervalo() != null
+                ? usuario.getProximoIntervalo()
+                : usuario.getIntervaloAtividade();
+        if (intervaloConfigurado != null && !intervaloConfigurado.isZero() && !intervaloConfigurado.isNegative()) {
+            long days = Math.max(1, intervaloConfigurado.toDays());
             if (days % 30 == 0) {
                 dto.streakFrequencyPeriod = "month";
                 dto.streakFrequencyCount = (int) (days / 30);

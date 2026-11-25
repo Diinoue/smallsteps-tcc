@@ -46,30 +46,25 @@ public class Usuario {
     @Column(name = "ultima_atividade")
     private LocalDateTime ultimaAtividade;
 
-    @Column(name = "inicio_ciclo")
-    private LocalDateTime inicioCiclo;
-
     @Column(name = "ultimo_prazo")
     private LocalDateTime ultimoPrazo;
-
-    @Column(name = "ciclo_descongelamento")
-    private Boolean cicloDescongelamento = false;
 
     @JdbcTypeCode(SqlTypes.INTERVAL_SECOND)
     @Column(name = "intervalo_atividade")
     private Duration intervaloAtividade;
+
+    @JdbcTypeCode(SqlTypes.INTERVAL_SECOND)
+    @Column(name = "proximo_intervalo")
+    private Duration proximoIntervalo;
+
+    @Column(name = "ciclo_descongelamento", nullable = false)
+    private Boolean cicloDescongelamento = false;
 
     @Column(name = "streak_publico")
     private Boolean streakPublico = false;
 
     @Column(name = "metas_publicas")
     private Boolean metasPublicas = true;
-
-    @Column(name = "frequencia_num")
-    private Integer frequenciaNum = 2;
-
-    @Column(name = "frequencia_periodo")
-    private String frequenciaPeriodo = "week";
 
     public Usuario() {}
 
@@ -134,14 +129,6 @@ public class Usuario {
         this.ultimaAtividade = ultimaAtividade;
     }
 
-    public LocalDateTime getInicioCiclo() {
-        return inicioCiclo;
-    }
-
-    public void setInicioCiclo(LocalDateTime inicioCiclo) {
-        this.inicioCiclo = inicioCiclo;
-    }
-
     public LocalDateTime getUltimoPrazo() {
         return ultimoPrazo;
     }
@@ -150,20 +137,28 @@ public class Usuario {
         this.ultimoPrazo = ultimoPrazo;
     }
 
-    public boolean isCicloDescongelamento() {
-        return cicloDescongelamento != null && cicloDescongelamento;
-    }
-
-    public void setCicloDescongelamento(Boolean cicloDescongelamento) {
-        this.cicloDescongelamento = cicloDescongelamento != null && cicloDescongelamento;
-    }
-
     public Duration getIntervaloAtividade() {
         return intervaloAtividade;
     }
 
     public void setIntervaloAtividade(Duration intervaloAtividade) {
         this.intervaloAtividade = intervaloAtividade;
+    }
+
+    public Duration getProximoIntervalo() {
+        return proximoIntervalo;
+    }
+
+    public void setProximoIntervalo(Duration proximoIntervalo) {
+        this.proximoIntervalo = proximoIntervalo;
+    }
+
+    public boolean isCicloDescongelamento() {
+        return cicloDescongelamento != null && cicloDescongelamento;
+    }
+
+    public void setCicloDescongelamento(Boolean cicloDescongelamento) {
+        this.cicloDescongelamento = cicloDescongelamento != null ? cicloDescongelamento : false;
     }
 
     public String getFoto() {
@@ -197,22 +192,4 @@ public class Usuario {
     public void setSenha(String senha) {
         this.senha = senha;
     }
-
-    public Integer getFrequenciaNum() {
-        return frequenciaNum != null ? frequenciaNum : 2;
-    }
-
-    public void setFrequenciaNum(Integer frequenciaNum) {
-        this.frequenciaNum = frequenciaNum;
-    }
-
-    public String getFrequenciaPeriodo() {
-        return frequenciaPeriodo != null ? frequenciaPeriodo : "week";
-    }
-
-    public void setFrequenciaPeriodo(String frequenciaPeriodo) {
-        this.frequenciaPeriodo = frequenciaPeriodo;
-    }
-
-    
 }

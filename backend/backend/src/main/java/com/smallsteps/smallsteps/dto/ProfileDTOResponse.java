@@ -1,5 +1,7 @@
 package com.smallsteps.smallsteps.dto;
 
+import java.time.Duration;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -11,6 +13,12 @@ public class ProfileDTOResponse {
     public String description;
     public List<String> tags = new ArrayList<>();
     public int streakCount;
+    public String streakStatus; // "ATIVO", "PENDENTE", "CONGELADO"
+    public LocalDateTime ultimaAtividade;
+    public LocalDateTime ultimoPrazo;
+    public Duration intervaloAtividade;
+    public Duration proximoIntervalo;
+    public boolean cicloDescongelamento;
     public int streakFrequencyCount;
     public String streakFrequencyPeriod; // "day", "week", "month"
     public boolean publicStreak;

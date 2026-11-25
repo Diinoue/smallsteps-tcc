@@ -10,5 +10,8 @@ public class DashboardDTOResponse {
         public LocalDateTime ultimaAtividade;
         public LocalDateTime ultimoPrazo;
         public Duration intervaloAtividade;
+        public Duration proximoIntervalo;
+        public boolean cicloDescongelamento;
+        public String streakStatus;
         public List<GoalDTOResponse> metas = new ArrayList<GoalDTOResponse>();
 }

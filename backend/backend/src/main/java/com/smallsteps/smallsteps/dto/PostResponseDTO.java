@@ -12,6 +12,8 @@ public class PostResponseDTO {
     private String mediaUrl;
     private int commentsCount;
     private PostAuthorDTO author;
+    private String streakAction;
+    private String streakMessage;
 
     public static class PostAuthorDTO {
         private int id;
@@ -148,5 +150,21 @@ public class PostResponseDTO {
 
     public void setAuthor(PostAuthorDTO author) {
         this.author = author;
+    }
+
+    public String getStreakAction() {
+        return streakAction;
+    }
+
+    public void setStreakAction(String streakAction) {
+        this.streakAction = streakAction;
+    }
+
+    public String getStreakMessage() {
+        return streakMessage;
+    }
+
+    public void setStreakMessage(String streakMessage) {
+        this.streakMessage = streakMessage;
     }
 }

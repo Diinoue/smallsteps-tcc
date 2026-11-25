@@ -178,6 +178,30 @@ public class UserServiceTest {
         // Verifica salvamento da visibilidade da meta
         verify(goalRepository).save(metaConcluida);
         assertTrue(metaConcluida.isVisivel());
+        assertEquals(Duration.ofDays(21), usuarioTeste.getIntervaloAtividade());
+        assertNotNull(usuarioTeste.getUltimoPrazo());
+    }
+
+    @Test
+    @DisplayName("Deve preservar ultimo_prazo atual ao alterar intervalo_atividade no meio de um ciclo")
+    void devePreservarUltimoPrazoAoAlterarIntervaloNoMeioDoCiclo() {
+        LocalDateTime prazoOriginal = LocalDateTime.of(2026, 11, 30, 18, 0, 0);
+        usuarioTeste.setUltimoPrazo(prazoOriginal);
+
+        when(userRepository.findByEmail("lagarto@email.com")).thenReturn(Optional.of(usuarioTeste));
+        when(userRepository.save(any(Usuario.class))).thenReturn(usuarioTeste);
+
+        UpdateProfileDTORequest request = new UpdateProfileDTORequest();
+        request.streakFrequencyCount = 7;
+        request.streakFrequencyPeriod = "day";
+
+        ProfileDTOResponse response = userService.updateProfileByEmail("lagarto@email.com", request);
+
+        assertEquals(Duration.ofDays(3), usuarioTeste.getIntervaloAtividade());
+        assertEquals(Duration.ofDays(7), usuarioTeste.getProximoIntervalo());
+        assertEquals(prazoOriginal, usuarioTeste.getUltimoPrazo());
+        assertEquals(1, response.streakFrequencyCount);
+        assertEquals("week", response.streakFrequencyPeriod);
     }
 
     @Test

@@ -76,8 +76,11 @@ public class PostService {
         post.setDtCriacao(LocalDateTime.now());
 
         Post salvo = postRepository.save(post);
-        streakService.registrarAtividadePorPost(usuario, communityId);
-        return new PostResponseDTO(salvo, usuario.getStreakNum(), 0);
+        StreakService.StreakUpdateResult streakResult = streakService.registrarAtividadePorPost(usuario, communityId);
+        PostResponseDTO response = new PostResponseDTO(salvo, usuario.getStreakNum(), 0);
+        response.setStreakAction(streakResult.getAction());
+        response.setStreakMessage(streakResult.getMessage());
+        return response;
     }
 
     @Transactional
